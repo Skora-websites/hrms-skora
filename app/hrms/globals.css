@@ -1,0 +1,348 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+@import "tailwindcss";
+
+/* ── Tailwind v4 Dark Mode Variant ────────────────────────
+   Makes the `dark:` utility class respond to the `.dark`
+   class on <html> (not just prefers-color-scheme).
+   This is critical for the theme toggle to work.        */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── CSS Custom Properties for Dynamic Theming ──────────
+   These are runtime-overridable CSS vars for the primary
+   color and gradient endpoints. JS sets these on <html>
+   whenever the user picks a new theme color.               */
+:root {
+  --gradient-primary-start: #5e72e4;
+  --gradient-primary-end: #825ee4;
+  --gradient-info-start: #1171ef;
+  --gradient-info-end: #11cdef;
+  --gradient-success-start: #2dce89;
+  --gradient-success-end: #2dcecc;
+  --gradient-warning-start: #fb6340;
+  --gradient-warning-end: #fbb140;
+  --gradient-danger-start: #f5365c;
+  --gradient-danger-end: #f56036;
+  --gradient-dark-start: #212229;
+  --gradient-dark-end: #212529;
+}
+
+/* Custom theme tokens */
+@theme {
+  --font-sans: 'Open Sans', system-ui, sans-serif;
+
+  /* Brand colors */
+  --color-primary: #5e72e4;
+  --color-primary-50: #f0f1fe;
+  --color-primary-100: #dde0fc;
+  --color-primary-200: #c2c6fa;
+  --color-primary-300: #9da3f6;
+  --color-primary-400: #757bf0;
+  --color-primary-500: #5e72e4;
+  --color-primary-600: #4350d8;
+  --color-primary-700: #383ec6;
+  --color-primary-800: #2f34a0;
+  --color-primary-900: #2a2f7f;
+
+  --color-secondary: #8392ab;
+  --color-success: #2dce89;
+  --color-info: #11cdef;
+  --color-warning: #fb6340;
+  --color-danger: #f5365c;
+  --color-dark: #344767;
+  --color-light: #e9ecef;
+  --color-muted: #67748e;
+
+  /* Gray scale */
+  --color-gray-100: #f8f9fa;
+  --color-gray-200: #e9ecef;
+  --color-gray-300: #dee2e6;
+  --color-gray-400: #ced4da;
+  --color-gray-500: #adb5bd;
+  --color-gray-600: #6c757d;
+  --color-gray-700: #495057;
+  --color-gray-800: #343a40;
+  --color-gray-900: #212529;
+
+  /* Border radius */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-pill: 50rem;
+
+  /* Font sizes */
+  --font-size-xxs: 0.65rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lead: 1.25rem;
+  --font-size-h6: 1rem;
+  --font-size-h5: 1.25rem;
+  --font-size-h4: 1.5rem;
+  --font-size-h3: 1.875rem;
+  --font-size-h2: 2.25rem;
+  --font-size-h1: 3rem;
+
+  /* Shadows */
+  --shadow-xs: 0 2px 9px -5px rgba(0,0,0,0.15);
+  --shadow-sm: 0 0.3125rem 0.625rem 0 rgba(0,0,0,0.12);
+  --shadow-default: 0 0.25rem 0.375rem -0.0625rem rgba(20,20,20,.12), 0 0.125rem 0.25rem -0.0625rem rgba(20,20,20,.07);
+  --shadow-lg: 0 8px 26px -4px rgba(20,20,20,0.15), 0 8px 9px -5px rgba(20,20,20,0.06);
+  --shadow-xl: 0 23px 45px -11px rgba(20,20,20,.25);
+
+  /* Letter spacing */
+  --letter-spacing-tighter: -0.05rem;
+  --letter-spacing-wide: 0.025rem;
+  --letter-spacing-wider: 0.05rem;
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-down: slide-down 0.3s ease-out;
+  --animate-pulse-soft: pulse-soft 1.2s ease-in-out infinite;
+}
+
+/* Animations - consolidated */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Form-specific animations */
+@keyframes form-error-in {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes section-in {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes input-fill-pulse {
+  0% { box-shadow: 0 0 0 0 var(--color-primary-alpha, rgba(94,114,228,0.15)); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@utility animate-form-error {
+  animation: form-error-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@utility animate-section-in {
+  animation: section-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stagger section children for a cascade effect */
+.animate-section-stagger > * {
+  opacity: 0;
+  animation: section-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-section-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-section-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-section-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-section-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-section-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-section-stagger > *:nth-child(6) { animation-delay: 250ms; }
+
+/* CSS Variables for dynamic theming (light/dark) */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 14% 48%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 14% 48%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 234 72% 62%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222 14% 48%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-accent: 220 14% 96%;
+  --sidebar-accent-foreground: 225 33% 30%;
+  --sidebar-primary: 234 72% 62%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 234 72% 62%;
+}
+
+.dark {
+  --background: 225 100% 7%;
+  --foreground: 0 0% 80%;
+  --card: 226 60% 17%;
+  --card-foreground: 0 0% 80%;
+  --border: 0 0% 40%;
+  --input: 0 0% 40%;
+  --ring: 234 72% 62%;
+  --sidebar: 226 40% 12%;
+  --sidebar-foreground: 0 0% 60%;
+  --sidebar-border: 226 30% 20%;
+  --sidebar-accent: 226 35% 18%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-primary: 234 72% 62%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 234 72% 62%;
+}
+
+/* Base layer — with smooth theme transitions */
+*, *::before, *::after {
+  border-color: hsl(var(--border));
+}
+
+/* ── Smooth Theme Transitions (Scoped) ───────────────────
+   The `theme-transitioning` class is added by useTheme.tsx
+   on toggle for ~300ms — avoids performance overhead and
+   conflicts with existing component transitions.           */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition-property: background-color, border-color, color;
+    transition-duration: 250ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Open Sans', system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: white;
+}
+
+h1 { font-size: 3rem; line-height: 1.25; letter-spacing: -0.05rem; }
+h2 { font-size: 2.25rem; line-height: 1.3; letter-spacing: -0.05rem; }
+h3 { font-size: 1.875rem; line-height: 1.375; letter-spacing: -0.05rem; }
+h4 { font-size: 1.5rem; line-height: 1.375; letter-spacing: -0.05rem; }
+h5 { font-size: 1.25rem; line-height: 1.375; }
+h6 { font-size: 1rem; line-height: 1.625; }
+
+/* Gradient backgrounds — use CSS vars so they're dynamic */
+@utility bg-gradient-primary {
+  background: linear-gradient(310deg, var(--gradient-primary-start, #5e72e4), var(--gradient-primary-end, #825ee4));
+}
+
+@utility bg-gradient-info {
+  background: linear-gradient(310deg, var(--gradient-info-start, #1171ef), var(--gradient-info-end, #11cdef));
+}
+
+@utility bg-gradient-success {
+  background: linear-gradient(310deg, var(--gradient-success-start, #2dce89), var(--gradient-success-end, #2dcecc));
+}
+
+@utility bg-gradient-warning {
+  background: linear-gradient(310deg, var(--gradient-warning-start, #fb6340), var(--gradient-warning-end, #fbb140));
+}
+
+@utility bg-gradient-danger {
+  background: linear-gradient(310deg, var(--gradient-danger-start, #f5365c), var(--gradient-danger-end, #f56036));
+}
+
+@utility bg-gradient-dark {
+  background: linear-gradient(310deg, var(--gradient-dark-start, #212229), var(--gradient-dark-end, #212529));
+}
+
+/* Gradient text — uses CSS vars for dynamic primary color */
+@utility text-gradient {
+  background: linear-gradient(310deg, var(--gradient-primary-start, #5e72e4), var(--gradient-primary-end, #825ee4));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Focus ring uses CSS var so it follows primary color */
+:focus-visible {
+  outline: none;
+  ring: 2px solid var(--color-primary, #5e72e4);
+  ring-offset: 2px;
+  ring-offset-color: hsl(var(--background));
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-gray-700);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-600);
+}
+
+/* Selection */
+::selection {
+  background: color-mix(in srgb, var(--color-primary, #5e72e4) 20%, transparent);
+  color: var(--color-primary);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Navbar Glass Effect ─────────────────────────────────
+   Provides a semi-transparent background with blur for the
+   sticky navbar so page content never shows through it.    */
+.navbar-glass {
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .navbar-glass {
+  background-color: rgba(5, 17, 57, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Slow spin animation for theme configurator gear icon */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}

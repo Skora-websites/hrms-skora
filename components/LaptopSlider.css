@@ -1,0 +1,260 @@
+.cred-carousel-section {
+  position: relative;
+  width: 100%;
+  padding: 80px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #030914; 
+  overflow: hidden;
+  background-image: radial-gradient(circle at 50% 40%, rgba(56,189,248,0.1) 0%, rgba(3,9,20,0) 65%);
+}
+
+.carousel-layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.audio-controls {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 50;
+}
+
+.audio-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 20px;
+  border-radius: 30px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.audio-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.audio-active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.carousel-scene {
+  width: 100%;
+  height: 380px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1500px;
+  z-index: 10;
+}
+
+.carousel-spinner {
+  position: absolute;
+  width: 400px;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.carousel-item {
+  position: absolute;
+  width: 400px;
+  height: 100%;
+  left: 0;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform-style: preserve-3d;
+}
+
+.macbook-3d-rig {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transform: translateY(-20px) rotateX(-12deg); 
+  transition: transform 0.3s ease;
+}
+
+.macbook-lid {
+  width: 400px;
+  height: 250px;
+  background: #000000;
+  border-radius: 12px 12px 0 0;
+  padding: 16px 16px 30px 16px;
+  position: relative;
+  transform-origin: bottom center;
+  transform: rotateX(-20deg); 
+  box-shadow: inset 0 0 0 1px #333, inset 0 2px 4px rgba(255,255,255,0.2);
+  z-index: 2;
+  transform-style: preserve-3d;
+}
+
+.macbook-screen {
+  width: 100%;
+  height: 100%;
+  background: #111;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.macbook-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.screen-glare {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0) 55%);
+  transform: translate(-30%, -30%);
+  pointer-events: none;
+}
+
+.macbook-base {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 400px;
+  height: 270px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #9ca3af 100%);
+  transform-origin: top center;
+  transform: rotateX(90deg);
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+  z-index: 1;
+  transform-style: preserve-3d;
+}
+
+.macbook-keyboard-well {
+  width: 86%;
+  height: 115px;
+  margin-top: 20px;
+  background-color: #cbd5e1;
+  border-radius: 6px;
+  padding: 5px;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.15), inset 0 -1px 1px rgba(255,255,255,0.8);
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 3px;
+}
+
+.laptop-key {
+  background: #1f2937;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+.spacebar { grid-column: span 5; }
+
+.macbook-trackpad {
+  width: 36%;
+  height: 75px;
+  margin-top: 15px;
+  background: #d1d5db;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 1px 1px rgba(255,255,255,0.7);
+}
+
+.macbook-base-lip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(to right, #6b7280 0%, #9ca3af 10%, #9ca3af 90%, #6b7280 100%);
+  transform-origin: top center;
+  transform: rotateX(-90deg);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+}
+
+.desk-shadow {
+  position: absolute;
+  top: 230px; 
+  left: 50%;
+  width: 450px;
+  height: 250px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 65%);
+  transform: translate(-50%, 0) rotateX(90deg) translateZ(-30px);
+  pointer-events: none;
+}
+
+.dim-overlay {
+  position: absolute;
+  inset: 0;
+  background: #030914;
+  border-radius: inherit;
+  opacity: 0.7;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+
+.item-active .dim-overlay {
+  opacity: 0;
+}
+
+.carousel-text-overlay {
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
+  z-index: 60;
+}
+
+.text-animate-wrapper {
+  animation: fadeUpText 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes fadeUpText {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.gradient-text {
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 12px 0;
+  background: linear-gradient(135deg, #ffffff 0%, #7dd3fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 10px 30px rgba(125, 211, 252, 0.3);
+}
+
+.carousel-text-overlay p {
+  font-size: 1.2rem;
+  color: #94a3b8; 
+  margin: 0 auto;
+  font-weight: 500;
+  line-height: 1.6;
+}
