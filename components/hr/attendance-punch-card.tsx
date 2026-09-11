@@ -134,7 +134,18 @@ export function AttendancePunchCard() {
 
   const getPosition = () => new Promise<GeolocationPosition>((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error("Geolocation is required for attendance."));
-    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+    const fail = (err: GeolocationPositionError) => reject(new Error(
+      err.code === err.PERMISSION_DENIED
+        ? "Location permission denied. Allow location access for this site, then try again."
+        : err.code === err.POSITION_UNAVAILABLE
+          ? "Location unavailable. Turn on device location services and try again."
+          : "Location request timed out. Make sure location/GPS is on and try again."
+    ));
+    navigator.geolocation.getCurrentPosition(resolve, (err) => {
+      if (err.code === err.PERMISSION_DENIED) return fail(err);
+      // High-accuracy GPS often fails on devices without it — retry once with coarse accuracy.
+      navigator.geolocation.getCurrentPosition(resolve, () => fail(err), { maximumAge: 30000, timeout: 10000 });
+    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
   });
 
   const handlePunchIn = async () => {
@@ -221,8 +232,7 @@ export function AttendancePunchCard() {
 
   if (loading) return <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 text-sm text-slate-500">Loading attendance…</div>;
 
-  return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+  return (    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
         <div>
           <h3 className="font-bold text-base flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Daily Attendance &amp; Shift Punch</h3>
