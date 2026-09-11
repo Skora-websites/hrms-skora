@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Plus,
   Trash2,
-  MapPin,
 } from "lucide-react";
 
 export default function HrAdminSettingsPage() {
@@ -37,11 +36,8 @@ export default function HrAdminSettingsPage() {
   const [professionalTax, setProfessionalTax] = useState(200);
   const [tdsEnabled, setTdsEnabled] = useState(true);
 
-  // Geofence
-  const [officeLat, setOfficeLat] = useState("");
-  const [officeLng, setOfficeLng] = useState("");
-
   const [loading, setLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -68,10 +64,6 @@ export default function HrAdminSettingsPage() {
               if (s.payrollDeductions.professionalTax !== undefined) setProfessionalTax(s.payrollDeductions.professionalTax);
               if (s.payrollDeductions.tdsEnabled !== undefined) setTdsEnabled(s.payrollDeductions.tdsEnabled);
             }
-            if (s.geofence) {
-              if (s.geofence.latitude !== undefined) setOfficeLat(s.geofence.latitude);
-              if (s.geofence.longitude !== undefined) setOfficeLng(s.geofence.longitude);
-            }
           }
         }
       } catch { /* use defaults */ }
@@ -94,7 +86,6 @@ export default function HrAdminSettingsPage() {
             holidays,
             leaveAccrual: { cl: clAccrual, sl: slAccrual, al: alAccrual, carryForward, carryForwardLimit },
             payrollDeductions: { pfPercent, esiPercent, professionalTax, tdsEnabled },
-            geofence: { latitude: officeLat, longitude: officeLng },
           },
         }),
       });
@@ -210,23 +201,6 @@ export default function HrAdminSettingsPage() {
                 <span className="text-[11px] text-slate-500">Apply Tax Deducted at Source for eligible employees</span>
               </div>
               <Toggle checked={tdsEnabled} onChange={setTdsEnabled} />
-            </div>
-          </div>
-        </SettingsSection>
-
-        {/* ═══ Geofence Office Coordinates ═══ */}
-        <SettingsSection title="Office Geofence Coordinates" icon={<MapPin className="h-5 w-5 text-red-500" />}>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
-            Set the office Latitude &amp; Longitude for 100-meter geofenced punch validation.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Latitude</label>
-              <input type="text" value={officeLat} onChange={(e) => setOfficeLat(e.target.value)} placeholder="28.6007594" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Longitude</label>
-              <input type="text" value={officeLng} onChange={(e) => setOfficeLng(e.target.value)} placeholder="77.4319307" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
             </div>
           </div>
         </SettingsSection>

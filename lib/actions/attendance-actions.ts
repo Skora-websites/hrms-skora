@@ -11,11 +11,9 @@ export async function punchInAction(data: {
   userName: string;
   userEmail: string;
   employeeCode?: string;
-  location?: string;
   status?: string;
   tenantId?: string;
   managerId?: string;
-  workLocation?: "office" | "remote";
 }) {
   try {
     const auth = await requireAuth();
@@ -30,10 +28,9 @@ export async function punchInAction(data: {
       userName: (user as any).displayName || (user as any).firstName || "Employee",
       userEmail: (user as any).email || "",
       employeeCode: (user as any).employeeCode,
-      location: data.location,
+      status: data.status,
       tenantId: auth.tenantId,
       managerId: (user as any).managerId,
-      workLocation: data.workLocation,
     });
     if (!record) return { success: false, error: "Failed to save attendance record. Please try again." };
 

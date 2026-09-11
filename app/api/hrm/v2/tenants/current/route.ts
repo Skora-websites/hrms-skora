@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler } from "@/lib/api-handler";
-import { getOfficeConfig } from "@/lib/hrm/office-config";
 
 const DEFAULT_RULES = {
   officeStart: 10,
@@ -19,7 +18,6 @@ export const GET = withErrorHandler(async () => {
   const auth = await requireAuth();
   if (isErrorResponse(auth)) return auth;
 
-  const office = await getOfficeConfig();
   let officeRules = { ...DEFAULT_RULES };
 
   try {
@@ -32,10 +30,5 @@ export const GET = withErrorHandler(async () => {
     }
   } catch { /* use defaults */ }
 
-  return NextResponse.json({
-    latitude: office.latitude,
-    longitude: office.longitude,
-    geofenceRadius: office.geofenceRadius,
-    officeRules,
-  });
+  return NextResponse.json({ officeRules });
 }, { label: "Tenant Current" });

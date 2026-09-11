@@ -26,7 +26,6 @@ export default function SuperAdminSettingsPage() {
   const [passwordExpiryDays, setPasswordExpiryDays] = useState(90);
 
   // API keys
-  const [geolocationKey, setGeolocationKey] = useState("");
   const [paymentGatewayKey, setPaymentGatewayKey] = useState("");
   const [paymentProvider, setPaymentProvider] = useState("razorpay");
 
@@ -41,9 +40,7 @@ export default function SuperAdminSettingsPage() {
   const [lateAfter, setLateAfter] = useState(10.5);
   const [requiredHours, setRequiredHours] = useState(8.5);
   const [breakAllowance, setBreakAllowance] = useState(30);
-  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [officeLat, setOfficeLat] = useState("");
-  const [officeLng, setOfficeLng] = useState(""); // Mon-Fri
+  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri
 
   const toggleWorkDay = (day: number) => {
     setWorkDays((prev) =>
@@ -73,7 +70,6 @@ export default function SuperAdminSettingsPage() {
             if (s.passwordMinLength !== undefined) setPasswordMinLength(s.passwordMinLength);
             if (s.passwordExpiryDays !== undefined) setPasswordExpiryDays(s.passwordExpiryDays);
             if (s.apiKeys) {
-              if (s.apiKeys.geolocation !== undefined) setGeolocationKey(s.apiKeys.geolocation);
               if (s.apiKeys.paymentGateway !== undefined) setPaymentGatewayKey(s.apiKeys.paymentGateway);
               if (s.apiKeys.paymentProvider !== undefined) setPaymentProvider(s.apiKeys.paymentProvider);
             }
@@ -102,13 +98,11 @@ export default function SuperAdminSettingsPage() {
           userId: "system",
           settings: {
             officeRules: { officeStart, officeEnd, lateAfter, workDays, requiredHours, breakAllowance, meetingCountsAsWork: true },
-            geofence: { latitude: officeLat, longitude: officeLng },
             sessionTimeout,
             enforce2FA,
             passwordMinLength,
             passwordExpiryDays,
             apiKeys: {
-              geolocation: geolocationKey,
               paymentGateway: paymentGatewayKey,
               paymentProvider,
             },
@@ -338,46 +332,14 @@ export default function SuperAdminSettingsPage() {
           </div>
         </SettingsSection>
 
-        
-        {/* ═══ Office Geofence Coordinates ═══ */}
-        <SettingsSection
-          title="Office Geofence Coordinates"
-          icon={<Globe className="h-5 w-5 text-red-500" />}
-          description="Set office location for 100-meter geofenced punch validation"
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Latitude</label>
-              <input type="text" value={officeLat} onChange={(e) => setOfficeLat(e.target.value)} placeholder="28.6007594" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Longitude</label>
-              <input type="text" value={officeLng} onChange={(e) => setOfficeLng(e.target.value)} placeholder="77.4319307" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
-            </div>
-          </div>
-        </SettingsSection>
 
         {/* ═══ API Key Management ═══ */}
         <SettingsSection
           title="API Key Management"
           icon={<Key className="h-5 w-5 text-yellow-500" />}
-          description="Geolocation, Payment Gateway and other external API keys"
+          description="Payment Gateway and other external API keys"
         >
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                <Globe className="h-3.5 w-3.5 inline mr-1" />
-                Geolocation API Key (for Haversine geofencing)
-              </label>
-              <input
-                type="password"
-                value={geolocationKey}
-                onChange={(e) => setGeolocationKey(e.target.value)}
-                placeholder="Enter geolocation service API key"
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
-              />
-            </div>
-
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 <Key className="h-3.5 w-3.5 inline mr-1" />

@@ -11,11 +11,7 @@ import {
   AlertTriangle,
   XCircle,
   Users,
-  MapPin,
-  Building2,
-  Filter,
   CalendarDays,
-  ListFilter,
   ArrowLeft,
   ArrowRight,
   TrendingUp,
@@ -50,7 +46,6 @@ interface AttendanceRecord {
   status: string;
   workHours?: number;
   location?: string;
-  distanceMeters?: number;
   department?: string;
 }
 
@@ -63,10 +58,13 @@ export default function HrAdminAttendancePage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDept, setFilterDept] = useState("all");
-  const [activeView, setActiveView] = useState<"roster" | "punched" | "calendar" | "live">("roster");
+  const [activeView, setActiveView] = useState<"roster" | "punched" | "calendar">("roster");
 
-  const [liveLocations, setLiveLocations] = useState<any[]>([]);
-  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  // Date keys are IST calendar days — the server buckets attendance by IST too.
+  const todayStr = useMemo(
+    () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()),
+    []
+  );
   const isToday = selectedDate === todayStr;
 
   // ── Load Data ──────────────────────────────────────────────
@@ -118,23 +116,6 @@ export default function HrAdminAttendancePage() {
     };
   }, [loadData]);
 
-
-  // ── Fetch live employee locations ────────────────────────
-  useEffect(() => {
-    if (activeView !== "live") return;
-    const fetchLive = async () => {
-      try {
-        const res = await fetch("/api/hrm/v2/attendance/location");
-        if (res.ok) {
-          const data = await res.json();
-          setLiveLocations(Array.isArray(data.data) ? data.data : []);
-        }
-      } catch { /* retry next interval */ }
-    };
-    fetchLive();
-    const interval = setInterval(fetchLive, 15000);
-    return () => clearInterval(interval);
-  }, [activeView]);
   // ── Quick Date Navigators ──────────────────────────────────
   const setQuickDate = (dateVal: string) => {
     setSelectedDate(dateVal);
@@ -173,14 +154,13 @@ export default function HrAdminAttendancePage() {
         punchInTime: rec?.punchInTime,
         punchOutTime: rec?.punchOutTime,
         workHours: rec?.workHours,
-        location: rec?.location || (rec ? "GPS Verified" : "—"),
-        distanceMeters: rec?.distanceMeters,
+        location: rec?.location || (rec ? "Office" : "—"),
       };
     });
   }, [employees, records]);
 
   // ── Summary Stats ──────────────────────────────────────────
-  const totalEmployees = roster.length || employees.length || 14;
+  const totalEmployees = roster.length || employees.length;
   const presentEmployees = roster.filter((r) => r.status === "PRESENT" || r.status === "LATE" || r.status === "HALF_DAY");
   const presentCount = presentEmployees.length;
   const lateCount = roster.filter((r) => r.status === "LATE").length;
@@ -628,109 +608,53 @@ export default function HrAdminAttendancePage() {
               <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
             </div>
 
-            {/* 31 Calendar Days */}
+            {/* Calendar Days for the selected month */}
             <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 31 }, (_, i) => {
-                const dayNum = i + 1;
-                const dStr = `2026-08-${dayNum.toString().padStart(2, "0")}`;
-                const isSelected = selectedDate === dStr;
-                const isPastOrToday = dStr <= todayStr;
+              {(() => {
+                const [y, m] = selectedDate.split("-").map(Number);
+                const daysInMonth = new Date(y, m, 0).getDate();
+                return Array.from({ length: daysInMonth }, (_, i) => {
+                  const dayNum = i + 1;
+                  const dStr = `${selectedDate.slice(0, 7)}-${dayNum.toString().padStart(2, "0")}`;
+                  const isSelected = selectedDate === dStr;
+                  const isPastOrToday = dStr <= todayStr;
 
-                return (
-                  <button
-                    key={dayNum}
-                    onClick={() => {
-                      setSelectedDate(dStr);
-                      setActiveView("roster");
-                    }}
-                    className={`h-20 p-2 rounded-xl border flex flex-col justify-between text-left transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
-                        : isPastOrToday
-                        ? "border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 hover:border-primary/50 text-slate-900 dark:text-white"
-                        : "border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 text-slate-400 opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold">{dayNum}</span>
-                      {dStr === todayStr && (
-                        <span className="text-[8px] bg-emerald-500 text-white font-bold px-1 rounded">Today</span>
-                      )}
-                    </div>
-
-                    <div className="text-[10px]">
-                      {dStr === "2026-08-21" ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold block">6 Punches</span>
-                      ) : dStr === "2026-08-19" ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold block">2 Punches</span>
-                      ) : dStr === todayStr ? (
-                        <span className="text-slate-500 block">{presentCount} Punches</span>
-                      ) : (
-                        <span className="text-slate-400 block">—</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-        )}
-        {activeView === "live" && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-blue-500" /> Live Employee Locations
-              </h3>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Updates every 15s · {liveLocations.length} employee(s) tracked
-              </span>
-            </div>
-            {liveLocations.length === 0 ? (
-              <div className="text-center py-12 rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/5">
-                <MapPin className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No employees are currently tracked</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Employees will appear here after punching in with GPS tracking enabled</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {liveLocations.map((loc) => {
-                  const secondsAgo = Math.round((Date.now() - new Date(loc.timestamp).getTime()) / 1000);
-                  const isStale = secondsAgo > 120;
                   return (
-                    <div key={loc.userId} className={
-                      "p-4 rounded-xl border bg-white dark:bg-[#0B0F19] dark:border-white/10 space-y-2 " +
-                      (isStale ? "border-amber-300 dark:border-amber-500/30" : "border-gray-100 dark:border-white/5")
-                    }>
+                    <button
+                      key={dayNum}
+                      onClick={() => {
+                        setSelectedDate(dStr);
+                        setActiveView("roster");
+                      }}
+                      className={`h-20 p-2 rounded-xl border flex flex-col justify-between text-left transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
+                          : isPastOrToday
+                          ? "border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 hover:border-primary/50 text-slate-900 dark:text-white"
+                          : "border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 text-slate-400 opacity-60"
+                      }`}
+                    >
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{loc.userName}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400">{loc.employeeCode || "—"} · {loc.userEmail}</p>
-                        </div>
-                        <span className={
-                          "w-2.5 h-2.5 rounded-full " + (isStale ? "bg-amber-400 animate-pulse" : "bg-emerald-500 animate-pulse")
-                        } />
+                        <span className="font-mono text-xs font-bold">{dayNum}</span>
+                        {dStr === todayStr && (
+                          <span className="text-[8px] bg-emerald-500 text-white font-bold px-1 rounded">Today</span>
+                        )}
                       </div>
-                      <div className="text-xs space-y-1 text-slate-600 dark:text-slate-400">
-                        <p className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-blue-500" /> {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}</p>
-                        <p>Accuracy: ±{Math.round(loc.accuracy)}m {loc.distanceFromOffice !== undefined ? "· " + loc.distanceFromOffice + "m from office" : ""}</p>
-                        <p className={isStale ? "text-amber-500" : "text-emerald-500"}>
-                          {isStale ? "Last update: " + secondsAgo + "s ago" : "Live · " + secondsAgo + "s ago"}
-                        </p>
+
+                      <div className="text-[10px]">
+                        {dStr === selectedDate ? (
+                          <span className="text-slate-500 block">{presentCount} Punches</span>
+                        ) : (
+                          <span className="text-slate-400 block">—</span>
+                        )}
                       </div>
-                      <span className={"inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full " +
-                        (loc.auxState === "meeting" ? "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300" :
-                         loc.auxState === "on_break" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300" :
-                         "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300")}
-                      >
-                        {loc.auxState === "meeting" ? "In Meeting" : loc.auxState === "on_break" ? "On Break" : "Active"}
-                      </span>
-                    </div>
+                    </button>
                   );
-                })}
-              </div>
-            )}
+                });
+              })()}
+            </div>
           </div>
+
         )}
       </div>
     </AppShell>

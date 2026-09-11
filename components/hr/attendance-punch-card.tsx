@@ -1,17 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock, Coffee, LogOut, MapPin, Navigation, Users, Zap } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertCircle, CheckCircle2, Clock, Coffee, LogOut, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/auth-provider";
 import { punchInAction, punchOutAction, updateAUXStateAction } from "@/lib/actions/attendance-actions";
-import { isWithinGeofence } from "@/lib/geofencing";
 
-interface OfficeLocation { latitude: number; longitude: number; radius: number; }
 interface OfficeRules { officeStart: number; officeEnd: number; lateAfter: number; workDays: number[]; halfDayAfter: number; }
 type AuxState = "active" | "on_break" | "meeting";
 
-const DEFAULT_OFFICE: OfficeLocation = { latitude: 28.6007594, longitude: 77.4319307, radius: 100 };
 const DEFAULT_RULES: OfficeRules = { officeStart: 10, officeEnd: 19, lateAfter: 10.5, workDays: [1, 2, 3, 4, 5], halfDayAfter: 14.5 };
 
 // Key attendance by the office calendar date (IST) so the client and server
@@ -23,6 +20,18 @@ function todayString() {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
+}
+
+// Current hour in IST as a decimal (server is UTC; device may be any zone).
+function istHourNow() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date());
+  const [h, m] = parts.split(":").map(Number);
+  return h + m / 60;
 }
 
 function formatHour(hour: number) {
@@ -44,12 +53,9 @@ function formatDuration(seconds: number) {
 export function AttendancePunchCard() {
   const { user } = useAuth();
   const userId = user?.id || "";
-  const today = useMemo(() => todayString(), []);
+  const [today, setToday] = useState(() => todayString());
   const [record, setRecord] = useState<any | null>(null);
-  const [office, setOffice] = useState<OfficeLocation>(DEFAULT_OFFICE);
   const [rules, setRules] = useState<OfficeRules>(DEFAULT_RULES);
-  const [distance, setDistance] = useState<number | null>(null);
-  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [punching, setPunching] = useState(false);
   const [auxSwitching, setAuxSwitching] = useState(false);
@@ -58,12 +64,11 @@ export function AttendancePunchCard() {
   const [showEarlyLeave, setShowEarlyLeave] = useState(false);
   const [earlyReason, setEarlyReason] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
-  const watchRef = useRef<number | null>(null);
 
-  const refreshAttendance = useCallback(async () => {
+  const refreshAttendance = useCallback(async (dateKey: string) => {
     if (!userId) return;
     try {
-      const response = await fetch(`/api/hrm/v2/attendance?userId=${encodeURIComponent(userId)}&date=${encodeURIComponent(today)}`, { cache: "no-store" });
+      const response = await fetch(`/api/hrm/v2/attendance?userId=${encodeURIComponent(userId)}&date=${encodeURIComponent(dateKey)}`, { cache: "no-store" });
       if (!response.ok) throw new Error("Unable to load today's attendance");
       const data = await response.json();
       const rows = Array.isArray(data.data) ? data.data : [];
@@ -73,10 +78,24 @@ export function AttendancePunchCard() {
     } finally {
       setLoading(false);
     }
-  }, [today, userId]);
+  }, [userId]);
 
   useEffect(() => {
-    refreshAttendance();
+    // Midnight IST rollover: recompute the date key so a card left open
+    // overnight queries the new day instead of yesterday's records.
+    const interval = window.setInterval(() => {
+      const next = todayString();
+      setToday((prev) => {
+        if (prev === next) return prev;
+        refreshAttendance(next);
+        return next;
+      });
+    }, 60000);
+    return () => window.clearInterval(interval);
+  }, [refreshAttendance]);
+
+  useEffect(() => {
+    refreshAttendance(today);
     const loadConfig = async () => {
       try {
         const response = await fetch("/api/hrm/v2/tenants/current", { cache: "no-store" });
@@ -89,18 +108,14 @@ export function AttendancePunchCard() {
           workDays: data.officeRules?.workDays ?? DEFAULT_RULES.workDays,
           halfDayAfter: data.officeRules?.halfDayAfter ?? DEFAULT_RULES.halfDayAfter,
         });
-        if (Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
-          setOffice({ latitude: Number(data.latitude), longitude: Number(data.longitude), radius: Number(data.geofenceRadius) || 100 });
-        }
       } catch { /* server defaults remain in place */ }
     };
     loadConfig();
-  }, [refreshAttendance]);
+  }, [refreshAttendance, today]);
 
   const punchedIn = Boolean(record?.punchInTime);
   const punchedOut = Boolean(record?.punchOutTime);
   const auxState: AuxState = record?.auxState === "on_break" || record?.auxState === "meeting" ? record.auxState : "active";
-  const workLocation = record?.workLocation || (record?.location?.includes?.("[remote]") ? "remote" : "office");
 
   // `tick` is a dependency on purpose: the 1s interval updates it so this memo
   // recomputes and the timer keeps counting live instead of freezing at mount.
@@ -118,6 +133,7 @@ export function AttendancePunchCard() {
       const end = period.endTime ? new Date(period.endTime).getTime() : now;
       if (Number.isFinite(start)) total += Math.max(0, end - start);
     }
+    // No AUX history (older records): fall back to wall-clock since punch-in.
     if (history.length === 0) total = Math.max(0, now - new Date(record.punchInTime).getTime());
     return Math.floor(total / 1000);
   }, [record, tick]);
@@ -128,49 +144,19 @@ export function AttendancePunchCard() {
     return () => window.clearInterval(id);
   }, [punchedIn, punchedOut]);
 
-  useEffect(() => () => {
-    if (watchRef.current !== null && navigator.geolocation) navigator.geolocation.clearWatch(watchRef.current);
-  }, []);
-
-  const getPosition = () => new Promise<GeolocationPosition>((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error("Geolocation is required for attendance."));
-    const fail = (err: GeolocationPositionError) => reject(new Error(
-      err.code === err.PERMISSION_DENIED
-        ? "Location permission denied. Allow location access for this site, then try again."
-        : err.code === err.POSITION_UNAVAILABLE
-          ? "Location unavailable. Turn on device location services and try again."
-          : "Location request timed out. Make sure location/GPS is on and try again."
-    ));
-    navigator.geolocation.getCurrentPosition(resolve, (err) => {
-      if (err.code === err.PERMISSION_DENIED) return fail(err);
-      // High-accuracy GPS often fails on devices without it — retry once with coarse accuracy.
-      navigator.geolocation.getCurrentPosition(resolve, () => fail(err), { maximumAge: 30000, timeout: 10000 });
-    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
-  });
-
   const handlePunchIn = async () => {
     setError(null); setSuccess(null); setPunching(true);
     try {
       if (!rules.workDays.includes(new Date().getDay())) throw new Error("Today is a scheduled weekly off.");
-      const position = await getPosition();
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const accuracy = position.coords.accuracy;
-      setGpsAccuracy(accuracy);
-      const result = isWithinGeofence(lat, lng, office.latitude, office.longitude, office.radius);
-      setDistance(result.distance);
-      const currentHour = new Date().getHours() + new Date().getMinutes() / 60;
-      const isOffice = result.within;
-      if (isOffice && currentHour < rules.officeStart) throw new Error(`Office hours start at ${formatHour(rules.officeStart)}.`);
-      if (isOffice && currentHour >= rules.officeEnd + 1) throw new Error(`Late punch-ins are not accepted after ${formatHour(rules.officeEnd + 1)}.`);
-      const status = isOffice ? (currentHour > rules.lateAfter ? "LATE" : currentHour >= rules.halfDayAfter ? "HALF_DAY" : "PRESENT") : "WFH";
+      const currentHour = istHourNow();
+      if (currentHour < rules.officeStart) throw new Error(`Office hours start at ${formatHour(rules.officeStart)}.`);
+      if (currentHour >= rules.officeEnd + 1) throw new Error(`Late punch-ins are not accepted after ${formatHour(rules.officeEnd + 1)}.`);
+      const status = currentHour > rules.lateAfter ? "LATE" : currentHour >= rules.halfDayAfter ? "HALF_DAY" : "PRESENT";
       const punch = await punchInAction({
         userId,
         userName: user?.name || user?.email || "Employee",
         userEmail: user?.email || "",
-        location: `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} (${Math.round(result.distance)}m from office) [${isOffice ? "office" : "remote"}]`,
         status,
-        workLocation: isOffice ? "office" : "remote",
       });
       if (!punch.success || !punch.record) throw new Error(punch.error || "Attendance was not saved. Please try again.");
       setRecord(punch.record);
@@ -186,9 +172,8 @@ export function AttendancePunchCard() {
     try {
       const result = await punchOutAction(userId, today);
       if (!result.success) throw new Error(result.error || "Punch-out was not saved.");
-      await refreshAttendance();
+      await refreshAttendance(today);
       setSuccess("Punch-out recorded successfully.");
-      if (watchRef.current !== null && navigator.geolocation) navigator.geolocation.clearWatch(watchRef.current);
       window.dispatchEvent(new CustomEvent("attendance-updated", { detail: { type: "punch-out", userId } }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Punch-out could not be recorded.");
@@ -196,7 +181,7 @@ export function AttendancePunchCard() {
   };
 
   const handlePunchOut = async () => {
-    const hour = new Date().getHours() + new Date().getMinutes() / 60;
+    const hour = istHourNow();
     if (rules.workDays.includes(new Date().getDay()) && hour < rules.officeEnd) {
       setShowEarlyLeave(true);
       return;
@@ -238,7 +223,7 @@ export function AttendancePunchCard() {
           <h3 className="font-bold text-base flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Daily Attendance &amp; Shift Punch</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Office: <strong>{formatHour(rules.officeStart)} – {formatHour(rules.officeEnd)}</strong> · Late after <strong>{formatHour(rules.lateAfter)}</strong></p>
         </div>
-        {punchedIn && !punchedOut && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full">LIVE · {workLocation === "remote" ? "Remote" : "Office"}</span>}
+        {punchedIn && !punchedOut && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full">LIVE</span>}
       </div>
 
       {error && <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 p-3 text-xs text-red-600 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" /><span>{error}</span></div>}
@@ -250,8 +235,6 @@ export function AttendancePunchCard() {
           <p className="text-base font-bold mt-1">{punchedIn ? new Date(record.punchInTime).toLocaleTimeString() : "Not Punched In Today"}</p>
           {punchedOut && <p className="text-sm font-semibold text-emerald-600 mt-1">Out: {new Date(record.punchOutTime).toLocaleTimeString()}</p>}
           {punchedIn && <div className="mt-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">Status: {record.status || "PRESENT"}</div>}
-          {record?.location && <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1"><MapPin className="h-3 w-3" /> {record.location}</p>}
-          {distance !== null && <p className="text-[11px] text-slate-500 mt-1"><Navigation className="inline h-3 w-3" /> {Math.round(distance)}m from office{gpsAccuracy ? ` · GPS ±${Math.round(gpsAccuracy)}m` : ""}</p>}
         </div>
 
         <div className="text-center bg-white dark:bg-black/60 px-6 py-3 rounded-xl border border-gray-200 dark:border-white/10">
@@ -261,7 +244,7 @@ export function AttendancePunchCard() {
 
         <div>
           {!punchedIn ? (
-            <Button onClick={handlePunchIn} disabled={punching} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-6 h-11">{punching ? "Validating…" : <><MapPin className="h-4 w-4" /> Punch In</>}</Button>
+            <Button onClick={handlePunchIn} disabled={punching} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-6 h-11">{punching ? "Saving…" : "Punch In"}</Button>
           ) : punchedOut ? (
             <span className="text-xs font-bold text-emerald-600 px-4 py-2 rounded-xl border border-emerald-200 bg-emerald-50">✓ Shift Complete</span>
           ) : (
@@ -269,8 +252,6 @@ export function AttendancePunchCard() {
           )}
         </div>
       </div>
-
-      {!punchedIn && <p className="text-[10px] text-slate-400 mt-3 text-center flex items-center justify-center gap-1"><MapPin className="h-3 w-3" /> GPS verification is required to punch in.</p>}
 
       {punchedIn && !punchedOut && <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
         <div className="flex items-center gap-2 mb-3 text-xs font-semibold"><Zap className="h-3.5 w-3.5 text-primary" /> AUX Status</div>
