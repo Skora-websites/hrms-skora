@@ -1,4 +1,3 @@
-import hrmsAccountRolesData from "@/data/hrms-account-roles.json";
 
 // ══════════════════════════════════════════════════════════════════
 // Navigation Items (CRM + HRM)
@@ -118,10 +117,14 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
 // ══════════════════════════════════════════════════════════════════
 
 /**
- * Authoritative email → role map for the HRMS portal (see data/hrms-account-roles.json).
+ * Authoritative email → role map for the HRMS portal.
  * Login routes the dashboard by email: whoever signs in with one of these emails gets
  * exactly the role listed here (stored user records are synced to match). Emails not
  * listed keep whatever role is stored in the database.
+ *
+ * Supplied via the HRMS_ACCOUNT_ROLES_JSON environment variable so the PII
+ * (personal emails, names, employee codes) stays out of the public repository.
+ * Example value: {"hr@example.com":{"role":"hr_admin","displayName":"Jane Doe",...}}
  */
 export interface HrmsAccountRole {
   role: "super_admin" | "hr_admin" | "manager" | "employee";
@@ -133,10 +136,23 @@ export interface HrmsAccountRole {
   employeeCode: string;
 }
 
-export const HRMS_ACCOUNT_ROLES: Record<string, HrmsAccountRole> = hrmsAccountRolesData as Record<
-  string,
-  HrmsAccountRole
->;
+function parseHrmsAccountRoles(): Record<string, HrmsAccountRole> {
+  const raw = process.env.HRMS_ACCOUNT_ROLES_JSON;
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("expected a JSON object keyed by email");
+    }
+    return parsed as Record<string, HrmsAccountRole>;
+  } catch (error) {
+    throw new Error(
+      `HRMS_ACCOUNT_ROLES_JSON is not valid JSON (${(error as Error).message}).`
+    );
+  }
+}
+
+export const HRMS_ACCOUNT_ROLES: Record<string, HrmsAccountRole> = parseHrmsAccountRoles();
 
 /**
  * Emails that are automatically granted Super Admin. Derived from the authoritative

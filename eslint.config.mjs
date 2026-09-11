@@ -30,6 +30,7 @@ const eslintConfig = defineConfig([
       "react-hooks/static-components": "warn",
       "react-hooks/unsupported-syntax": "warn",
       "react-hooks/use-memo": "warn",
+      "react-hooks/immutability": "warn",
       // Legacy var/const patterns — demote while migrating the codebase.
       "no-var": "warn",
       "prefer-const": "warn",
