@@ -55,7 +55,6 @@ export default function RegisterPage() {
     confirmPassword: "",
     department: "Software Engineering",
   });
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,8 +89,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
       setLoading(false);
       return;
     }
@@ -103,24 +102,7 @@ export default function RegisterPage() {
     }
 
     try {
-      // 1. Upload document first
-      let documentName = "";
-      let documentUrl = "";
-      if (selectedFile) {
-        const formDataUpload = new FormData();
-        formDataUpload.append("file", selectedFile);
-        const uploadRes = await fetch("/api/hrm/v2/onboarding/upload", {
-          method: "POST",
-          body: formDataUpload,
-        });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          documentName = uploadData.data?.fileName || selectedFile.name;
-          documentUrl = uploadData.data?.fileUrl || "";
-        }
-      }
-
-      // 2. Submit Registration Request with document info
+      // 1. Register first — the session cookie is required by the upload route.
       const res = await fetch("/api/hrm/v2/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,8 +114,6 @@ export default function RegisterPage() {
           firstName: formData.name.split(" ")[0] || formData.name,
           lastName: formData.name.split(" ").slice(1).join(" ") || "",
           department: formData.department,
-          documentName,
-          documentUrl,
         }),
       });
 
@@ -141,6 +121,30 @@ export default function RegisterPage() {
         const data = await res.json();
         throw new Error(data.error || "Registration failed");
       }
+
+      // 2. Upload the verification document (authenticated).
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", selectedFile);
+      const uploadRes = await fetch("/api/hrm/v2/onboarding/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+      if (!uploadRes.ok) {
+        const uploadErr = await uploadRes.json().catch(() => ({ error: "Document upload failed" }));
+        throw new Error(uploadErr.error || "Document upload failed");
+      }
+      const uploadData = await uploadRes.json();
+
+      // 3. Attach the document to the onboarding task HR reviews.
+      await fetch("/api/hrm/v2/onboarding", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "attach_document",
+          documentName: uploadData.data?.fileName || selectedFile.name,
+          documentUrl: uploadData.data?.fileUrl || "",
+        }),
+      });
 
       setSuccess("Documents submitted! Verification request sent to HR for approval.");
       setTimeout(() => router.push("/hrms"), 1800);
@@ -200,16 +204,34 @@ export default function RegisterPage() {
             />
 
             <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              >
+                <option value="Software Engineering">Software Engineering</option>
+                <option value="Sales & Marketing">Sales & Marketing</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Finance">Finance</option>
+                <option value="Design">Design</option>
+                <option value="Operations">Operations</option>
+                <option value="Customer Support">Customer Support</option>
+              </select>
+            </div>
+
+            <div>
               <FormInput
                 label="Password"
                 type={showPassword ? "text" : "password"}
                 icon={<Lock className="h-4 w-4" />}
                 name="password"
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                minLength={6}
+                minLength={8}
                 endIcon={
                   <button
                     type="button"

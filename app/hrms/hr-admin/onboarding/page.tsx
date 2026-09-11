@@ -12,6 +12,7 @@ interface Candidate {
   role: string;
   department: string;
   documentName: string;
+  documentUrl?: string;
   status: "pending" | "approved" | "rejected_48h";
   employeeCode?: string;
   submittedAt: string;
@@ -32,34 +33,45 @@ export default function HrAdminOnboardingPage() {
       const res = await fetch("/api/hrm/v2/onboarding?pending=true");
       if (res.ok) {
         const data = await res.json();
-        setCandidates(data.data || []);
+        const rows = Array.isArray(data.data) ? data.data : [];
+        setCandidates(rows.map((t: any) => ({
+          id: t.id || t._id || "",
+          name: t.employeeName || t.name || "",
+          email: t.email || "",
+          role: t.role || "Employee",
+          department: t.department || "—",
+          documentName: t.documentName || "",
+          documentUrl: t.documentUrl || "",
+          status: (t.status === "rejected" || t.status === "escalated" ? "rejected_48h" : t.status === "approved" ? "approved" : "pending") as Candidate["status"],
+          employeeCode: t.employeeCode,
+          submittedAt: t.submittedAt ? new Date(t.submittedAt).toLocaleDateString() : "—",
+          deadlineHoursRemaining: t.rejectionDeadline
+            ? Math.max(0, Math.round((new Date(t.rejectionDeadline).getTime() - Date.now()) / 3600000))
+            : undefined,
+        })));
       }
     } catch { /* empty */ }
     setLoading(false);
   };
 
   const handleApprove = async (id: string) => {
-    const code = "EMP-2026-" + Math.floor(1000 + Math.random() * 9000);
     try {
-      // Update onboarding task status
-      await fetch("/api/hrm/v2/onboarding", {
+      // Server issues the employee code, activates the account, and persists it.
+      const res = await fetch("/api/hrm/v2/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "update_task", taskId: id, status: "approved" }),
       });
-      // Update user status to active
-      const candidate = candidates.find((c) => c.id === id);
-      if (candidate) {
-        await fetch("/api/hrm/v2/users", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: candidate.id, action: "status", status: "active" }),
-        });
+      if (res.ok) {
+        const data = await res.json();
+        const code = data.data?.employeeCode;
+        setCandidates((prev) => prev.map((c) => c.id === id ? { ...c, status: "approved" as const, employeeCode: code } : c));
+        return;
       }
+      console.error("Approve failed:", (await res.json().catch(() => ({}))).error);
     } catch (err) {
       console.error("Failed to approve onboarding:", err);
     }
-    setCandidates((prev) => prev.map((c) => c.id === id ? { ...c, status: "approved" as const, employeeCode: code } : c));
   };
 
   const handleReject = async (id: string) => {
@@ -113,7 +125,15 @@ export default function HrAdminOnboardingPage() {
                   <tr key={c.id}>
                     <td className="py-3 font-bold">{c.name}<span className="block text-[10px] text-slate-500 font-normal">{c.email}</span></td>
                     <td className="py-3"><span className="font-semibold">{c.role}</span><span className="block text-[10px] text-slate-500">{c.department}</span></td>
-                    <td className="py-3 text-primary font-mono text-[11px] underline cursor-pointer"><FileText className="h-3 w-3 inline mr-1" />{c.documentName}</td>
+                    <td className="py-3">
+                      {c.documentUrl ? (
+                        <a href={c.documentUrl} target="_blank" rel="noopener noreferrer" className="text-primary font-mono text-[11px] underline hover:text-primary/80">
+                          <FileText className="h-3 w-3 inline mr-1" />{c.documentName || "View"}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">{c.documentName || "No document"}</span>
+                      )}
+                    </td>
                     <td className="py-3">
                       {c.status === "approved" ? <Chip color="emerald">VERIFIED</Chip>
                         : c.status === "rejected_48h" ? <Chip color="red">REJECTED ({c.deadlineHoursRemaining}h)</Chip>

@@ -53,11 +53,15 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
     if (db) {
       // Also update the employee_onboarding_tasks record so CEO/HR can see the document
-      const task = await db.collection("employee_onboarding_tasks").findOne({ userId });
+      const task = await db.collection("employee_onboarding_tasks").findOne(
+        { userId, tenantId: "default" },
+        { sort: { createdAt: -1 } }
+      );
       if (task) {
+        const wasRejected = (task as any).status === "rejected";
         await db.collection("employee_onboarding_tasks").updateOne(
           { _id: task._id },
-          { $set: { documentName: file.name, documentUrl: dataUrl, updatedAt: new Date() } }
+          { $set: { documentName: file.name, documentUrl: dataUrl, status: "pending", resubmittedAt: wasRejected ? new Date() : (task as any).resubmittedAt, updatedAt: new Date() } }
         );
       }
 

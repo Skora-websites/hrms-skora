@@ -101,9 +101,10 @@ export async function getEmployeeOnboardingTasks(
 export async function updateOnboardingTaskStatus(
   id: string,
   status: EmployeeOnboardingTask["status"],
-  completedById?: string
+  completedById?: string,
+  extras?: Record<string, unknown>
 ): Promise<EmployeeOnboardingTask | null> {
-  const updateData: Partial<EmployeeOnboardingTask> = { status };
+  const updateData: Record<string, unknown> = { ...extras };
   if (status === "completed") {
     updateData.completedAt = new Date();
     updateData.completedById = completedById;
@@ -111,12 +112,14 @@ export async function updateOnboardingTaskStatus(
   return employeeOnboardingTasksService.update(id, updateData as any);
 }
 
+// "Rejected" applications stay visible to HR with a countdown (48h
+// resubmission window), so the queue query includes them too.
 export async function getPendingOnboardingTasks(
   tenantId: string
 ): Promise<EmployeeOnboardingTask[]> {
   return employeeOnboardingTasksService.findManyInTenant(tenantId, {
     where: [
-      { field: "status", op: "==", value: "pending" },
+      { field: "status", op: "in", value: ["pending", "rejected", "escalated"] },
     ],
     orderByField: "dueDate",
     orderByDirection: "asc",

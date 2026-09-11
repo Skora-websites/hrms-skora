@@ -12,6 +12,10 @@ import {
   getPendingOnboardingTasks,
 } from "@/services/hrm/onboarding";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "mongodb";
+import { generateEmployeeCode } from "@/lib/hrm/employee-code";
+import { hrmUsersService } from "@/lib/hrm/firestore";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,6 +40,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (pending === "true") {
+      // HR-only queue — employees fetch their own tasks via ?employeeTasks=true
+      if (auth.role === "employee") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       const tasks = await getPendingOnboardingTasks(tenantId);
       return NextResponse.json({ data: tasks });
     }
@@ -84,6 +92,53 @@ export async function POST(request: NextRequest) {
       if (!updated) {
         return NextResponse.json({ error: "Task not found" }, { status: 404 });
       }
+
+      const db = await getDb();
+
+      // Approval: issue a server-side employee code and activate the account.
+      if (body.status === "approved") {
+        const employeeCode = await generateEmployeeCode();
+        await hrmUsersService.update((updated as any).userId, {
+          status: "active",
+          onboardingStatus: "approved",
+          employeeCode,
+        } as any);
+        if (db) {
+          const taskFilter = ObjectId.isValid(body.taskId) ? { _id: new ObjectId(body.taskId) } : { id: body.taskId };
+          await db.collection("employee_onboarding_tasks").updateOne(
+            taskFilter,
+            { $set: { employeeCode, updatedAt: new Date() } }
+          ).catch(() => undefined);
+          await db.collection("notifications").insertOne({
+            userId: (updated as any).userId,
+            title: "Onboarding Approved",
+            body: `Your documents were verified. Welcome aboard! Your employee code is ${employeeCode}.`,
+            type: "onboarding", isRead: false, createdAt: new Date(), tenantId: "default",
+          });
+        }
+        return NextResponse.json({ data: { ...updated, employeeCode } });
+      }
+
+      // Rejection: start the 48h resubmission clock.
+      if (body.status === "rejected") {
+        const now = new Date();
+        const deadline = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+        await hrmUsersService.update((updated as any).userId, { onboardingStatus: "rejected" } as any);
+        const rejectUpdate = await updateOnboardingTaskStatus(body.taskId, body.status, body.completedById, {
+          lastRejectionDate: now,
+          rejectionDeadline: deadline,
+        });
+        if (db) {
+          await db.collection("notifications").insertOne({
+            userId: (updated as any).userId,
+            title: "Documents Rejected",
+            body: "Your onboarding document was rejected. Please re-upload within 48 hours.",
+            type: "onboarding", isRead: false, createdAt: now, tenantId: "default",
+          });
+        }
+        return NextResponse.json({ data: rejectUpdate || updated });
+      }
+
       return NextResponse.json({ data: updated });
     }
 
@@ -101,8 +156,62 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireAuth();
     if (isErrorResponse(auth)) return auth;
+
+    const body = await request.json();
+
+    // Employees attach/resubmit their own verification document.
+    if (body.action === "attach_document") {
+      if (auth.role === "employee" && body.userId && body.userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const userId = auth.userId;
+      if (!body.documentUrl) {
+        return NextResponse.json({ error: "documentUrl is required" }, { status: 400 });
+      }
+
+      const db = await getDb();
+      if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
+
+      const task = await db.collection("employee_onboarding_tasks").findOne(
+        { userId, tenantId: "default" },
+        { sort: { createdAt: -1 } }
+      );
+      if (!task) {
+        return NextResponse.json({ error: "No onboarding task found" }, { status: 404 });
+      }
+
+      // Resubmission after rejection clears the pending/rejected state.
+      const wasRejected = (task as any).status === "rejected";
+      const updated = await db.collection("employee_onboarding_tasks").findOneAndUpdate(
+        { _id: task._id },
+        {
+          $set: {
+            documentName: body.documentName || "",
+            documentUrl: body.documentUrl,
+            status: "pending",
+            resubmittedAt: wasRejected ? new Date() : (task as any).resubmittedAt,
+            updatedAt: new Date(),
+          },
+        },
+        { returnDocument: "after" }
+      );
+
+      await db.collection("notifications").insertOne({
+        userId: "admin",
+        title: wasRejected ? "Document Re-submitted" : "Document Uploaded",
+        body: `${(auth as any).displayName || auth.userId} ${wasRejected ? "re-submitted" : "uploaded"} their onboarding document for verification.`,
+        type: "onboarding", isRead: false, referenceId: userId, createdAt: new Date(), tenantId: "default",
+      });
+
+      const doc = updated ? { ...updated, _id: (updated as any)._id.toString() } : null;
+      return NextResponse.json({ data: doc });
+    }
+
+    // Admin path: program updates by id (original behavior)
+    const adminAuth = await requireAdmin();
+    if (isErrorResponse(adminAuth)) return adminAuth;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -110,7 +219,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "id parameter required" }, { status: 400 });
     }
 
-    const body = await request.json();
     const updated = await updateOnboardingProgram(id, body);
     if (!updated) {
       return NextResponse.json({ error: "Onboarding program not found" }, { status: 404 });

@@ -109,6 +109,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── 2b-2. Pending verification — fence to a narrow route set ─────────────
+  // Registered-but-not-yet-approved accounts may only browse the HRMS shell,
+  // their own employee hub, settings, and the onboarding status page.
+  const userStatus = request.cookies.get("user_status")?.value;
+  if (hasHrmsSession && userStatus === "pending_verification") {
+    const allowedPrefixes = ["/hrms", "/hrms/employee", "/hrms/settings", "/hrms/onboarding"];
+    const isAllowed =
+      pathname === "/hrms" ||
+      allowedPrefixes.some((r) => pathname === r || pathname.startsWith(r + "/"));
+    if (!isAllowed) {
+      return NextResponse.redirect(new URL("/hrms/employee", request.url));
+    }
+  }
+
   // ── 2c. Authenticated user on auth routes → dashboard ───
   if (hasHrmsSession && userRole) {
     const isAuthRoute = hrmsAuthRoutes.some(

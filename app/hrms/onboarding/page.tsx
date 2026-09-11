@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
-import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, Upload, IdCard, AlertCircle, XCircle, AlertTriangle, FileUp } from "lucide-react";
+import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 
 interface CandidateApplication {
@@ -13,75 +14,91 @@ interface CandidateApplication {
   role: string;
   department: string;
   documentName: string;
-  status: "DOCUMENT_VERIFICATION_PENDING" | "APPROVED" | "REJECTED_48H_DEADLINE" | "CANCELLED";
+  documentUrl?: string;
+  status: "pending" | "rejected" | "escalated" | "approved";
   employeeCode?: string;
   submittedAt: string;
-  deadlineHoursRemaining?: number;
+  rejectionDeadline?: string;
 }
-
-const initialApplications: CandidateApplication[] = [
-  {
-    id: "app-101",
-    name: "Shivangi Gupta",
-    email: "shivangi@company.com",
-    role: "Frontend Engineer",
-    department: "Engineering",
-    documentName: "Government_Aadhaar_Passport.pdf",
-    status: "DOCUMENT_VERIFICATION_PENDING",
-    submittedAt: "2026-08-19",
-  },
-  {
-    id: "app-102",
-    name: "Rohan Verma",
-    email: "rohan.v@company.com",
-    role: "Sales Associate",
-    department: "Sales",
-    documentName: "Invalid_Blurry_Doc.pdf",
-    status: "REJECTED_48H_DEADLINE",
-    submittedAt: "2026-08-18",
-    deadlineHoursRemaining: 47,
-  },
-  {
-    id: "app-103",
-    name: "Priya Sharma",
-    email: "priya.s@company.com",
-    role: "UI/UX Designer",
-    department: "Design",
-    documentName: "Government_ID_Proof.pdf",
-    status: "APPROVED",
-    employeeCode: "EMP-2026-1004",
-    submittedAt: "2026-08-17",
-  },
-];
 
 export default function OnboardingPage() {
   const { user } = useAuth();
-  const [applications, setApplications] = useState<CandidateApplication[]>(initialApplications);
-  const [rejectReasonModal, setRejectReasonModal] = useState<string | null>(null);
+  const router = useRouter();
+  const [applications, setApplications] = useState<CandidateApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const isHR = user?.role === "super_admin" || user?.role === "hr_admin" || !user?.role;
+  const isHR = user?.role === "super_admin" || user?.role === "hr_admin" || user?.role === "admin";
 
-  const handleApprove = (appId: string) => {
-    const randomCode = `EMP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === appId
-          ? { ...app, status: "APPROVED", employeeCode: randomCode, deadlineHoursRemaining: undefined }
-          : app
-      )
-    );
+  const loadApplications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/hrm/v2/onboarding?pending=true");
+      if (res.ok) {
+        const data = await res.json();
+        setApplications(Array.isArray(data.data) ? data.data : []);
+      }
+    } catch { /* empty */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    // Employees have nothing to approve here — send them to their own hub,
+    // which carries the personal onboarding status banner instead.
+    if (user && user.role === "employee") {
+      router.replace("/hrms/employee");
+      return;
+    }
+    if (user) loadApplications();
+  }, [user, router, loadApplications]);
+
+  const handleApprove = async (appId: string) => {
+    setBusyId(appId);
+    try {
+      const res = await fetch("/api/hrm/v2/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update_task", taskId: appId, status: "approved" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.id === appId
+              ? { ...app, status: "approved", employeeCode: data.data?.employeeCode, rejectionDeadline: undefined }
+              : app
+          )
+        );
+      }
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const handleRejectWith48hDeadline = (appId: string) => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === appId
-          ? { ...app, status: "REJECTED_48H_DEADLINE", deadlineHoursRemaining: 48 }
-          : app
-      )
-    );
-    setRejectReasonModal(null);
+  const handleReject = async (appId: string) => {
+    setBusyId(appId);
+    try {
+      const res = await fetch("/api/hrm/v2/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update_task", taskId: appId, status: "rejected" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const deadline = data.data?.rejectionDeadline;
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.id === appId ? { ...app, status: "rejected", rejectionDeadline: deadline } : app
+          )
+        );
+      }
+    } finally {
+      setBusyId(null);
+    }
   };
+
+  const remainingHours = (deadline?: string) =>
+    deadline ? Math.max(0, Math.round((new Date(deadline).getTime() - Date.now()) / 3600000)) : 48;
 
   return (
     <AppShell title="Employee Onboarding & HR Document Approval">
@@ -101,84 +118,98 @@ export default function OnboardingPage() {
           <UserCheck className="h-5 w-5 text-primary" /> Registered Applications &amp; Document Approvals
         </h3>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
-              <tr>
-                <th className="pb-3 font-semibold">Candidate</th>
-                <th className="pb-3 font-semibold">Role &amp; Dept</th>
-                <th className="pb-3 font-semibold">Verification File</th>
-                <th className="pb-3 font-semibold">Submitted Date</th>
-                <th className="pb-3 font-semibold">Verification Status</th>
-                <th className="pb-3 font-semibold">Employee Code</th>
-                {isHR && <th className="pb-3 font-semibold text-right">HR Action</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-slate-800 dark:text-slate-200">
-              {applications.map((app) => (
-                <tr key={app.id}>
-                  <td className="py-3 font-bold text-slate-900 dark:text-white">
-                    {app.name}
-                    <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-normal">{app.email}</span>
-                  </td>
-                  <td className="py-3">
-                    <span className="font-semibold block">{app.role}</span>
-                    <span className="text-[10px] text-slate-500">{app.department}</span>
-                  </td>
-                  <td className="py-3">
-                    <span className="inline-flex items-center gap-1 text-primary font-mono text-[11px] underline cursor-pointer font-bold">
-                      <FileText className="h-3.5 w-3.5" /> {app.documentName}
-                    </span>
-                  </td>
-                  <td className="py-3 font-mono text-slate-500">{app.submittedAt}</td>
-                  <td className="py-3">
-                    {app.status === "APPROVED" ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2 className="h-3 w-3" /> VERIFIED &amp; APPROVED
-                      </span>
-                    ) : app.status === "REJECTED_48H_DEADLINE" ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 py-0.5 text-[10px] font-bold text-red-600 dark:text-red-400">
-                        <AlertTriangle className="h-3 w-3 animate-pulse" /> REJECTED (48H DEADLINE: {app.deadlineHoursRemaining || 48}h)
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-0.5 text-[10px] font-bold text-yellow-600 dark:text-yellow-400">
-                        <Clock className="h-3 w-3 animate-pulse" /> DOCUMENT VERIFICATION PENDING
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 font-mono font-bold text-primary">
-                    {app.employeeCode ? app.employeeCode : <span className="text-slate-400 font-normal text-[11px]">Pending HR Approval</span>}
-                  </td>
-                  {isHR && (
-                    <td className="py-3 text-right">
-                      {app.status === "DOCUMENT_VERIFICATION_PENDING" ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            onClick={() => handleApprove(app.id)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-3"
-                          >
-                            <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Approve
-                          </Button>
-                          <Button
-                            onClick={() => handleRejectWith48hDeadline(app.id)}
-                            variant="danger"
-                            className="font-bold text-xs h-8 px-3"
-                          >
-                            <XCircle className="h-3.5 w-3.5 mr-1" /> Reject (48h Clock)
-                          </Button>
-                        </div>
-                      ) : app.status === "REJECTED_48H_DEADLINE" ? (
-                        <span className="text-[10px] text-red-500 font-bold">48h Resubmission Active</span>
+        {loading ? (
+          <div className="p-8 text-center text-slate-500 text-xs">Loading applications...</div>
+        ) : applications.length === 0 ? (
+          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+            No pending onboarding applications.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+                <tr>
+                  <th className="pb-3 font-semibold">Candidate</th>
+                  <th className="pb-3 font-semibold">Role &amp; Dept</th>
+                  <th className="pb-3 font-semibold">Verification File</th>
+                  <th className="pb-3 font-semibold">Submitted Date</th>
+                  <th className="pb-3 font-semibold">Verification Status</th>
+                  <th className="pb-3 font-semibold">Employee Code</th>
+                  {isHR && <th className="pb-3 font-semibold text-right">HR Action</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-slate-800 dark:text-slate-200">
+                {applications.map((app) => (
+                  <tr key={app.id}>
+                    <td className="py-3 font-bold text-slate-900 dark:text-white">
+                      {app.name}
+                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-normal">{app.email}</span>
+                    </td>
+                    <td className="py-3">
+                      <span className="font-semibold block">{app.role}</span>
+                      <span className="text-[10px] text-slate-500">{app.department}</span>
+                    </td>
+                    <td className="py-3">
+                      {app.documentUrl ? (
+                        <a href={app.documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary font-mono text-[11px] underline hover:text-primary/80 font-bold">
+                          <FileText className="h-3.5 w-3.5" /> {app.documentName || "View"}
+                        </a>
                       ) : (
-                        <span className="text-[11px] text-slate-400 font-medium">Finalized</span>
+                        <span className="text-slate-400 text-[11px]">No document</span>
                       )}
                     </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <td className="py-3 font-mono text-slate-500">{app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "—"}</td>
+                    <td className="py-3">
+                      {app.status === "approved" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" /> VERIFIED &amp; APPROVED
+                        </span>
+                      ) : app.status === "rejected" || app.status === "escalated" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 py-0.5 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          <AlertTriangle className="h-3 w-3 animate-pulse" /> REJECTED (48H DEADLINE: {remainingHours(app.rejectionDeadline)}h)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-0.5 text-[10px] font-bold text-yellow-600 dark:text-yellow-400">
+                          <Clock className="h-3 w-3 animate-pulse" /> DOCUMENT VERIFICATION PENDING
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 font-mono font-bold text-primary">
+                      {app.employeeCode ? app.employeeCode : <span className="text-slate-400 font-normal text-[11px]">Pending HR Approval</span>}
+                    </td>
+                    {isHR && (
+                      <td className="py-3 text-right">
+                        {app.status === "pending" ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              onClick={() => handleApprove(app.id)}
+                              disabled={busyId === app.id}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-3"
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Approve
+                            </Button>
+                            <Button
+                              onClick={() => handleReject(app.id)}
+                              disabled={busyId === app.id}
+                              variant="danger"
+                              className="font-bold text-xs h-8 px-3"
+                            >
+                              <XCircle className="h-3.5 w-3.5 mr-1" /> Reject (48h Clock)
+                            </Button>
+                          </div>
+                        ) : app.status === "rejected" || app.status === "escalated" ? (
+                          <span className="text-[10px] text-red-500 font-bold">48h Resubmission Active</span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-medium">Finalized</span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </AppShell>
   );

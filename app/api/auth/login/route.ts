@@ -65,6 +65,17 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     maxAge: SESSION_EXPIRES_IN_MS / 1000,
   });
 
+  // Mirror the account status into a short-lived cookie so the middleware can
+  // fence still-pending registrations without a DB round-trip per request.
+  const accountStatus = (user as any).status || "active";
+  response.cookies.set("user_status", accountStatus, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 3600,
+  });
+
   // Check if user must change password on first login
   const mustChange = (user as any).mustChangePassword === true;
   if (mustChange) {

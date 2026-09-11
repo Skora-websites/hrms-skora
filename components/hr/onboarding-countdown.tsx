@@ -23,6 +23,9 @@ export function OnboardingCountdown({
 
   useEffect(() => {
     const deadline = new Date(rejectionDate).getTime() + deadlineHours * 60 * 60 * 1000;
+    // Fire onExpired once per mount — the interval re-runs this effect on every
+    // parent render otherwise, spamming the escalation endpoint each tick.
+    let fired = false;
 
     const updateCountdown = () => {
       const now = Date.now();
@@ -30,7 +33,10 @@ export function OnboardingCountdown({
 
       if (diff <= 0) {
         setRemaining({ hours: 0, minutes: 0, seconds: 0, expired: true });
-        onExpired?.();
+        if (!fired) {
+          fired = true;
+          onExpired?.();
+        }
         return;
       }
 

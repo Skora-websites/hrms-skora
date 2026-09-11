@@ -196,11 +196,16 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
 
-    // Get the target user for audit logging
-    const targetUser = await hrmUsersService.findById(userId);
+    // Resolve the target. Callers may pass an email (e.g. onboarding rows store
+    // userId as the candidate's email in older UI flows) instead of an ObjectId.
+    let targetUser = await hrmUsersService.findById(userId);
+    if (!targetUser && typeof userId === "string" && userId.includes("@")) {
+      targetUser = await hrmUsersService.findOneInTenant(tenantId, "email", userId.toLowerCase().trim());
+    }
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+    const resolvedUserId = (targetUser as any).id || userId;
 
     const targetUserEmail = (targetUser as any).email || "unknown";
     let auditAction: AuditAction = "update_user";
@@ -216,7 +221,7 @@ export async function PATCH(request: NextRequest) {
           );
         }
         const normalizedRole = normalizeRole(role);
-        await hrmUsersService.update(userId, { role: normalizedRole } as any);
+        await hrmUsersService.update(resolvedUserId, { role: normalizedRole } as any);
         auditAction = "update_role";
         auditDetails = `Changed role from ${(targetUser as any).role} to ${normalizedRole}`;
         break;
@@ -230,7 +235,7 @@ export async function PATCH(request: NextRequest) {
             { status: 403 }
           );
         }
-        await hrmUsersService.update(userId, { status } as any);
+        await hrmUsersService.update(resolvedUserId, { status } as any);
         auditAction = status === "active" ? "login_enabled" : "login_disabled";
         auditDetails = `Changed status from ${(targetUser as any).status} to ${status}`;
 
@@ -249,7 +254,7 @@ export async function PATCH(request: NextRequest) {
         const adminAuth = await requireAdmin();
         if (isErrorResponse(adminAuth)) return adminAuth;
         const loginStatus = body.loginStatus;
-        await hrmUsersService.update(userId, { loginStatus } as any);
+        await hrmUsersService.update(resolvedUserId, { loginStatus } as any);
         auditAction = loginStatus === "disabled" ? "login_disabled" : "login_enabled";
         auditDetails = `Changed login status to ${loginStatus}`;
 
@@ -271,7 +276,7 @@ export async function PATCH(request: NextRequest) {
         if (email !== undefined) updateData.email = email;
         if (phone !== undefined) updateData.phone = phone;
         if (body.image !== undefined) updateData.image = body.image;
-        await hrmUsersService.update(userId, updateData as any);
+        await hrmUsersService.update(resolvedUserId, updateData as any);
         auditAction = "update_user";
         auditDetails = `Updated profile fields: ${Object.keys(updateData).join(", ")}`;
         break;
@@ -285,15 +290,36 @@ export async function PATCH(request: NextRequest) {
             { status: 403 }
           );
         }
-        const resetLink = "/hrms/forgot-password?email=" + encodeURIComponent(targetUserEmail);
+        // Issue a real single-use token (1h) and email the reset link — same
+        // flow as the self-service forgot-password route.
+        const crypto = require("crypto");
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
+        const { getDb } = await import("@/lib/db/mongo-helper");
+        const db = await getDb();
+        if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
+        await db.collection("password_resets").updateOne(
+          { userId: resolvedUserId },
+          { $set: { token: resetToken, expiresAt: resetExpiry, createdAt: new Date(), tenantId } },
+          { upsert: true }
+        );
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+        const resetUrl = siteUrl
+          ? `${siteUrl.replace(/\/$/, "")}/hrms/forgot-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(targetUserEmail)}`
+          : "";
+        const { sendPasswordResetEmail } = await import("@/lib/email");
+        const sent = resetUrl ? await sendPasswordResetEmail({ to: targetUserEmail, resetUrl }) : false;
+        if (!sent) {
+          await db.collection("password_resets").deleteOne({ userId: resolvedUserId, tenantId });
+          return NextResponse.json({ error: "Email could not be sent. Check SMTP configuration." }, { status: 502 });
+        }
         auditAction = "reset_password";
-        auditDetails = `Password reset link generated for ${targetUserEmail}`;
+        auditDetails = `Password reset link sent to ${targetUserEmail}`;
 
         return NextResponse.json({
           data: {
             success: true,
-            resetLink,
-            message: `Password reset link sent for ${targetUserEmail}`,
+            message: `Password reset link sent to ${targetUserEmail}`,
           },
         });
       }
@@ -319,7 +345,7 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
         }
         const newHash = await bcrypt.hash(np, 12);
-        await hrmUsersService.update(userId, { passwordHash: newHash, mustChangePassword: false } as any);
+        await hrmUsersService.update(resolvedUserId, { passwordHash: newHash, mustChangePassword: false } as any);
         auditAction = "update_user";
         auditDetails = "Password changed";
         // Clear must_change_password cookie if present
@@ -327,7 +353,7 @@ export async function PATCH(request: NextRequest) {
         pwResponse.cookies.set("must_change_password", "", { path: "/", maxAge: 0 });
         // Record audit log
         if (auth.userId !== userId) {
-          await recordAuditLog({ tenantId, action: auditAction, performedById: auth.userId, performedByName: body._performedByName || "Admin", targetUserId: userId, targetUserEmail, details: auditDetails });
+          await recordAuditLog({ tenantId, action: auditAction, performedById: auth.userId, performedByName: body._performedByName || "Admin", targetUserId: resolvedUserId, targetUserEmail, details: auditDetails });
         }
         return pwResponse;
       }
@@ -349,7 +375,7 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: "Password must contain at least one letter and one number" }, { status: 400 });
         }
         const forceHash = await bcrypt.hash(fnp, 12);
-        await hrmUsersService.update(userId, { passwordHash: forceHash, mustChangePassword: false } as any);
+        await hrmUsersService.update(resolvedUserId, { passwordHash: forceHash, mustChangePassword: false } as any);
         // Clear the cookie
         const forceResponse = NextResponse.json({ success: true, message: "Password updated successfully" });
         forceResponse.cookies.set("must_change_password", "", { path: "/", maxAge: 0 });
@@ -369,7 +395,7 @@ export async function PATCH(request: NextRequest) {
           if (firstName !== undefined) updateData.firstName = firstName;
           if (lastName !== undefined) updateData.lastName = lastName;
           if (phone !== undefined) updateData.phone = phone;
-          await hrmUsersService.update(userId, updateData as any);
+          await hrmUsersService.update(resolvedUserId, updateData as any);
           auditDetails = `Updated profile: ${Object.keys(updateData).join(", ")}`;
         } else {
           // Admin/manager: allowlist safe fields only — never allow role, passwordHash, status, loginStatus
@@ -381,7 +407,7 @@ export async function PATCH(request: NextRequest) {
           if (Object.keys(updateData).length === 0) {
             return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
           }
-          await hrmUsersService.update(userId, updateData as any);
+          await hrmUsersService.update(resolvedUserId, updateData as any);
           auditDetails = `Updated user fields: ${Object.keys(updateData).join(", ")}`;
         }
       }
@@ -394,7 +420,7 @@ export async function PATCH(request: NextRequest) {
         action: auditAction,
         performedById: auth.userId,
         performedByName: body._performedByName || "Admin",
-        targetUserId: userId,
+        targetUserId: resolvedUserId,
         targetUserEmail,
         details: auditDetails,
       });

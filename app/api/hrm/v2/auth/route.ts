@@ -35,7 +35,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
         email: normalizedEmail, emailVerified: false, displayName: displayName || firstName || normalizedEmail,
         firstName: firstName || displayName || "", lastName: lastName || "", role,
         status: "pending_verification", loginStatus: "enabled", passwordHash, tenantId: "default",
-        onboardingStatus: "pending", mustChangePassword: true,
+        onboardingStatus: "pending", mustChangePassword: false,
       } as any);
 
       const db = await getDb();
@@ -59,6 +59,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const response = NextResponse.json({ data: { uid: newUser.id, email: normalizedEmail, displayName: displayName || firstName || normalizedEmail, role } }, { status: 201 });
       response.cookies.set("session", sessionToken, { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
       response.cookies.set("user_role", role, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+      // Middleware gates pending accounts to a narrow route set for 1h;
+      // refreshed on every login so approval lifts the restriction.
+      response.cookies.set("user_status", "pending_verification", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 3600 });
       return response;
     }
 
