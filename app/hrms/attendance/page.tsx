@@ -217,7 +217,7 @@ export default function AttendancePage() {
                           {r.userName}
                           <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-normal">{r.userEmail}</span>
                         </td>
-                        <td className="py-3 font-mono text-primary font-semibold">{r.employeeCode || "EMP-2026-1001"}</td>
+                        <td className="py-3 font-mono text-primary font-semibold">{r.employeeCode || "—"}</td>
                         <td className="py-3 font-mono">
                           {r.punchInTime ? new Date(r.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                         </td>

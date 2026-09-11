@@ -163,7 +163,7 @@ export default function EmployeeProfilePage() {
 
   // Employee code is assigned by HR during onboarding; fall back to a stable
   // short id prefix only while awaiting assignment (never a fake "SUPERADMIN" code).
-  const empCode = user?.employeeCode || (user?.id ? `EMP-2026-${user.id.substring(0, 4).toUpperCase()}` : "Pending assignment");
+  const empCode = user?.employeeCode || "Pending assignment";
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
