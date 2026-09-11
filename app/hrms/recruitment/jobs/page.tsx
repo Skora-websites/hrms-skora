@@ -44,7 +44,7 @@ export default function JobsPage() {
 
   return (
     <AppShell title="Jobs">
-      <PageHeader title="Jobs" description="Manage all job postings and track applicants per role.">          <Button onClick={() => router.push("/recruitment")}>
+      <PageHeader title="Jobs" description="Manage all job postings and track applicants per role.">          <Button onClick={() => router.push("/hrms/recruitment")}>
           <Plus className="mr-2 h-4 w-4" />
           Post a Job
         </Button>

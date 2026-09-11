@@ -59,9 +59,14 @@ export default function EmployeeLeavesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [leaveRes] = await Promise.allSettled([
+      const [leaveRes, regRes] = await Promise.allSettled([
         fetch("/api/hrm/v2/leaves").then(r => r.ok ? r.json() : null),
+        fetch("/api/hrm/v2/attendance/regularization").then(r => r.ok ? r.json() : null),
       ]);
+      if (regRes.status === "fulfilled" && regRes.value) {
+        const rows = Array.isArray(regRes.value.data) ? regRes.value.data : [];
+        setRegularizations(rows);
+      }
       if (leaveRes.status === "fulfilled" && leaveRes.value) {
         const allLeaves = Array.isArray(leaveRes.value.data) ? leaveRes.value.data : [];
         setLeaves(allLeaves.map((l: any) => ({

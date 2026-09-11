@@ -44,11 +44,12 @@ export default function SuperAdminModulesPage() {
   const toggleModule = async (tenantId: string, moduleKey: string, currentValue: boolean) => {
     setSaving(`${tenantId}-${moduleKey}`);
     try {
-      await fetch(`/api/hrm/v2/tenants/${tenantId}`, {
+      const res = await fetch("/api/hrm/v2/tenants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [`modulesEnabled.${moduleKey}`]: !currentValue }),
+        body: JSON.stringify({ id: tenantId, [`modulesEnabled.${moduleKey}`]: !currentValue }),
       });
+      if (!res.ok) throw new Error("Failed to update module");
       setTenants((prev) =>
         prev.map((t) =>
           t.id === tenantId

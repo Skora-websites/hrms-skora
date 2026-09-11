@@ -32,7 +32,7 @@ export default function EmployeePerformancePage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/hrm/v2/performance/mine");
+      const res = await fetch("/api/hrm/v2/performance?mine=true");
       if (res.ok) setData((await res.json()).data || null);
     } catch { /* empty */ }
     setLoading(false);

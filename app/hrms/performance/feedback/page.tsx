@@ -50,7 +50,7 @@ export default function FeedbackPage() {
     const fetchFeedback = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/hrm/v2/feedback");
+        const res = await fetch("/api/hrm/v2/performance?type=feedback");
         if (res.ok) {
           const data = await res.json();
           setFeedback(data.data || []);

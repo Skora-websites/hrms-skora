@@ -53,7 +53,7 @@ export default function GoalsPage() {
   return (
     <AppShell title="Goals">
       <PageHeader title="Goals" description="Manage and track employee goals and OKRs.">
-        <Button onClick={() => router.push("/performance")}>
+        <Button onClick={() => router.push("/hrms/performance")}>
           <Plus className="mr-2 h-4 w-4" />
           Add Goal
         </Button>

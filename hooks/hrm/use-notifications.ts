@@ -52,7 +52,11 @@ export function useNotifications(userId: string | null): NotificationState & {
 
   const markAsRead = useCallback(async (id: string) => {
     try {
-      await fetch(`/api/hrm/v2/notifications/${id}/read`, { method: "PATCH" });
+      await fetch(`/api/hrm/v2/notifications?id=${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
       setState((prev) => {
         const notifications = prev.notifications.map((n) =>
           n.id === id ? { ...n, isRead: true, readAt: new Date() } : n
@@ -70,10 +74,10 @@ export function useNotifications(userId: string | null): NotificationState & {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await fetch(`/api/hrm/v2/notifications/read-all`, {
+      await fetch(`/api/hrm/v2/notifications`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ markAll: true, userId }),
       });
       setState((prev) => ({
         ...prev,

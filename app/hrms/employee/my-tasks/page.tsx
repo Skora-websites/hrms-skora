@@ -24,7 +24,7 @@ export default function EmployeeMyTasksPage() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v2/tasks");
+      const res = await fetch("/api/hrm/v2/tasks");
       if (res.ok) {
         const data = await res.json();
         setTasks(data.tasks || []);
