@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSession, signInWithMongo, SESSION_COOKIE_OPTIONS, SESSION_EXPIRES_IN_MS } from "@/lib/auth";
-import { withErrorHandler, badRequest } from "@/lib/api-handler";
+import { withErrorHandler, badRequest, ApiError } from "@/lib/api-handler";
 import { HRMS_ACCOUNT_ROLES } from "@/lib/constants";
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -16,6 +16,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   try {
     user = await signInWithMongo(email, password);
   } catch (authError: any) {
+    if (authError instanceof ApiError) throw authError; // 503 via withErrorHandler
     const msg = authError?.message || "Invalid credentials";
     return NextResponse.json(
       { error: msg },

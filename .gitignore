@@ -62,5 +62,11 @@ next-env.d.ts
 # Stale full project copy nested inside the repo
 /skora-nextjs/
 
+# Local staging checkout of the split HRMS repo (Skora-websites/hrms-skora)
+.hrms-staging/
+
+# Local dev-server output
+.dev-server.log
+
 # Large local archives
 *.zip

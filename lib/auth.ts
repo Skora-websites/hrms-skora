@@ -1,13 +1,14 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { getDb } from "./db/mongo-helper";
+import { ApiError } from "./api-handler";
 import { normalizeRoleStrict } from "./role-utils";
 import { ObjectId } from "mongodb";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 async function getDbWithTimeout(): Promise<Awaited<ReturnType<typeof getDb>>> {
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 9000));
   const dbPromise = getDb();
   return Promise.race([dbPromise, timeout]);
 }
@@ -84,7 +85,7 @@ export const SESSION_COOKIE_OPTIONS = {
 
 export async function createSession(userId: string): Promise<string> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) throw new ApiError("Login is temporarily unavailable. Please try again shortly.", 503);
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_EXPIRES_IN_MS);
   await db.collection("sessions").insertOne({ token, userId, expiresAt, createdAt: new Date() });
@@ -108,7 +109,7 @@ export async function signInWithMongo(
   password: string
 ): Promise<{ id: string; email: string; role: string; displayName: string; mustChangePassword: boolean }> {
   const db = await getDbWithTimeout();
-  if (!db) throw new Error("Database not available");
+  if (!db) throw new ApiError("Login is temporarily unavailable. Please try again shortly.", 503);
   const user = await db.collection("users").findOne({ email: email.toLowerCase().trim() });
   if (!user) throw new Error("Invalid email or password");
   const passwordHash = user.passwordHash || user.password;

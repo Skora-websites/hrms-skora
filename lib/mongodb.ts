@@ -123,7 +123,9 @@ function getMongoClient(): Promise<MongoClient | null> {
   const promise = connectWithRetry();
   globalWithMongo._mongoClientPromise = promise;
 
-  promise.catch(function() {
+  promise.then(function(client) {
+    if (client === null) globalWithMongo._mongoClientPromise = undefined;
+  }).catch(function() {
     globalWithMongo._mongoClientPromise = undefined;
   });
 
