@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
+import { downloadFileFromUrl } from "@/lib/download";
 import {
   FileText,
   Loader2,
@@ -130,21 +131,19 @@ export default function SuperAdminOfferLettersPage() {
 
   const handleDownload = async (offer: OfferLetter) => {
     try {
-      const res = await fetch("/api/hrm/v2/offer-letters/download?id=" + offer.id);
-      if (res.ok) {
-        const pw = res.headers.get("X-Offer-Letter-Password");
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "offer-letter-" + offer.employeeName.replace(/\s+/g, "-") + ".pdf";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        if (pw) {
-          setPassword(pw);
-          setShowPwModal(true);
+      const { ok } = await downloadFileFromUrl(
+        "/api/hrm/v2/offer-letters/download?id=" + offer.id,
+        "offer-letter-" + offer.employeeName.replace(/\s+/g, "-") + ".pdf"
+      );
+      if (ok) {
+        // Password no longer rides the download headers — fetch it separately.
+        const pwRes = await fetch("/api/hrm/v2/offer-letters/password?id=" + offer.id);
+        if (pwRes.ok) {
+          const pwData = await pwRes.json();
+          if (pwData.data?.password) {
+            setPassword(pwData.data.password);
+            setShowPwModal(true);
+          }
         }
         loadLetters();
       }
@@ -237,6 +236,9 @@ export default function SuperAdminOfferLettersPage() {
                       <span className="text-emerald-600 dark:text-emerald-400">✓ Emailed to employee</span>
                     ) : (
                       <span className="text-amber-600 dark:text-amber-400">Email not sent (auto-email off or not configured)</span>
+                    )}
+                    {offer.downloadedAt && (
+                      <span className="text-slate-500 dark:text-slate-400"> · Downloaded {new Date(offer.downloadedAt).toLocaleDateString("en-IN")}</span>
                     )}
                   </p>
                 )}

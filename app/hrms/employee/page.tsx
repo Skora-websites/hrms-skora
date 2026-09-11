@@ -165,13 +165,17 @@ export default function EmployeeDashboardPage() {
   const handleDownloadOffer = async () => {
     if (!latestOffer) return;
     try {
-      const { ok, headers } = await downloadFileFromUrl(
+      const { ok } = await downloadFileFromUrl(
         "/api/hrm/v2/offer-letters/download?id=" + latestOffer.id,
         "offer-letter-" + (latestOffer.employeeName || "employee").replace(/\s+/g, "-") + ".pdf"
       );
       if (ok) {
-        const pw = headers.get("X-Offer-Letter-Password");
-        if (pw) { setOfferPassword(pw); setShowPasswordModal(true); }
+        // Password no longer rides the download headers — fetch it separately.
+        const pwRes = await fetch("/api/hrm/v2/offer-letters/password?id=" + latestOffer.id);
+        if (pwRes.ok) {
+          const pwData = await pwRes.json();
+          if (pwData.data?.password) { setOfferPassword(pwData.data.password); setShowPasswordModal(true); }
+        }
       }
     } catch { /* empty */ }
   };

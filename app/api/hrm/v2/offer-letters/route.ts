@@ -195,7 +195,7 @@ export async function PATCH(request: NextRequest) {
           const settingsDoc = await db.collection("settings").findOne({ key: "offer_letter_config" });
           const cfg = settingsDoc?.settings || {};
           if (cfg.autoEmailOnRelease && letter.employeeEmail) {
-            const origin = request.headers.get("origin") || "https://skora-nextjs.vercel.app";
+            const origin = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get("origin") || "https://hrms-skora.vercel.app";
             const emailSent = await sendOfferLetterEmail({
               to: letter.employeeEmail,
               employeeName: letter.employeeName,
