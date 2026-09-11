@@ -211,7 +211,7 @@ export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
       )}
 
       {/* Avatar Card */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
             {/* Avatar */}
@@ -260,7 +260,7 @@ export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
       </div>
 
       {/* Personal Information */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2"><User className="h-5 w-5 text-primary" /> Personal Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -291,7 +291,7 @@ export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
       </div>
 
       {/* Change Password */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2"><Lock className="h-5 w-5 text-primary" /> Change Password</h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Update your login password.</p>
         {passwordSuccess && (

@@ -109,7 +109,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Main Content Card with Tabs */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         {/* Tab Switcher & Date Bar */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-2 flex-wrap">

@@ -230,9 +230,9 @@ export function AttendancePunchCard() {
     finally { setAuxSwitching(false); }
   };
 
-  if (loading) return <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 text-sm text-slate-500">Loading attendance…</div>;
+  if (loading) return <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-sm text-slate-500">Loading attendance…</div>;
 
-  return (    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+  return (    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
         <div>
           <h3 className="font-bold text-base flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Daily Attendance &amp; Shift Punch</h3>

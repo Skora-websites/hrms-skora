@@ -79,7 +79,7 @@ export default function EmployeePerformancePage() {
       </div>
 
       {/* Monthly Trend */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" /> Monthly Performance Trend
         </h3>
@@ -108,7 +108,7 @@ export default function EmployeePerformancePage() {
       </div>
 
       {/* Attendance Details */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5 text-emerald-500" /> Attendance Breakdown
         </h3>
@@ -133,7 +133,7 @@ export default function EmployeePerformancePage() {
 
 function KpiCard({ icon, label, value, sub, accent }: { icon: React.ReactNode; label: string; value: string; sub: string; accent?: string }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">{icon}</div>
       <p className="text-2xl font-extrabold">{value}</p>
       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>

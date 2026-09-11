@@ -25,7 +25,7 @@ export default async function SuperadminOverviewPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Active Tenants</span>
             <Building2 className="h-5 w-5 text-primary" />
@@ -36,7 +36,7 @@ export default async function SuperadminOverviewPage() {
           </span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">System Uptime</span>
             <Activity className="h-5 w-5 text-emerald-500" />
@@ -47,7 +47,7 @@ export default async function SuperadminOverviewPage() {
           </span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">PMS Active Modules</span>
             <ShieldCheck className="h-5 w-5 text-yellow-500" />
@@ -58,7 +58,7 @@ export default async function SuperadminOverviewPage() {
           <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">SaaS Tenants with PMS enabled</span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Monthly SaaS Revenue</span>
             <DollarSign className="h-5 w-5 text-cyan-500" />
@@ -71,7 +71,7 @@ export default async function SuperadminOverviewPage() {
       </div>
 
       {/* Tenants Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         <h3 className="font-bold text-slate-900 dark:text-white text-base mb-4">Registered Organization Tenants</h3>
 
         {tenants.length === 0 ? (

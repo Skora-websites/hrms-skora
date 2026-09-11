@@ -20,7 +20,7 @@ export default function ReportsPage() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {REPORTS.map((r) => (
-          <a key={r.title} href={r.href} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 hover:border-primary/50 transition-colors group">
+          <a key={r.title} href={r.href} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 hover:border-primary/50 transition-colors group">
             <r.icon className="h-8 w-8 text-primary mb-3 group-hover:scale-110 transition-transform" />
             <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1">{r.title}</h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">{r.description}</p>

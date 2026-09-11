@@ -44,7 +44,7 @@ export default function HrmsLayout({
       <meta name="msapplication-TileColor" content="#6366f1" />
       <meta name="msapplication-TileImage" content="/icons/icon-192.svg" />
 </head>
-      <div className="min-h-screen bg-background font-sans antialiased text-foreground">
+      <div data-hrms-root className="min-h-screen bg-background font-sans antialiased text-foreground">
       <script
         dangerouslySetInnerHTML={{
           __html: `

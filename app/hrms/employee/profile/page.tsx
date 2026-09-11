@@ -397,7 +397,7 @@ export default function EmployeeProfilePage() {
         )}
 
         {/* Profile Card & Form */}
-        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-5">
+        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-5">
           {saved && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
               <CheckCircle2 className="h-4 w-4" />
@@ -490,7 +490,7 @@ export default function EmployeeProfilePage() {
         </form>
 
         {/* Section 2.5: Change Password */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
           <div>
             <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
               <Lock className="h-5 w-5 text-primary" /> Change Password
@@ -567,7 +567,7 @@ export default function EmployeeProfilePage() {
         </div>
 
         {/* Section 3: REAL Onboarding Documents Container */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">

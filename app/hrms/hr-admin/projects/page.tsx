@@ -158,7 +158,7 @@ export default function HrAdminProjectsPage() {
           </div>
         </div>
       )}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6">
         {loading ? (
           <div className="p-8 text-center text-slate-500 text-xs flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading projects...</div>
         ) : filtered.length === 0 ? (

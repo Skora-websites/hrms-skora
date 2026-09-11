@@ -204,7 +204,7 @@ export default function ManagerApprovalsPage() {
           {pending.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 shadow-sm text-xs"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] shadow-sm text-xs"
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -254,7 +254,7 @@ export default function ManagerApprovalsPage() {
 
 function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">{icon}</div>
       <p className="text-2xl font-extrabold">{value}</p>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>

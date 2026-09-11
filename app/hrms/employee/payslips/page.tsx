@@ -88,17 +88,17 @@ export default function EmployeePayslipsPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-center text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-center text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <DollarSign className="h-5 w-5 text-emerald-500 mx-auto mb-2" />
           <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">₹{totalEarnings.toLocaleString()}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">Total Gross Earnings</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-center text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-center text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <DollarSign className="h-5 w-5 text-red-500 mx-auto mb-2" />
           <p className="text-2xl font-extrabold text-red-600 dark:text-red-400">₹{totalDeductions.toLocaleString()}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">Total Deductions (PF/Tax)</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-center text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-center text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <DollarSign className="h-5 w-5 text-primary mx-auto mb-2" />
           <p className="text-2xl font-extrabold text-primary">₹{totalNet.toLocaleString()}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">Net Disbursed Pay</p>
@@ -106,7 +106,7 @@ export default function EmployeePayslipsPage() {
       </div>
 
       {/* Payslip List */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 text-slate-900 dark:text-white shadow-sm">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white shadow-sm">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" /> Salary Statement History ({payslips.length})
         </h3>

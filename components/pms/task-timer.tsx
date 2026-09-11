@@ -87,7 +87,7 @@ export function TaskTimer({ task, isPunchedIn = true, onClose }: TaskTimerProps)
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-primary/30 bg-white dark:bg-[#0B0F19]/95 p-6 backdrop-blur-xl shadow-2xl max-w-md w-full text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-primary/30 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-xl shadow-2xl max-w-md w-full text-slate-900 dark:text-white">
       {/* Task info header */}
       <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-white/10">
         <div>

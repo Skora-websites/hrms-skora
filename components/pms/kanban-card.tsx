@@ -40,7 +40,7 @@ export function KanbanCard({ task, onOpenTimer }: KanbanCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative cursor-grab rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white hover:border-primary/40 active:cursor-grabbing"
+      className="group relative cursor-grab rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white hover:border-primary/40 active:cursor-grabbing"
     >
       {/* Top row: Priority badge & Project tag */}
       <div className="flex items-center justify-between gap-2 mb-2">

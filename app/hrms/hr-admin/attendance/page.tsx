@@ -284,7 +284,7 @@ export default function HrAdminAttendancePage() {
       </div>
 
       {/* ═══ Interactive Date Navigator Bar ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-4 mb-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 mb-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Quick Date Presets */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -367,7 +367,7 @@ export default function HrAdminAttendancePage() {
       {/* ═══ Key Metric Stat Cards for Selected Date ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         {/* Present */}
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">PRESENT</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -379,7 +379,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Absent */}
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-red-600 dark:text-red-400">ABSENT</span>
             <XCircle className="h-4 w-4 text-red-500" />
@@ -391,7 +391,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Late Arrivals */}
-        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400">LATE ARRIVALS</span>
             <Clock className="h-4 w-4 text-yellow-500" />
@@ -401,7 +401,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Half Day */}
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">HALF DAY</span>
             <AlertTriangle className="h-4 w-4 text-blue-500" />
@@ -411,7 +411,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Attendance Rate */}
-        <div className="col-span-2 lg:col-span-1 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="col-span-2 lg:col-span-1 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">TURNOUT RATE</span>
             <TrendingUp className="h-4 w-4 text-indigo-500" />
@@ -424,7 +424,7 @@ export default function HrAdminAttendancePage() {
       </div>
 
       {/* ═══ Main Table Card with View Switcher & Filters ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         {/* Controls Bar */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-white/10">
           {/* View Tabs */}

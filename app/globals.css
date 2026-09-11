@@ -45,6 +45,19 @@
     overflow-x: hidden;
     min-height: 100vh;
   }
+
+  /* HRMS routes manage their own theme (light/dark toggle) — quarantine the
+     marketing dark canvas so native controls don't render dark in light mode. */
+  html:has(main[data-hrms-root]):not(.dark),
+  html:has(div[data-hrms-root]):not(.dark) {
+    color-scheme: light;
+    background-color: #ffffff;
+  }
+
+  body:has(div[data-hrms-root]):not(.dark) {
+    background-color: #ffffff;
+    color: #1e293b;
+  }
 }
 
 /* Custom Scrollbar */

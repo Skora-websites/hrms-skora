@@ -314,7 +314,7 @@ export default function ProjectsPage() {
 
       {/* Create Form */}
       {showCreate && (
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 mb-6">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6">
           <h3 className="font-bold text-sm mb-4">Create New Project</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Project Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs" />

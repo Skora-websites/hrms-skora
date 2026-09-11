@@ -290,7 +290,7 @@ export default function HrAdminLeavePoliciesPage() {
 
       {/* Metrics Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Configured Policies</span>
             <CalendarDays className="h-4 w-4 text-primary" />
@@ -300,7 +300,7 @@ export default function HrAdminLeavePoliciesPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Paid Leave Types</span>
             <Shield className="h-4 w-4 text-emerald-500" />
@@ -310,7 +310,7 @@ export default function HrAdminLeavePoliciesPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Carry-Forward Enabled</span>
             <Clock className="h-4 w-4 text-purple-500" />
@@ -332,7 +332,7 @@ export default function HrAdminLeavePoliciesPage() {
           {leaveTypes.map((lt) => (
             <div
               key={lt.id || lt.code}
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white flex flex-col justify-between"
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-3">

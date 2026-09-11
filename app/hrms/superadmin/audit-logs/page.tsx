@@ -77,7 +77,7 @@ export default function SuperAdminAuditLogsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         {loading ? (
           <div className="p-8 text-center text-slate-500 text-xs">Loading audit logs...</div>
         ) : filtered.length === 0 ? (

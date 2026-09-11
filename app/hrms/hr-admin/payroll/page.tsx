@@ -321,22 +321,22 @@ export default function HrAdminPayrollPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <DollarSign className="h-5 w-5 text-primary mb-2" />
           <p className="text-2xl font-extrabold">₹{totalPayroll.toLocaleString()}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Total Payroll Disbursed</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <Receipt className="h-5 w-5 text-blue-500 mb-2" />
           <p className="text-2xl font-extrabold">{totalRuns}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Payroll Runs Executed</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <TrendingUp className="h-5 w-5 text-emerald-500 mb-2" />
           <p className="text-2xl font-extrabold">{latestRun ? latestRun.status.toUpperCase() : "READY"}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Latest Cycle Status</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <Users className="h-5 w-5 text-yellow-500 mb-2" />
           <p className="text-2xl font-extrabold">{latestRun?.totalEmployees || 14}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Active Employees on Payroll</p>
@@ -344,7 +344,7 @@ export default function HrAdminPayrollPage() {
       </div>
 
       {/* Payroll Runs Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 text-slate-900 dark:text-white shadow-sm">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white shadow-sm">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" /> Payroll Cycle History ({payrollRuns.length})
         </h3>

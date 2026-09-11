@@ -236,12 +236,12 @@ export default function ManagerMyTeamPage() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md animate-pulse h-56"
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md animate-pulse h-56"
             />
           ))}
         </div>
       ) : filteredMembers.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-12 text-center">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-12 text-center">
           <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <p className="text-slate-900 dark:text-white font-semibold text-lg">No team members found</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -286,10 +286,10 @@ export default function ManagerMyTeamPage() {
                 className={
                   "rounded-2xl border p-5 backdrop-blur-md transition-all " +
                   (isOnline
-                    ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 shadow-sm dark:shadow-2xl hover:shadow-md"
+                    ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] shadow-sm dark:shadow-2xl hover:shadow-md"
                     : isPunchedOut
                     ? "border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0B0F19]/70 opacity-70"
-                    : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90")
+                    : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]")
                 }
               >
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">

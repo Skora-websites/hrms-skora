@@ -102,6 +102,31 @@
   --animate-fade-in: fade-in 0.5s ease-out;
   --animate-slide-down: slide-down 0.3s ease-out;
   --animate-pulse-soft: pulse-soft 1.2s ease-in-out infinite;
+
+  /* Semantic shadcn-style tokens (HSL triplets defined in :root/.dark below).
+     Without these mappings the bg-card / bg-sidebar / border-border /
+     text-foreground utilities compile to nothing (transparent UI). */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-muted-foreground: hsl(var(--foreground));
+}
+
+/* Undefined utility referenced by button/badge "light" variants. */
+@utility bg-gradient-light {
+  background: var(--color-light);
 }
 
 /* Animations - consolidated */

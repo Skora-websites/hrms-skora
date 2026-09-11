@@ -78,7 +78,7 @@ export default function SuperAdminModulesPage() {
       ) : (
         <div className="space-y-4">
           {tenants.map((t) => (
-            <div key={t.id} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+            <div key={t.id} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="h-5 w-5 text-primary" />
                 <h3 className="font-bold text-base">{t.name}</h3>

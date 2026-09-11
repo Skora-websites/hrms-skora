@@ -189,7 +189,7 @@ export default function ManagerSettingsPage() {
 
 function SettingsSection({ title, icon, description, children }: { title: string; icon: React.ReactNode; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <h3 className="font-bold text-base flex items-center gap-2 mb-1">{icon} {title}</h3>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">{description}</p>
       {children}

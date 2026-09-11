@@ -171,19 +171,19 @@ export default function LeavesPage() {
 
       {/* Leave Balances Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Casual Leave (CL)</span>
           <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">12 Days</p>
           <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Annual quota</span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Sick Leave (SL)</span>
           <p className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">12 Days</p>
           <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Annual quota</span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Annual Leave (AL)</span>
           <p className="text-3xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">24 Days</p>
           <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Annual quota</span>
@@ -191,7 +191,7 @@ export default function LeavesPage() {
       </div>
 
       {/* Leave Requests Table / Feed */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         <h3 className="font-bold text-slate-900 dark:text-white text-base mb-4 flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" /> Submitted Leave Requests ({leaves.length})
         </h3>

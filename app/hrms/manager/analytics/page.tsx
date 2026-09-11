@@ -240,7 +240,7 @@ export default function ManagerAnalyticsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors font-medium"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors font-medium"
           >
             <Download className="h-3.5 w-3.5" />
             Export CSV
@@ -290,7 +290,7 @@ export default function ManagerAnalyticsPage() {
 
 
       {/* ═══ Weekly Attendance Trend ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl mb-6">
         <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white mb-4">
           <TrendingUp className="h-5 w-5 text-blue-500" /> Weekly Attendance Trend
         </h3>
@@ -317,7 +317,7 @@ export default function ManagerAnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* ═══ AUX Distribution ═══ */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
           <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white mb-4">
             <BarChart3 className="h-5 w-5 text-primary" /> AUX Distribution
           </h3>
@@ -362,7 +362,7 @@ export default function ManagerAnalyticsPage() {
         </div>
 
         {/* ═══ Work Hours Distribution ═══ */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
           <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white mb-4">
             <Clock className="h-5 w-5 text-yellow-500" /> Work Hours Distribution
           </h3>
@@ -403,7 +403,7 @@ export default function ManagerAnalyticsPage() {
         </div>
 
         {/* ═══ Top Performers by Hours ═══ */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
           <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white mb-4">
             <Award className="h-5 w-5 text-yellow-500" /> Top Performers Today
           </h3>
@@ -455,7 +455,7 @@ export default function ManagerAnalyticsPage() {
       </div>
 
       {/* ═══ Employee Detail Table ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
         <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white mb-4">
           <Users className="h-5 w-5 text-primary" /> All Team Members
         </h3>
@@ -565,7 +565,7 @@ function KpiCard({
   accent?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">{icon}</div>
       <p className="text-2xl font-extrabold">{value}</p>
       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>

@@ -110,7 +110,7 @@ export default function OfferLetterSettingsPage() {
           )}
 
           {/* Company Branding */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
             <h3 className="font-bold text-base flex items-center gap-2 mb-4">
               <Building2 className="h-5 w-5 text-primary" /> Company Branding
             </h3>
@@ -141,7 +141,7 @@ export default function OfferLetterSettingsPage() {
           </div>
 
           {/* Signatory */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
             <h3 className="font-bold text-base flex items-center gap-2 mb-4">
               <PenLine className="h-5 w-5 text-blue-500" /> Signatory
             </h3>
@@ -158,7 +158,7 @@ export default function OfferLetterSettingsPage() {
           </div>
 
           {/* Template Content */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
             <h3 className="font-bold text-base flex items-center gap-2 mb-4">
               <FileText className="h-5 w-5 text-emerald-500" /> Template Content
             </h3>
@@ -180,7 +180,7 @@ export default function OfferLetterSettingsPage() {
           </div>
 
           {/* PDF Options */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
             <h3 className="font-bold text-base flex items-center gap-2 mb-4">
               <Palette className="h-5 w-5 text-yellow-500" /> PDF Options
             </h3>
@@ -206,7 +206,7 @@ export default function OfferLetterSettingsPage() {
           </div>
 
           {/* Email on Release */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
             <h3 className="font-bold text-base flex items-center gap-2 mb-4">
               <Mail className="h-5 w-5 text-orange-500" /> Email on Release
             </h3>

@@ -206,7 +206,7 @@ export default function SuperAdminOfferLettersPage() {
           <p className="text-sm">No offer letters found.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 overflow-hidden">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/30">
             {pendingCount > 0 && (

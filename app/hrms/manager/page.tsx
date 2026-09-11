@@ -194,7 +194,7 @@ export default function ManagerDashboardPage() {
   return (
     <AppShell title="Manager Dashboard">
       {/* ═══ Header Banner — Personal Profile ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
@@ -253,7 +253,7 @@ export default function ManagerDashboardPage() {
 
       
       {/* ═══ LIVE AUX DASHBOARD ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-gray-100 dark:border-white/10">
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
@@ -577,7 +577,7 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           {label}
@@ -608,7 +608,7 @@ function DashboardSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
@@ -701,7 +701,7 @@ function QuickLink({
   return (
     <a
       href={href}
-      className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white hover:border-primary/50 transition-colors group"
+      className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white hover:border-primary/50 transition-colors group"
     >
       <div className="mb-3">{icon}</div>
       <h4 className="font-bold text-sm group-hover:text-primary transition-colors">{label}</h4>

@@ -141,7 +141,7 @@ export default function EmployeeLeavesPage() {
       </div>
 
       {/* Pending */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <Clock className="h-5 w-5 text-yellow-500" /> Pending ({pending.length})
         </h3>
@@ -170,7 +170,7 @@ export default function EmployeeLeavesPage() {
       </div>
 
       {/* Regularizations */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5 text-blue-500" /> Regularization Requests ({regularizations.length})
         </h3>
@@ -194,7 +194,7 @@ export default function EmployeeLeavesPage() {
       </div>
 
       {/* Processed */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Processed ({processed.length})
         </h3>

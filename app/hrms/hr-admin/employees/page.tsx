@@ -316,7 +316,7 @@ export default function HrAdminEmployeesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-slate-500">TOTAL WORKFORCE</span>
             <Users className="h-4 w-4 text-primary" />
@@ -324,7 +324,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{employees.length}</p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">ACTIVE STATUS</span>
             <UserCheck className="h-4 w-4 text-emerald-500" />
@@ -332,7 +332,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{activeCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400">INACTIVE / ON LEAVE</span>
             <UserX className="h-4 w-4 text-yellow-500" />
@@ -340,7 +340,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{inactiveCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">DEPARTMENTS</span>
             <Building2 className="h-4 w-4 text-indigo-500" />
@@ -358,14 +358,14 @@ export default function HrAdminEmployeesPage() {
             placeholder="Search by name, email, employee code, designation..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm"
           />
         </div>
 
         <select
           value={filterDept}
           onChange={(e) => setFilterDept(e.target.value)}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm cursor-pointer"
+          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm cursor-pointer"
         >
           <option value="all">All Departments ({departments.length})</option>
           {departments.map((d) => (
@@ -378,7 +378,7 @@ export default function HrAdminEmployeesPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm cursor-pointer"
+          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm cursor-pointer"
         >
           <option value="all">All Statuses</option>
           <option value="active">Active</option>
@@ -388,7 +388,7 @@ export default function HrAdminEmployeesPage() {
       </div>
 
       {/* Employee Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         {loading ? (
           <div className="py-12 text-center text-slate-500 text-xs">
             <RefreshCw className="h-6 w-6 animate-spin mx-auto text-primary mb-2" />

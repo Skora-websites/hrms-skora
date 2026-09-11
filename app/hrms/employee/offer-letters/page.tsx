@@ -119,7 +119,7 @@ export default function EmployeeOfferLettersPage() {
       ) : (
         <div className="max-w-3xl space-y-6">
           {/* Request Section — always visible so users can (re-)request anytime */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-base text-slate-900 dark:text-white">Need a new or corrected offer letter?</h3>
@@ -163,7 +163,7 @@ export default function EmployeeOfferLettersPage() {
 
           {/* History */}
           {letters.length > 1 && (
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6">
               <h3 className="font-bold text-base text-slate-900 dark:text-white mb-4">History</h3>
               <div className="space-y-2">
                 {letters.slice(1).map((l) => (

@@ -302,7 +302,7 @@ export default function EmployeeDashboardPage() {
       </div>
 
       {/* ═══ My Tasks ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-base flex items-center gap-2">
             <Briefcase className="h-5 w-5 text-primary" /> My Tasks Board
@@ -338,7 +338,7 @@ export default function EmployeeDashboardPage() {
       </div>
 
       {/*     OFFER LETTER     */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-base flex items-center gap-2">
             <FileText className="h-5 w-5 text-blue-500" /> Offer Letter
@@ -393,7 +393,7 @@ export default function EmployeeDashboardPage() {
       {/* ═══ Bottom Grid: Leave Balance + Recent Payslips ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leave Balances */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-base flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-orange-500" /> Leave Balances
@@ -422,7 +422,7 @@ export default function EmployeeDashboardPage() {
         </div>
 
         {/* Recent Payslips */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-base flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-emerald-500" /> Recent Payslips
@@ -476,7 +476,7 @@ export default function EmployeeDashboardPage() {
 
 function QuickStat({ icon, label, value, suffix }: { icon: React.ReactNode; label: string; value: string | number; suffix?: string }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">{icon}</div>
       <p className="text-2xl font-extrabold">{value}{suffix && <span className="text-xs font-normal text-slate-500 ml-1">{suffix}</span>}</p>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>

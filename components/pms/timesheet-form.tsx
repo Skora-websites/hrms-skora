@@ -73,7 +73,7 @@ export function TimesheetForm({ tasks, projects, isPunchedIn = true, onSuccess }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
       <h3 className="font-bold text-slate-900 dark:text-white text-lg">Log Timesheet Entry</h3>
 
       {/* Cross-module validation gate message */}
