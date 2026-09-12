@@ -190,7 +190,7 @@ export async function PATCH(request: NextRequest) {
     const tenantId = "default";
 
     const body = await request.json();
-    const { userId, action: updateAction, role, status, displayName, firstName, lastName, email, phone } = body;
+    const { userId, action: updateAction, role, status, displayName, firstName, lastName, email, phone, emergencyContact, bankAccount, reportingManager, managerEmail, domainWork, allottedTeam } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
@@ -275,6 +275,12 @@ export async function PATCH(request: NextRequest) {
         if (lastName !== undefined) updateData.lastName = lastName;
         if (email !== undefined) updateData.email = email;
         if (phone !== undefined) updateData.phone = phone;
+        if (emergencyContact !== undefined) updateData.emergencyContact = emergencyContact;
+        if (bankAccount !== undefined) updateData.bankAccount = bankAccount;
+        if (reportingManager !== undefined) updateData.reportingManager = reportingManager;
+        if (managerEmail !== undefined) updateData.managerEmail = managerEmail;
+        if (domainWork !== undefined) updateData.domainWork = domainWork;
+        if (allottedTeam !== undefined) updateData.allottedTeam = allottedTeam;
         if (body.image !== undefined) updateData.image = body.image;
         await hrmUsersService.update(resolvedUserId, updateData as any);
         auditAction = "update_user";

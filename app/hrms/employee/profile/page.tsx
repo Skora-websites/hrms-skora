@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,9 @@ import {
   Loader2,
   Download,
   Plus,
-  Crown,
   Lock,
   AlertCircle,
 } from "lucide-react";
-
-
 
 interface DocItem {
   id: string;
@@ -36,38 +33,39 @@ interface DocItem {
   fileUrl?: string;
 }
 
-const defaultDocs: DocItem[] = [];
+const DOC_TYPES = [
+  "Aadhaar Card / Govt ID",
+  "Passport / Visa",
+  "PAN Card",
+  "Educational Degree Certificate",
+  "Offer Letter / Contract",
+];
 
 export default function EmployeeProfilePage() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth() as any;
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [phone, setPhone] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
   const [bankAccount, setBankAccount] = useState("");
+  const [reportingManager, setReportingManager] = useState("");
+  const [managerEmail, setManagerEmail] = useState("");
+  const [domainWork, setDomainWork] = useState("");
+  const [allottedTeam, setAllottedTeam] = useState("");
 
-  // Role comes exclusively from the session — never from a hardcoded email list.
   const isSuperAdmin = user?.role === "super_admin";
 
-  // Reporting Manager & Team Allocation Info
-  const [reportingManager] = useState("");
-  const [managerEmail] = useState("");
-  const [domainWork] = useState("");
-  const [allottedTeam] = useState("");
-
-  // Verification Status — SUPER ADMIN IS AUTOMATICALLY FULLY VERIFIED & APPROVED
-  const [verificationStatus, setVerificationStatus] = useState<"PENDING" | "APPROVED" | "REJECTED_48H">(
-    isSuperAdmin ? "APPROVED" : "PENDING"
-  );
+  // Verification status comes from the server (user record + latest onboarding
+  // task), never from localStorage — that caused stale "pending" banners.
+  const [verificationStatus, setVerificationStatus] = useState<"PENDING" | "APPROVED" | "REJECTED_48H">("PENDING");
   const [deadlineSeconds, setDeadlineSeconds] = useState(48 * 3600);
 
-  // Onboarding Documents State
-  const [documents, setDocuments] = useState<DocItem[]>(defaultDocs);
+  const [documents, setDocuments] = useState<DocItem[]>([]);
   const [editingDoc, setEditingDoc] = useState<DocItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newDocType, setNewDocType] = useState("Aadhaar Card / Govt ID");
+  const [newDocType, setNewDocType] = useState(DOC_TYPES[0]);
 
-  // File Upload State (Matching Register Page Pattern)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedServerUrl, setUploadedServerUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,12 +73,11 @@ export default function EmployeeProfilePage() {
   const [viewingDoc, setViewingDoc] = useState<DocItem | null>(null);
   const [docSubmittedToHR, setDocSubmittedToHR] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [submittingToHR, setSubmittingToHR] = useState(false);
 
-  // Live Upload Progress Bar State
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
-  const [isSubmittingToHR, setIsSubmittingToHR] = useState(false);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -90,85 +87,85 @@ export default function EmployeeProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Load documents from backend server / localStorage
-  useEffect(() => {
-    if (isSuperAdmin) {
-      setVerificationStatus("APPROVED");
-    }
+  // Load profile fields + onboarding task (status, deadline, document) from DB.
+  const loadProfile = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/hrm/v2/users?action=get&userId=${encodeURIComponent(user.id)}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        const u = data.data || {};
+        setPhone(u.phone || "");
+        setEmergencyContact(u.emergencyContact || "");
+        setBankAccount(u.bankAccount || "");
+        setReportingManager(u.reportingManager || "");
+        setManagerEmail(u.managerEmail || "");
+        setDomainWork(u.domainWork || "");
+        setAllottedTeam(u.allottedTeam || "");
 
-    const fetchDocs = async () => {
-      try {
-        const res = await fetch("/api/upload/list");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.documents && data.documents.length > 0) {
-            const mapped: DocItem[] = data.documents.map((d: any) => ({
-              id: d._id || d.storedName,
-              name: d.originalName,
-              type: d.docType || "Verification Document",
-              date: d.uploadedAt ? d.uploadedAt.split("T")[0] : new Date().toISOString().split("T")[0],
-              size: d.fileSize || "1.5 MB",
-              fileUrl: d.fileUrl,
-            }));
-            setDocuments((prev) => [...mapped, ...prev]);
-          }
-        }
-      } catch {
-        // ignore offline
+        const rejected = (u.onboardingStatus || "").toLowerCase().includes("reject");
+        const approved = u.status === "active" && !rejected && !u.onboardingStatus?.includes("pending");
+        setVerificationStatus(rejected ? "REJECTED_48H" : approved ? "APPROVED" : "PENDING");
       }
-    };
+    } catch { /* ignore */ }
 
-    fetchDocs();
-
-    if (!isSuperAdmin) {
-      const savedStatus = localStorage.getItem("my-onboarding-status");
-      if (savedStatus) {
-        try {
-          const parsed = JSON.parse(savedStatus);
-          if (parsed.status === "REJECTED_48H_DEADLINE") {
-            setVerificationStatus("REJECTED_48H");
-          } else if (parsed.status === "APPROVED") {
+    try {
+      const t = await fetch(`/api/hrm/v2/onboarding?employeeTasks=true&userId=${encodeURIComponent(user.id)}`, { cache: "no-store" });
+      if (t.ok) {
+        const rows = (await t.json()).data || [];
+        const task = Array.isArray(rows) ? rows[0] : null;
+        if (task) {
+          if (task.status === "rejected") setVerificationStatus("REJECTED_48H");
+          else if (task.status === "approved" || task.status === "completed") {
             setVerificationStatus("APPROVED");
-          } else {
-            setVerificationStatus("PENDING");
           }
-        } catch {
-          // ignore
+          if (task.rejectionDeadline) {
+            const remaining = Math.floor((new Date(task.rejectionDeadline).getTime() - Date.now()) / 1000);
+            if (remaining > 0) setDeadlineSeconds(remaining);
+          }
+          if (task.documentUrl) {
+            const docType = task.documentName || "Verification Document";
+            setDocuments([{
+              id: task.id || task._id || "task-doc",
+              name: task.documentName || "document",
+              type: docType,
+              date: task.updatedAt ? new Date(task.updatedAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+              size: "—",
+              fileUrl: task.documentUrl,
+            }]);
+          }
         }
       }
-    }
-  }, [isSuperAdmin]);
+    } catch { /* ignore */ }
+  }, [user?.id]);
 
-  // 48h Countdown Timer
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (verificationStatus === "REJECTED_48H" && !isSuperAdmin) {
-      interval = setInterval(() => {
-        setDeadlineSeconds((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    loadProfile();
+  }, [loadProfile]);
+
+  // 48h countdown while rejected
+  useEffect(() => {
+    if (verificationStatus !== "REJECTED_48H" || isSuperAdmin) return;
+    const interval = setInterval(() => {
+      setDeadlineSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
   }, [verificationStatus, isSuperAdmin]);
 
   const formatCountdown = (totalSecs: number) => {
     const hrs = Math.floor(totalSecs / 3600);
     const mins = Math.floor((totalSecs % 3600) / 60);
     const secs = totalSecs % 60;
-    return `${hrs.toString().padStart(2, "0")}:${mins
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Employee code is assigned by HR during onboarding; fall back to a stable
-  // short id prefix only while awaiting assignment (never a fake "SUPERADMIN" code).
   const empCode = user?.employeeCode || "Pending assignment";
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     try {
-      await fetch("/api/hrm/v2/users", {
+      const res = await fetch("/api/hrm/v2/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -177,11 +174,19 @@ export default function EmployeeProfilePage() {
           phone,
           emergencyContact,
           bankAccount,
+          reportingManager,
+          managerEmail,
+          domainWork,
+          allottedTeam,
         }),
       });
-    } catch { /* ignore */ }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+      if (!res.ok) throw new Error(((await res.json()).error) || "Save failed");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      refresh?.();
+    } catch (err: any) {
+      setSaveError(err?.message || "Save failed");
+    }
   };
 
   const handlePasswordChange = async () => {
@@ -224,108 +229,82 @@ export default function EmployeeProfilePage() {
     setPasswordSaving(false);
   };
 
-  // Trigger File Picker Directly
   const triggerFileBrowse = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    fileInputRef.current?.click();
   };
 
-  // File Change Handler — Exactly as used on Register Page!
+  // Upload the file, then attach it to the user's onboarding task.
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      setUploadError(null);
-      setUploadProgress(15);
-      setIsUploading(true);
-      setUploadComplete(false);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setUploadError(null);
+    setUploadProgress(15);
+    setIsUploading(true);
+    setUploadComplete(false);
 
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", editingDoc?.type || newDocType);
-        formData.append("userId", user?.id || "employee");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", editingDoc?.type || newDocType);
 
-        setUploadProgress(60);
-
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to save file to server");
-        }
-
-        const data = await res.json();
-        setUploadProgress(100);
-        setIsUploading(false);
-        setUploadComplete(true);
-        setUploadedServerUrl(data.url);
-      } catch (err: any) {
-        setIsUploading(false);
-        setUploadError(err.message || "Upload error");
+      const res = await fetch("/api/hrm/v2/onboarding/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Upload failed");
       }
+      const data = await res.json();
+      setUploadProgress(100);
+      setUploadedServerUrl(data.data?.fileUrl || null);
+    } catch (err: any) {
+      setIsUploading(false);
+      setUploadError(err?.message || "Upload error");
+      return;
     }
+    setIsUploading(false);
+    setUploadComplete(true);
   };
 
-  // Final Submit to HR
-  const handleSubmitToHR = () => {
-    if (!selectedFile) return;
+  // Submit: PATCH onboarding attach_document → task goes pending for HR review.
+  const handleSubmitToHR = async () => {
+    if (!selectedFile || !uploadedServerUrl) return;
+    setSubmittingToHR(true);
+    setUploadError(null);
+    try {
+      const res = await fetch("/api/hrm/v2/onboarding", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "attach_document",
+          documentName: selectedFile.name,
+          documentUrl: uploadedServerUrl,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Submission to HR failed");
 
-    setIsSubmittingToHR(true);
-
-    setTimeout(() => {
-      const sizeInMB = (selectedFile.size / (1024 * 1024)).toFixed(1) + " MB";
-      const newFileName = selectedFile.name;
-      const todayStr = new Date().toISOString().split("T")[0];
-      const targetType = editingDoc?.type || newDocType;
-      const serverUrl = uploadedServerUrl || `/uploads/${Date.now()}_${newFileName}`;
-
-      let updated: DocItem[];
-      if (editingDoc) {
-        updated = documents.map((d) =>
-          d.id === editingDoc.id
-            ? {
-                ...d,
-                name: newFileName,
-                size: sizeInMB,
-                date: todayStr,
-                fileUrl: serverUrl,
-              }
-            : d
-        );
-      } else {
-        const newDocItem: DocItem = {
-          id: `doc-${Date.now()}`,
-          name: newFileName,
-          type: targetType,
-          date: todayStr,
-          size: sizeInMB,
-          fileUrl: serverUrl,
-        };
-        updated = [newDocItem, ...documents];
-      }
-
-      setDocuments(updated);
-      localStorage.setItem("employee-onboarding-docs", JSON.stringify(updated));
-
-      if (!isSuperAdmin) {
-        setVerificationStatus("PENDING");
-        localStorage.setItem("my-onboarding-status", JSON.stringify({ status: "DOCUMENT_VERIFICATION_PENDING" }));
-      }
-
-      setIsSubmittingToHR(false);
+      setDocuments([{
+        id: `doc-${Date.now()}`,
+        name: selectedFile.name,
+        type: editingDoc?.type || newDocType,
+        date: new Date().toISOString().split("T")[0],
+        size: (selectedFile.size / (1024 * 1024)).toFixed(1) + " MB",
+        fileUrl: uploadedServerUrl,
+      }]);
+      setVerificationStatus("PENDING");
+      setDocSubmittedToHR(true);
+      setTimeout(() => setDocSubmittedToHR(false), 4500);
       setEditingDoc(null);
       setShowAddModal(false);
       setSelectedFile(null);
       setUploadedServerUrl(null);
       setUploadProgress(0);
       setUploadComplete(false);
-      setDocSubmittedToHR(true);
-      setTimeout(() => setDocSubmittedToHR(false), 4500);
-    }, 500);
+      loadProfile();
+    } catch (err: any) {
+      setUploadError(err?.message || "Submission failed");
+    }
+    setSubmittingToHR(false);
   };
 
   return (
@@ -341,7 +320,7 @@ export default function EmployeeProfilePage() {
 
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {isSuperAdmin ? "Superadmin System Profile" : "Employee Self-Service Profile"}
+          {isSuperAdmin ? "Superadmin System Profile" : "Employee Profile"}
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {isSuperAdmin
@@ -351,57 +330,47 @@ export default function EmployeeProfilePage() {
       </div>
 
       <div className="max-w-3xl space-y-6">
-        {/* Superadmin Automatic Approval Banner */}
-        {isSuperAdmin ? (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-3 shadow-sm">
-            <Crown className="h-5 w-5 shrink-0 text-emerald-500" />
+        {!isSuperAdmin && verificationStatus === "PENDING" && (
+          <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-xs text-yellow-700 dark:text-yellow-400 flex items-start gap-3">
+            <Clock className="h-5 w-5 shrink-0 text-yellow-500 animate-pulse mt-0.5" />
             <div>
-              <p className="font-bold text-sm">Superadmin System Authority Verified</p>
+              <p className="font-bold text-sm">Document Verification Pending with HR</p>
               <p className="mt-0.5">
-                Full platform administrative rights active. No HR verification approval required for Superadmin.
+                Your onboarding verification documents are under review by HR Admin. Official Employee Code will be issued once approved.
               </p>
             </div>
           </div>
-        ) : (
-          <>
-            {/* Employee Verification Status Banners */}
-            {verificationStatus === "PENDING" && (
-              <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-xs text-yellow-700 dark:text-yellow-400 flex items-start gap-3">
-                <Clock className="h-5 w-5 shrink-0 text-yellow-500 animate-pulse mt-0.5" />
-                <div>
-                  <p className="font-bold text-sm">Document Verification Pending with HR</p>
-                  <p className="mt-0.5">
-                    Your onboarding verification documents are under review by HR Admin. Official Employee Code will be issued once approved.
-                  </p>
-                </div>
-              </div>
-            )}
+        )}
 
-            {verificationStatus === "REJECTED_48H" && (
-              <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-xs text-red-700 dark:text-red-400 flex items-start gap-3 shadow-lg">
-                <AlertTriangle className="h-6 w-6 shrink-0 text-red-500 animate-bounce mt-0.5" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm text-red-600 dark:text-red-300">⚠️ Document Verification Rejected by HR</p>
-                    <span className="font-mono font-extrabold text-sm text-red-600 dark:text-red-400 bg-red-500/20 px-3 py-1 rounded-lg border border-red-500/30">
-                      Deadline: {formatCountdown(deadlineSeconds)}
-                    </span>
-                  </div>
-                  <p className="mt-1 leading-relaxed">
-                    HR Admin rejected your uploaded document. You have <strong>48 Hours</strong> to edit and upload a valid document file below, or your registration will be cancelled/held.
-                  </p>
-                </div>
+        {!isSuperAdmin && verificationStatus === "REJECTED_48H" && (
+          <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-xs text-red-700 dark:text-red-400 flex items-start gap-3 shadow-lg">
+            <AlertTriangle className="h-6 w-6 shrink-0 text-red-500 animate-bounce mt-0.5" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <p className="font-bold text-sm text-red-600 dark:text-red-300">⚠️ Document Verification Rejected by HR</p>
+                <span className="font-mono font-extrabold text-sm text-red-600 dark:text-red-400 bg-red-500/20 px-3 py-1 rounded-lg border border-red-500/30">
+                  Deadline: {formatCountdown(deadlineSeconds)}
+                </span>
               </div>
-            )}
-          </>
+              <p className="mt-1 leading-relaxed">
+                HR Admin rejected your uploaded document. You have <strong>48 Hours</strong> to edit and upload a valid document file below, or your registration will be cancelled/held.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Profile Card & Form */}
-        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-5">
+        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-5">
           {saved && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
               <CheckCircle2 className="h-4 w-4" />
               <span>Profile information updated successfully!</span>
+            </div>
+          )}
+          {saveError && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 font-bold">
+              <AlertCircle className="h-4 w-4" />
+              <span>{saveError}</span>
             </div>
           )}
 
@@ -412,13 +381,12 @@ export default function EmployeeProfilePage() {
                 {(user?.name || user?.email || "SA").substring(0, 2).toUpperCase()}
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-lg">{user?.name || "Super Admin"}</h3>
-                <p className="text-xs text-primary font-semibold uppercase">{user?.role || "Super Admin"}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">{user?.name || "Employee"}</h3>
+                <p className="text-xs text-primary font-semibold uppercase">{user?.role || "Employee"}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email || "Not signed in"}</p>
               </div>
             </div>
 
-            {/* Auto-Generated Employee Code Badge */}
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Employee Code</span>
               <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-mono font-bold text-primary shadow-sm">
@@ -431,20 +399,44 @@ export default function EmployeeProfilePage() {
           {/* Section 1: Reporting Manager & Team Assignment */}
           <div className="space-y-3 pt-2">
             <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-primary" /> Reporting Manager & Team Allocation
+              <UserCheck className="h-4 w-4 text-primary" /> Reporting Manager &amp; Team Allocation
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs p-4 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/5">
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1 font-semibold">Reporting Authority</span>
-                <p className="font-bold text-slate-900 dark:text-white text-sm">{reportingManager}</p>
-                <span className="text-[11px] text-primary">{managerEmail}</span>
+                <label className="text-slate-500 dark:text-slate-400 block mb-1 font-semibold">Reporting Authority</label>
+                <input
+                  type="text"
+                  value={reportingManager}
+                  onChange={(e) => setReportingManager(e.target.value)}
+                  placeholder="Manager name"
+                  className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={managerEmail}
+                  onChange={(e) => setManagerEmail(e.target.value)}
+                  placeholder="Manager email"
+                  className="w-full mt-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-1.5 text-[11px] text-primary focus:border-primary focus:outline-none"
+                />
               </div>
 
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1 font-semibold">Domain / Area of Work</span>
-                <p className="font-bold text-slate-900 dark:text-white text-sm">{domainWork}</p>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">Allotted Unit: <strong>{allottedTeam}</strong></span>
+                <label className="text-slate-500 dark:text-slate-400 block mb-1 font-semibold">Domain / Area of Work</label>
+                <input
+                  type="text"
+                  value={domainWork}
+                  onChange={(e) => setDomainWork(e.target.value)}
+                  placeholder="e.g. Frontend Development"
+                  className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={allottedTeam}
+                  onChange={(e) => setAllottedTeam(e.target.value)}
+                  placeholder="Allotted Unit / Team"
+                  className="w-full mt-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400 focus:border-primary focus:outline-none"
+                />
               </div>
             </div>
           </div>
@@ -462,7 +454,7 @@ export default function EmployeeProfilePage() {
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Emergency Contact Person & Phone</label>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Emergency Contact Person &amp; Phone</label>
               <input
                 type="text"
                 value={emergencyContact}
@@ -489,8 +481,8 @@ export default function EmployeeProfilePage() {
           </div>
         </form>
 
-        {/* Section 2.5: Change Password */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+        {/* Change Password */}
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
           <div>
             <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
               <Lock className="h-5 w-5 text-primary" /> Change Password
@@ -509,7 +501,7 @@ export default function EmployeeProfilePage() {
 
           {passwordError && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 font-bold">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+              <AlertCircle className="h-4 w-4" />
               <span>{passwordError}</span>
             </div>
           )}
@@ -566,15 +558,15 @@ export default function EmployeeProfilePage() {
           </div>
         </div>
 
-        {/* Section 3: REAL Onboarding Documents Container */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+        {/* Onboarding Documents */}
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
                 <FileText className="h-5 w-5 text-primary" /> Onboarding &amp; Verification Documents
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Saved on server disk &amp; MongoDB database.
+                Upload a document and submit it to HR for verification.
               </p>
             </div>
 
@@ -595,9 +587,9 @@ export default function EmployeeProfilePage() {
           </div>
 
           {docSubmittedToHR && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold animate-bounce">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
               <CheckCircle2 className="h-4 w-4" />
-              <span>Real document file uploaded &amp; saved to server!</span>
+              <span>Document submitted to HR for verification.</span>
             </div>
           )}
 
@@ -620,12 +612,12 @@ export default function EmployeeProfilePage() {
                   <div>
                     <span className="font-bold text-slate-900 dark:text-white block text-sm">{doc.type}</span>
                     <span className="text-primary font-mono text-xs block font-bold">{doc.name}</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Uploaded: {doc.date} • {doc.size || "1.5 MB"}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Uploaded: {doc.date}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center">
-                  {doc.fileUrl ? (
+                  {doc.fileUrl && (
                     <a
                       href={doc.fileUrl}
                       target="_blank"
@@ -634,15 +626,6 @@ export default function EmployeeProfilePage() {
                     >
                       <Download className="h-3.5 w-3.5" /> Download File
                     </a>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={() => setViewingDoc(doc)}
-                      variant="outline"
-                      className="gap-1.5 text-xs font-semibold h-8 border-gray-200 dark:border-white/10"
-                    >
-                      <Eye className="h-3.5 w-3.5" /> View Record
-                    </Button>
                   )}
 
                   <Button
@@ -683,9 +666,6 @@ export default function EmployeeProfilePage() {
             <div className="p-6 text-center bg-slate-50 dark:bg-black/40 rounded-xl border border-dashed border-gray-200 dark:border-white/10 space-y-3">
               <FileText className="h-14 w-14 text-primary mx-auto" />
               <p className="font-mono font-bold text-sm text-primary">{viewingDoc.name}</p>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                ✓ Saved on Server Disk &amp; Database
-              </span>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -707,7 +687,7 @@ export default function EmployeeProfilePage() {
         </div>
       )}
 
-      {/* Modal 2: EXACT SAME FILE UPLOAD PATTERN AS REGISTER PAGE */}
+      {/* Modal 2: Upload Document */}
       {(editingDoc || showAddModal) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
@@ -739,17 +719,14 @@ export default function EmployeeProfilePage() {
                   onChange={(e) => setNewDocType(e.target.value)}
                   className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
                 >
-                  <option value="Aadhaar Card / Govt ID">Aadhaar Card / Govt ID</option>
-                  <option value="Passport / Visa">Passport / Visa</option>
-                  <option value="PAN Card">PAN Card</option>
-                  <option value="Educational Degree Certificate">Educational Degree Certificate</option>
-                  <option value="Offer Letter / Contract">Offer Letter / Contract</option>
+                  {DOC_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
                 </select>
               </div>
             )}
 
             <div className="space-y-4 text-xs">
-              {/* EXACT MATCH OF THE FILE DROPZONE BOX FROM REGISTER PAGE */}
               <div className="space-y-1.5 pt-1">
                 <label className="block font-semibold text-slate-700 dark:text-slate-300">
                   Select Document File <span className="text-red-500">*</span>
@@ -766,12 +743,11 @@ export default function EmployeeProfilePage() {
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                     {selectedFile
                       ? `Size: ${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
-                      : "Supports PDF, PNG, JPG, DOCX (Max 15 MB)"}
+                      : "Supports PDF, PNG, JPG, DOCX (Max 10 MB)"}
                   </span>
                 </div>
               </div>
 
-              {/* LIVE UPLOAD PROGRESS BAR */}
               {selectedFile && (
                 <div className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
                   <div className="flex items-center justify-between text-xs font-semibold">
@@ -783,7 +759,7 @@ export default function EmployeeProfilePage() {
                         </>
                       ) : uploadComplete ? (
                         <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
-                          <CheckCircle2 className="h-4 w-4" /> Upload Complete! Saved on Server
+                          <CheckCircle2 className="h-4 w-4" /> Upload Complete
                         </span>
                       ) : (
                         "Ready to Upload"
@@ -801,7 +777,6 @@ export default function EmployeeProfilePage() {
                 </div>
               )}
 
-              {/* ACTION BUTTONS */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
                 <Button
                   type="button"
@@ -817,14 +792,14 @@ export default function EmployeeProfilePage() {
                 >
                   Cancel
                 </Button>
-                
+
                 <Button
                   type="button"
-                  disabled={!selectedFile || isUploading || !uploadComplete || isSubmittingToHR}
+                  disabled={!selectedFile || isUploading || !uploadComplete || submittingToHR}
                   onClick={handleSubmitToHR}
                   className="bg-primary text-white font-bold gap-2 disabled:opacity-50"
                 >
-                  {isSubmittingToHR ? (
+                  {submittingToHR ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Submitting to HR...

@@ -147,11 +147,10 @@ export function AttendancePunchCard() {
   const handlePunchIn = async () => {
     setError(null); setSuccess(null); setPunching(true);
     try {
-      if (!rules.workDays.includes(new Date().getDay())) throw new Error("Today is a scheduled weekly off.");
+      // Punch-in is allowed at any time — office hours only affect the
+      // PRESENT/LATE/HALF_DAY label, never block the punch itself.
       const currentHour = istHourNow();
-      if (currentHour < rules.officeStart) throw new Error(`Office hours start at ${formatHour(rules.officeStart)}.`);
-      if (currentHour >= rules.officeEnd + 1) throw new Error(`Late punch-ins are not accepted after ${formatHour(rules.officeEnd + 1)}.`);
-      const status = currentHour > rules.lateAfter ? "LATE" : currentHour >= rules.halfDayAfter ? "HALF_DAY" : "PRESENT";
+      const status = currentHour > rules.halfDayAfter ? "HALF_DAY" : currentHour > rules.lateAfter ? "LATE" : "PRESENT";
       const punch = await punchInAction({
         userId,
         userName: user?.name || user?.email || "Employee",
