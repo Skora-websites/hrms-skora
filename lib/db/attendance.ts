@@ -157,7 +157,9 @@ export async function recordPunchIn(data: { userId: string; userName: string; us
 export async function recordAUXChange(userId: string, dateStr: string, newState: AUXState, tenantId = "default"): Promise<AttendanceRecord | null> {
   const db = await getDb();
   if (!db) return null;
-  const record = await db.collection("attendance").findOne({ ...userDateQuery(userId, dateStr, tenantId), punchOutTime: { $exists: false, $ne: null } });
+  // `punchOutTime: null` matches "missing" too — `{ $exists: false, $ne: null }`
+  // is self-contradictory in Mongo ($ne:null demands the field exists).
+  const record = await db.collection("attendance").findOne({ ...userDateQuery(userId, dateStr, tenantId), punchOutTime: null });
   if (!record) return null;
   const nowISO = new Date().toISOString();
   const history: AUXEntry[] = normalizeAuxHistory(record.auxHistory);
@@ -178,7 +180,7 @@ export async function recordPunchOut(userId: string, dateStr: string, tenantId =
   if (!db) return false;
   const now = new Date();
   const nowISO = now.toISOString();
-  const record = await db.collection("attendance").findOne({ ...userDateQuery(userId, dateStr, tenantId), punchOutTime: { $exists: false, $ne: null } });
+  const record = await db.collection("attendance").findOne({ ...userDateQuery(userId, dateStr, tenantId), punchOutTime: null });
   if (!record) return false;
   let history: AUXEntry[] = normalizeAuxHistory(record.auxHistory);
   history = history.map((e: AUXEntry, i: number) => i === history.length - 1 && !e.endTime ? { ...e, endTime: nowISO } : e);

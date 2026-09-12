@@ -174,15 +174,31 @@ export async function PATCH(request: NextRequest) {
       const db = await getDb();
       if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
 
-      const task = await db.collection("employee_onboarding_tasks").findOne(
+      let task = await db.collection("employee_onboarding_tasks").findOne(
         { userId, tenantId: "default" },
         { sort: { createdAt: -1 } }
       );
+      // Older accounts were never given an onboarding task row. Create one on
+      // the fly so doc submit from the profile page never dead-ends.
       if (!task) {
-        return NextResponse.json({ error: "No onboarding task found" }, { status: 404 });
+        const userFilter: Record<string, unknown> = ObjectId.isValid(userId)
+          ? { _id: new ObjectId(userId) }
+          : { _id: userId };
+        const u = await db.collection("users").findOne(userFilter);
+        await db.collection("employee_onboarding_tasks").insertOne({
+          userId, tenantId: "default",
+          employeeName: (u && (u.displayName || u.firstName)) || (auth as any).email || userId,
+          email: (u && u.email) || "", department: (u && u.department) || "",
+          status: "pending", createdAt: new Date(), updatedAt: new Date(),
+        });
+        task = await db.collection("employee_onboarding_tasks").findOne(
+          { userId, tenantId: "default" },
+          { sort: { createdAt: -1 } }
+        );
       }
 
       // Resubmission after rejection clears the pending/rejected state.
+      if (!task) return NextResponse.json({ error: "Could not create onboarding task" }, { status: 500 });
       const wasRejected = (task as any).status === "rejected";
       const updated = await db.collection("employee_onboarding_tasks").findOneAndUpdate(
         { _id: task._id },

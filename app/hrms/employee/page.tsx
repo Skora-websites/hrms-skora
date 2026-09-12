@@ -131,12 +131,20 @@ export default function EmployeeDashboardPage() {
   const handleUpload = async () => {
     if (!uploadFile) return;
     setUploading(true);
+    setOfferMsg(null);
     try {
       const formData = new FormData();
       formData.append("file", uploadFile);
-      await fetch("/api/hrm/v2/onboarding/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/hrm/v2/onboarding/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Upload failed");
+      }
+      setOfferMsg("Document uploaded and submitted to HR for verification.");
       loadData();
-    } catch { /* empty */ }
+    } catch (e: any) {
+      setOfferMsg(e?.message || "Upload failed. Please try again.");
+    }
     setUploading(false);
     setUploadFile(null);
   };

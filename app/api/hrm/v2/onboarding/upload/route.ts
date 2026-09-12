@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type
+    // Validate file type (by MIME, falling back to extension — some browsers
+    // send an empty MIME type for .docx/.doc).
     const allowedTypes = [
       "application/pdf",
       "image/png",
@@ -25,7 +26,10 @@ export async function POST(request: NextRequest) {
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
-    if (!allowedTypes.includes(file.type)) {
+    const allowedExtensions = [".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx"];
+    const lowerName = file.name.toLowerCase();
+    const typeOk = allowedTypes.includes(file.type) || (file.type === "" && allowedExtensions.some((e) => lowerName.endsWith(e)));
+    if (!typeOk) {
       return NextResponse.json(
         { error: "Invalid file type. Allowed: PDF, PNG, JPG, DOC, DOCX" },
         { status: 400 }
@@ -53,10 +57,29 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
     if (db) {
       // Also update the employee_onboarding_tasks record so CEO/HR can see the document
-      const task = await db.collection("employee_onboarding_tasks").findOne(
+      let task = await db.collection("employee_onboarding_tasks").findOne(
         { userId, tenantId: "default" },
         { sort: { createdAt: -1 } }
       );
+      // Older accounts never got a task row — create one so the uploaded
+      // document is always attached and visible to HR.
+      if (!task) {
+        const { ObjectId } = await import("mongodb");
+        const userFilter: Record<string, unknown> = ObjectId.isValid(userId)
+          ? { _id: new ObjectId(userId) }
+          : { _id: userId };
+        const u = await db.collection("users").findOne(userFilter);
+        await db.collection("employee_onboarding_tasks").insertOne({
+          userId, tenantId: "default",
+          employeeName: (u && (u.displayName || u.firstName)) || userId,
+          email: (u && u.email) || "", department: (u && u.department) || "",
+          status: "pending", createdAt: new Date(), updatedAt: new Date(),
+        });
+        task = await db.collection("employee_onboarding_tasks").findOne(
+          { userId, tenantId: "default" },
+          { sort: { createdAt: -1 } }
+        );
+      }
       if (task) {
         const wasRejected = (task as any).status === "rejected";
         await db.collection("employee_onboarding_tasks").updateOne(
