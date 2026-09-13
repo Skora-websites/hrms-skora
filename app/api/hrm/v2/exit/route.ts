@@ -15,6 +15,8 @@ import {
   getExitDashboard,
 } from "@/services/hrm/exit";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "mongodb";
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,6 +60,11 @@ export async function GET(request: NextRequest) {
     }
 
     const exits = await getEmployeeExits(tenantId, (status as any) || undefined);
+    // Employees may only see their own exit records — the full list is
+    // sensitive HR data (reasons, exit types).
+    if (auth.role === "employee") {
+      return NextResponse.json({ data: exits.filter((e: any) => e.userId === auth.userId) });
+    }
     return NextResponse.json({ data: exits });
   } catch (error: any) {
     console.error("GET /api/hrm/v2/exit error:", error);
@@ -152,6 +159,55 @@ export async function PATCH(request: NextRequest) {
     let updated;
     if (action === "status") {
       updated = await updateExitStatus(id, body.status);
+
+      // When an exit is completed, email the experience letter PDF to the
+      // departing employee (best-effort — payment/status change must not fail).
+      if (updated && body.status === "completed") {
+        try {
+          const db = await getDb();
+          if (db) {
+            const exit: any = await getEmployeeExitById(id);
+            const user: any = exit
+              ? await db.collection("users").findOne({ _id: new ObjectId(exit.userId) })
+              : null;
+            if (user?.email) {
+              const settingsDoc = await db.collection("settings").findOne({ key: "offer_letter_config" });
+              const cfg = settingsDoc?.settings || {};
+              if (cfg.autoEmailOnRelease !== false) {
+                const { generateExperienceLetterPdf } = await import("@/lib/experience-letter-pdf");
+                const { sendExperienceLetterEmail } = await import("@/lib/email");
+                const pdf = await generateExperienceLetterPdf(
+                  {
+                    employeeName: user.displayName || user.firstName || user.email,
+                    employeeCode: user.employeeCode,
+                    designation: user.designationName || user.designation,
+                    department: user.departmentName || user.department,
+                    joiningDate: user.joiningDate || null,
+                    lastWorkingDate: exit.lastWorkingDate || null,
+                  },
+                  cfg
+                );
+                const lwd = exit.lastWorkingDate
+                  ? new Date(exit.lastWorkingDate).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
+                  : "the last working date";
+                const sent = await sendExperienceLetterEmail({
+                  to: user.email,
+                  employeeName: user.displayName || user.firstName || user.email,
+                  lastWorkingDate: lwd,
+                  companyName: cfg.companyName || "SKORA",
+                  pdfAttachment: { filename: pdf.filename, content: pdf.buffer },
+                });
+                await db.collection("employee_exits").updateOne(
+                  { _id: new ObjectId(id) },
+                  { $set: { experienceLetterEmailSent: sent === true, experienceLetterEmailSentAt: sent ? new Date() : null } }
+                );
+              }
+            }
+          }
+        } catch (emailErr) {
+          console.warn("Experience letter email failed (exit status itself saved):", emailErr);
+        }
+      }
     } else if (action === "settings") {
       updated = await updateExitSettings(id, body);
     } else {

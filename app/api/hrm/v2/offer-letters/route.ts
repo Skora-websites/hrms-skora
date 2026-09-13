@@ -190,12 +190,24 @@ export async function PATCH(request: NextRequest) {
           createdAt: new Date(),
         });
 
-        // Send email if auto-email is enabled in settings
+        // Send email unless auto-email was explicitly disabled in settings.
+        // (Undefined/false-y configs default to ON so released letters always
+        // reach the employee's inbox once SMTP is configured.)
         try {
           const settingsDoc = await db.collection("settings").findOne({ key: "offer_letter_config" });
           const cfg = settingsDoc?.settings || {};
-          if (cfg.autoEmailOnRelease && letter.employeeEmail) {
+          if (cfg.autoEmailOnRelease !== false && letter.employeeEmail) {
             const origin = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get("origin") || "https://hrms-skora.vercel.app";
+            // Generate the same password-protected PDF the employee can
+            // download and attach it directly to the email.
+            let pdfAttachment: { filename: string; content: Buffer; password: string } | undefined;
+            try {
+              const { generateOfferLetterPdf } = await import("@/lib/offer-letter-pdf");
+              const pdf = await generateOfferLetterPdf(letter as any, cfg);
+              pdfAttachment = { filename: pdf.filename, content: pdf.buffer, password: pdf.password };
+            } catch (pdfErr) {
+              console.warn("Offer letter PDF attachment failed, sending link-only email:", pdfErr);
+            }
             const emailSent = await sendOfferLetterEmail({
               to: letter.employeeEmail,
               employeeName: letter.employeeName,
@@ -206,6 +218,7 @@ export async function PATCH(request: NextRequest) {
               signatoryName: cfg.signatoryName || "Vishal Srivastava",
               signatoryTitle: cfg.signatoryTitle || "",
               downloadUrl: origin + "/hrms/employee/offer-letters",
+              pdfAttachment,
               subjectTemplate: cfg.emailSubject || undefined,
               bodyTemplate: cfg.emailBody || undefined,
             });

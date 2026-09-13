@@ -28,6 +28,7 @@ import {
   UserCheck,
   Sparkles,
   CheckCircle2,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -71,6 +72,7 @@ const iconMap: Record<string, React.ElementType> = {
   Sun,
   UserCheck,
   CheckCircle2,
+  FolderOpen,
 };
 
 const roleSettingsMap: Record<string, string> = {

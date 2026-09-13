@@ -91,10 +91,12 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
   ],
   manager: [
     { title: "Team Overview", href: "/hrms/manager", icon: "LayoutDashboard", group: "overview" },
+    { title: "My Team", href: "/hrms/manager/my-team", icon: "Users", group: "overview" },
     { title: "Project Tasks", href: "/hrms/manager/projects", icon: "ClipboardList", group: "operations" },
     { title: "Timesheets", href: "/hrms/manager/timesheets", icon: "FileText", group: "hrm" },
     { title: "Approvals", href: "/hrms/manager/approvals", icon: "CheckCircle2", group: "hrm" },
     { title: "KPI Analytics", href: "/hrms/manager/analytics", icon: "TrendingUp", group: "hrm" },
+    { title: "My Documents", href: "/hrms/documents/my", icon: "FolderOpen", group: "lifecycle" },
     { title: "Settings", href: "/hrms/manager/settings", icon: "Settings", group: "system" },
   ],
   employee: [
@@ -103,6 +105,7 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "Leave Requests", href: "/hrms/employee/leaves", icon: "CalendarDays", group: "hrm" },
     { title: "Payslips", href: "/hrms/employee/payslips", icon: "DollarSign", group: "hrm" },
     { title: "My Performance", href: "/hrms/employee/performance", icon: "TrendingUp", group: "hrm" },
+    { title: "My Documents", href: "/hrms/documents/my", icon: "FolderOpen", group: "lifecycle" },
     { title: "Offer Letters", href: "/hrms/employee/offer-letters", icon: "FileText", group: "lifecycle" },
     { title: "Settings", href: "/hrms/employee/settings", icon: "Settings", group: "system" },
   ],

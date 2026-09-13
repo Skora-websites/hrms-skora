@@ -23,7 +23,8 @@
     "cap:run:ios": "npx cap run ios",
     "build:mobile": "next build && npx cap sync",
     "build:android": "next build && npx cap sync android && npx cap open android",
-    "build:ios": "next build && npx cap sync ios && npx cap open ios"
+    "build:ios": "next build && npx cap sync ios && npx cap open ios",
+    "pretest": "node scripts/seed-test-accounts.js || echo \"[pretest] seeding skipped (DB unreachable) - suite continues\""
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

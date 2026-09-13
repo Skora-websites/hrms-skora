@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MailStatusCard } from "@/components/superadmin/mail-status-card";
 import {
   Users,
   UserCheck,
@@ -512,6 +513,9 @@ export default function SuperadminOverviewPage() {
           color="orange"
         />
       </div>
+
+      {/* ═══ EMAIL / SMTP STATUS ═══ */}
+      <MailStatusCard />
 
       {/* ═══ LIVE OPERATIONS DASHBOARD ═══ */}
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">

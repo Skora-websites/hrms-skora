@@ -2,9 +2,9 @@
 // Skora HRMS — Service Worker (PWA)
 // ══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = "skora-hrms-v1";
-const STATIC_CACHE = "skora-hrms-static-v1";
-const DYNAMIC_CACHE = "skora-hrms-dynamic-v1";
+const CACHE_NAME = "skora-hrms-v2";
+const STATIC_CACHE = "skora-hrms-static-v2";
+const DYNAMIC_CACHE = "skora-hrms-dynamic-v2";
 
 // Assets to pre-cache (app shell)
 const PRE_CACHE_URLS = [
@@ -57,8 +57,8 @@ self.addEventListener("fetch", (event) => {
   // Skip admin routes (different auth)
   if (url.pathname.startsWith("/admin")) return;
 
-  // Strategy: Network-first for HTML pages, Cache-first for static assets
-  if (request.headers.get("accept")?.includes("text/html")) {
+  // Strategy: Network-first for HTML pages, stale-while-revalidate for assets.
+if (request.headers.get("accept")?.includes("text/html")) {
     // HTML pages — network first, fallback to cache
     event.respondWith(
       fetch(request)
@@ -76,21 +76,22 @@ self.addEventListener("fetch", (event) => {
         })
     );
   } else {
-    // Static assets — cache first, fallback to network
+    // Static assets — stale-while-revalidate: serve the cached copy
+    // immediately, but always refresh the cache in the background so the
+    // NEXT load gets the fresh asset. (Plain cache-first left users on
+    // stale JS chunks forever after a deploy.)
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
-
-        return fetch(request).then((response) => {
-          // Cache successful responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(DYNAMIC_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        });
+      caches.open(DYNAMIC_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        const networkFetch = fetch(request)
+          .then((response) => {
+            if (response.status === 200) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          })
+          .catch(() => cached);
+        return cached || networkFetch;
       })
     );
   }

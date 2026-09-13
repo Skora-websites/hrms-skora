@@ -44,7 +44,7 @@ const DEFAULT_SETTINGS: OfferLetterSettings = {
     "We look forward to welcoming you to the team and are confident that your contributions will be instrumental in driving our success.\n\nPlease confirm your acceptance of this offer by signing and returning this letter.",
   pdfPasswordEnabled: true,
   pdfWatermark: "",
-  autoEmailOnRelease: false,
+  autoEmailOnRelease: true,
   emailSubject: "Your Offer Letter from {{companyName}}",
   emailBody:
     "Dear {{employeeName}},\n\nYour offer letter has been released. Please find it attached.\n\nBest regards,\n{{signatoryName}}",

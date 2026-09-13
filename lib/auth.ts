@@ -27,6 +27,10 @@ export interface Session {
     employeeCode?: string | null;
     /** Coarse onboarding state: pending -> approved/rejected. */
     onboardingStatus?: string | null;
+    /** Self-service profile fields (employee profile page). */
+    phone?: string | null;
+    emergencyContact?: string | null;
+    bankAccount?: string | null;
   } | null;
 }
 
@@ -67,6 +71,9 @@ export async function auth(): Promise<Session> {
         status: user.status || null,
         employeeCode: user.employeeCode || null,
         onboardingStatus: user.onboardingStatus || null,
+        phone: user.phone || null,
+        emergencyContact: user.emergencyContact || null,
+        bankAccount: user.bankAccount || null,
       },
     };
   } catch {

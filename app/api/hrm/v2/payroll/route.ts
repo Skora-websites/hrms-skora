@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getDb } from "@/lib/db/mongo-helper";
 import {
   getPayGroups,
   createPayGroup,
@@ -12,6 +13,7 @@ import {
   getSalaryComponents,
   createSalaryComponent,
   updateSalaryComponent,
+  markPayrollTransactionPaid,
 } from "@/services/hrm/payroll";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 
@@ -138,6 +140,65 @@ export async function PATCH(request: NextRequest) {
     const type = body.type;
 
     let result;
+    if (body.action === "mark_paid") {
+      // Mark a payroll transaction paid and email the payslip PDF to the
+      // employee using the shared SMTP transport (best-effort).
+      const tx = await markPayrollTransactionPaid(id);
+      if (!tx) return NextResponse.json({ error: "Record not found" }, { status: 404 });
+
+      try {
+        const db = await getDb();
+        const t = tx as any;
+        if (db && t.userEmail) {
+          const settingsDoc = await db.collection("settings").findOne({ key: "offer_letter_config" });
+          const cfg = settingsDoc?.settings || {};
+          if (cfg.autoEmailOnRelease !== false) {
+            const { generatePayslipPdf } = await import("@/lib/payslip-pdf");
+            const { sendPayslipEmail } = await import("@/lib/email");
+            const start = new Date(t.periodStart);
+            const end = new Date(t.periodEnd);
+            const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const periodLabel = start.getMonth() === end.getMonth()
+              ? `${MONTHS[start.getMonth()]} ${start.getFullYear()}`
+              : `${MONTHS[start.getMonth()]} – ${MONTHS[end.getMonth()]} ${end.getFullYear()}`;
+            const pdf = await generatePayslipPdf(
+              {
+                userName: t.userName || "Employee",
+                userEmail: t.userEmail,
+                employeeCode: t.employeeCode,
+                department: t.department,
+                designation: t.designation,
+                periodStart: t.periodStart,
+                periodEnd: t.periodEnd,
+                grossPay: t.grossPay || 0,
+                netPay: t.netPay || 0,
+                earnings: t.earnings,
+                deductions: t.deductions,
+                status: "paid",
+              },
+              cfg
+            );
+            const sent = await sendPayslipEmail({
+              to: t.userEmail,
+              employeeName: t.userName || "Employee",
+              periodLabel,
+              netPay: t.netPay || 0,
+              companyName: cfg.companyName || "SKORA",
+              pdfAttachment: { filename: pdf.filename, content: pdf.buffer },
+            });
+            const { ObjectId } = await import("mongodb");
+            await db.collection("payroll_transactions").updateOne(
+              { _id: ObjectId.isValid(id) ? new ObjectId(id) : (id as any) },
+              { $set: { emailSent: sent === true, emailSentAt: sent ? new Date() : null } }
+            );
+          }
+        }
+      } catch (emailErr) {
+        console.warn("Payslip email failed (payment itself succeeded):", emailErr);
+      }
+
+      return NextResponse.json({ data: tx });
+    }
     if (type === "component") {
       result = await updateSalaryComponent(id, body);
     } else if (type === "pay-group") {
