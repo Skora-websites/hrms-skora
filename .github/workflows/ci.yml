@@ -52,43 +52,31 @@ jobs:
       - name: Seed test accounts
         run: node scripts/seed-test-accounts.js
 
-      - name: Start dev server
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Start production server
         run: |
-          nohup npm run dev > .dev-server.log 2>&1 &
+          nohup npm run start > .server.log 2>&1 &
           for i in $(seq 1 60); do
-            if curl -sf -o /dev/null http://localhost:3000/; then
-              echo "Dev server is up"
-              break
-            fi
-            sleep 2
-            if [ "$i" = "60" ]; then
-              echo "Dev server failed to start — log follows"
-              tail -n 100 .dev-server.log
-              exit 1
-            fi
-          done
-          # Warm up API routes: Next dev returns 503 while a route compiles,
-          # so wait until the session endpoint stops returning 503.
-          for i in $(seq 1 45); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" -m 30 http://localhost:3000/api/auth/session || echo "000")
-            echo "warm-up attempt $i: /api/auth/session -> $code"
-            if [ "$code" != "000" ] && [ "$code" != "503" ]; then
-              echo "API routes are warm"
+            code=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/auth/session || echo "000")
+            if [ "$code" != "000" ]; then
+              echo "Production server is up (session -> $code)"
               exit 0
             fi
             sleep 2
           done
-          echo "API routes never warmed up — log follows"
-          tail -n 100 .dev-server.log
+          echo "Server failed to start — log follows"
+          tail -n 100 .server.log
           exit 1
 
       - name: Run tests
         run: npm test
 
-      - name: Upload dev server log on failure
+      - name: Upload server log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: dev-server-log
-          path: .dev-server.log
+          name: server-log
+          path: .server.log
           retention-days: 7
