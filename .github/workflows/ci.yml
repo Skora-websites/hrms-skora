@@ -59,14 +59,14 @@ jobs:
         run: |
           nohup npm run start > .server.log 2>&1 &
           for i in $(seq 1 60); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/auth/session || echo "000")
-            if [ "$code" != "000" ]; then
-              echo "Production server is up (session -> $code)"
+            code=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/health || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "Production server is up and MongoDB reachable (health -> 200)"
               exit 0
             fi
             sleep 2
           done
-          echo "Server failed to start — log follows"
+          echo "Server failed to become healthy — log follows"
           tail -n 100 .server.log
           exit 1
 
