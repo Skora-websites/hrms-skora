@@ -93,11 +93,21 @@ async function resolveSRV(srvUri) {
   return uri;
 }
 
+// TLS on by default (Atlas requires it; SRV implies it even when params omit ssl).
+// An explicit tls/ssl param always wins — CI's local Mongo uses ?tls=false.
+function uriWantsTls(uri) {
+  const q = uri.split("?")[1] || "";
+  const params = new URLSearchParams(q);
+  const explicit = params.get("tls") || params.get("ssl");
+  if (explicit) return explicit === "true";
+  return true;
+}
+
 async function main() {
   const { MongoClient } = require(path.join(__dirname, "..", "node_modules", "mongodb"));
   const uri = await resolveSRV(process.env.MONGODB_URI);
   console.log("[seed] Connecting (SRV resolved via Google DNS)…");
-  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 15000, tls: true });
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 15000, tls: uriWantsTls(uri) });
   await client.connect();
   const db = client.db(process.env.MONGODB_DB || "hrms");
   const bcrypt = require(path.join(__dirname, "..", "node_modules", "bcryptjs"));

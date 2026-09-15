@@ -27,7 +27,7 @@ jobs:
           --health-retries 5
 
     env:
-      MONGODB_URI: mongodb://localhost:27017/hrms-ci
+      MONGODB_URI: mongodb://localhost:27017/hrms-ci?tls=false
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
     steps:
