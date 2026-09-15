@@ -58,11 +58,27 @@ jobs:
           for i in $(seq 1 60); do
             if curl -sf -o /dev/null http://localhost:3000/; then
               echo "Dev server is up"
+              break
+            fi
+            sleep 2
+            if [ "$i" = "60" ]; then
+              echo "Dev server failed to start — log follows"
+              tail -n 100 .dev-server.log
+              exit 1
+            fi
+          done
+          # Warm up API routes: Next dev returns 503 while a route compiles,
+          # so wait until the session endpoint stops returning 503.
+          for i in $(seq 1 45); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -m 30 http://localhost:3000/api/auth/session || echo "000")
+            echo "warm-up attempt $i: /api/auth/session -> $code"
+            if [ "$code" != "000" ] && [ "$code" != "503" ]; then
+              echo "API routes are warm"
               exit 0
             fi
             sleep 2
           done
-          echo "Dev server failed to start — log follows"
+          echo "API routes never warmed up — log follows"
           tail -n 100 .dev-server.log
           exit 1
 
