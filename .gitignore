@@ -29,6 +29,7 @@
 *.db
 *.json
 !package.json
+!package-lock.json
 !tsconfig.json
 
 # Markdown Documentation & AGENTS Rules (NEVER EXPOSE)
