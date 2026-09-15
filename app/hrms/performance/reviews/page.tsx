@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +17,23 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// ── Mock Data ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-const MOCK_REVIEWS: any[] = [];
+interface ReviewItem {
+  id: string;
+  userId: string;
+  reviewerId: string;
+  period: string;
+  overallRating: number;
+  status: "draft" | "submitted" | "acknowledged" | "completed";
+  periodEnd?: string;
+}
+
+interface UserOption {
+  id: string;
+  displayName?: string;
+  email?: string;
+}
 
 const statusColors: Record<string, "success" | "warning" | "danger" | "info" | "primary"> = {
   draft: "info",
@@ -36,7 +50,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 function StarRating({ rating }: { rating: number }) {
-  if (rating === 0) return <span className="text-xs text-muted">—</span>;
+  if (!rating) return <span className="text-xs text-muted">—</span>;
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -56,10 +70,41 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function ReviewsPage() {
   const [search, setSearch] = useState("");
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_REVIEWS.filter((r) => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [reviewsRes, usersRes] = await Promise.all([
+        fetch("/api/hrm/v2/performance?type=reviews"),
+        fetch("/api/hrm/v2/users?action=list"),
+      ]);
+      const reviewsData = reviewsRes.ok ? await reviewsRes.json() : { data: [] };
+      const usersData = usersRes.ok ? await usersRes.json() : { data: [] };
+      setReviews(reviewsData.data || []);
+      setUserNames(
+        Object.fromEntries(((usersData.data || []) as UserOption[]).map((u) => [u.id, u.displayName || u.email || u.id]))
+      );
+    } catch {
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const nameOf = (id: string) => userNames[id] || id || "—";
+
+  const filtered = reviews.filter((r) => {
     const q = search.toLowerCase();
-    return !search || r.employee.toLowerCase().includes(q) || r.reviewer.toLowerCase().includes(q) || r.period.toLowerCase().includes(q);
+    const employee = nameOf(r.userId).toLowerCase();
+    const reviewer = nameOf(r.reviewerId).toLowerCase();
+    return !search || employee.includes(q) || reviewer.includes(q) || (r.period || "").toLowerCase().includes(q);
   });
 
   return (
@@ -73,7 +118,11 @@ export default function ReviewsPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-sm text-muted">Loading reviews...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Star className="h-12 w-12 text-muted mx-auto mb-4" />
           <p className="text-dark dark:text-white font-semibold text-lg">No reviews found</p>
@@ -95,23 +144,25 @@ export default function ReviewsPage() {
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-dark dark:text-white">{review.employee}</h3>
+                    <h3 className="text-sm font-semibold text-dark dark:text-white">{nameOf(review.userId)}</h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
-                        <Users className="h-3 w-3" />{review.reviewer}
+                        <Users className="h-3 w-3" />{nameOf(review.reviewerId)}
                       </span>
                       <span className="text-xs text-muted flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />{review.period}
+                        <Calendar className="h-3 w-3" />{review.period.replace("_", " ")}
                       </span>
-                      <span className="text-xs text-muted flex items-center gap-1">
-                        <Clock className="h-3 w-3" />Due {review.dueDate}
-                      </span>
+                      {review.periodEnd && (
+                        <span className="text-xs text-muted flex items-center gap-1">
+                          <Clock className="h-3 w-3" />Ends {review.periodEnd}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <StarRating rating={review.rating} />
-                  <Badge variant={statusColors[review.status]} size="sm">
+                  <StarRating rating={review.overallRating} />
+                  <Badge variant={statusColors[review.status] || "info"} size="sm">
                     <span className="flex items-center gap-1">
                       {statusIcons[review.status]}
                       {review.status.charAt(0).toUpperCase() + review.status.slice(1)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,6 @@ import {
   FileCheck,
   Search,
   Briefcase,
-  Users,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -17,9 +16,27 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// ── Mock Data ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-const MOCK_APPLICATIONS: any[] = [];
+interface ApplicationItem {
+  id: string;
+  candidateId: string;
+  jobId: string;
+  stage: string;
+  status: "pending" | "in_progress" | "accepted" | "rejected" | "withdrawn";
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface Candidate {
+  id: string;
+  name: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
+}
 
 const stageLabels: Record<string, string> = {
   new: "New Application",
@@ -50,10 +67,45 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function ApplicationsPage() {
   const [search, setSearch] = useState("");
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+  const [candidates, setCandidates] = useState<Record<string, string>>({});
+  const [jobs, setJobs] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_APPLICATIONS.filter((a) => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [appsRes, candRes, jobsRes] = await Promise.all([
+        fetch("/api/hrm/v2/recruitment?type=applications"),
+        fetch("/api/hrm/v2/recruitment?type=candidates"),
+        fetch("/api/hrm/v2/recruitment?type=jobs"),
+      ]);
+      const appsData = appsRes.ok ? await appsRes.json() : { data: [] };
+      const candData = candRes.ok ? await candRes.json() : { data: [] };
+      const jobsData = jobsRes.ok ? await jobsRes.json() : { data: [] };
+      setApplications(appsData.data || []);
+      setCandidates(
+        Object.fromEntries(((candData.data || []) as Candidate[]).map((c) => [c.id, c.name]))
+      );
+      setJobs(
+        Object.fromEntries(((jobsData.data || []) as Job[]).map((j) => [j.id, j.title]))
+      );
+    } catch {
+      setApplications([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const filtered = applications.filter((a) => {
+    const candidateName = candidates[a.candidateId] || "";
+    const jobTitle = jobs[a.jobId] || "";
     const q = search.toLowerCase();
-    return !search || a.candidate.toLowerCase().includes(q) || a.position.toLowerCase().includes(q);
+    return !search || candidateName.toLowerCase().includes(q) || jobTitle.toLowerCase().includes(q);
   });
 
   return (
@@ -67,7 +119,11 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-sm text-muted">Loading applications...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <FileCheck className="h-12 w-12 text-muted mx-auto mb-4" />
           <p className="text-dark dark:text-white font-semibold text-lg">No applications found</p>
@@ -86,13 +142,15 @@ export default function ApplicationsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
-                    {app.candidate.charAt(0).toUpperCase()}
+                    {(candidates[app.candidateId] || "?").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-dark dark:text-white">{app.candidate}</h3>
+                    <h3 className="text-sm font-semibold text-dark dark:text-white">
+                      {candidates[app.candidateId] || "Unknown candidate"}
+                    </h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
-                        <Briefcase className="h-3 w-3" />{app.position}
+                        <Briefcase className="h-3 w-3" />{jobs[app.jobId] || "Unassigned position"}
                       </span>
                       <span className="text-xs text-muted flex items-center gap-1">
                         <FileCheck className="h-3 w-3" />{stageLabels[app.stage] || app.stage}
@@ -107,7 +165,9 @@ export default function ApplicationsPage() {
                       {app.status.replace("_", " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                     </span>
                   </Badge>
-                  <span className="text-xs text-muted">Updated {app.updatedAt}</span>
+                  {app.updatedAt && (
+                    <span className="text-xs text-muted">Updated {app.updatedAt}</span>
+                  )}
                 </div>
               </div>
             </motion.div>

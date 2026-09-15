@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,19 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// ── Mock Data ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-const MOCK_CANDIDATES: any[] = [];
+interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  position: string;
+  location?: string;
+  status: "new" | "review" | "shortlisted" | "interviewing" | "offered" | "hired" | "rejected";
+  appliedDate?: string;
+  createdAt?: string;
+}
 
 const statusBadge: Record<string, "success" | "warning" | "info" | "primary" | "danger"> = {
   new: "info",
@@ -31,8 +41,27 @@ const statusBadge: Record<string, "success" | "warning" | "info" | "primary" | "
 
 export default function CandidatesPage() {
   const [search, setSearch] = useState("");
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_CANDIDATES.filter((c) => {
+  const fetchCandidates = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/hrm/v2/recruitment?type=candidates");
+      const data = res.ok ? await res.json() : { data: [] };
+      setCandidates(data.data || []);
+    } catch {
+      setCandidates([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCandidates();
+  }, [fetchCandidates]);
+
+  const filtered = candidates.filter((c) => {
     const q = search.toLowerCase();
     return !search || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.position.toLowerCase().includes(q);
   });
@@ -48,7 +77,11 @@ export default function CandidatesPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-sm text-muted">Loading candidates...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Users className="h-12 w-12 text-muted mx-auto mb-4" />
           <p className="text-dark dark:text-white font-semibold text-lg">No candidates found</p>
@@ -75,15 +108,19 @@ export default function CandidatesPage() {
                       <span className="text-xs text-muted flex items-center gap-1">
                         <Mail className="h-3 w-3" />{candidate.email}
                       </span>
+                      {candidate.phone && (
+                        <span className="text-xs text-muted flex items-center gap-1">
+                          <Phone className="h-3 w-3" />{candidate.phone}
+                        </span>
+                      )}
                       <span className="text-xs text-muted flex items-center gap-1">
-                        <Phone className="h-3 w-3" />{candidate.phone}
+                        <Briefcase className="h-3 w-3" />{candidate.position || "Unassigned"}
                       </span>
-                      <span className="text-xs text-muted flex items-center gap-1">
-                        <Briefcase className="h-3 w-3" />{candidate.position}
-                      </span>
-                      <span className="text-xs text-muted flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />{candidate.location}
-                      </span>
+                      {candidate.location && (
+                        <span className="text-xs text-muted flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />{candidate.location}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -91,7 +128,9 @@ export default function CandidatesPage() {
                   <Badge variant={statusBadge[candidate.status] || "info"} size="sm">
                     {candidate.status.charAt(0).toUpperCase() + candidate.status.slice(1)}
                   </Badge>
-                  <span className="text-xs text-muted">Applied {candidate.appliedDate}</span>
+                  {candidate.appliedDate && (
+                    <span className="text-xs text-muted">Applied {candidate.appliedDate}</span>
+                  )}
                 </div>
               </div>
             </motion.div>

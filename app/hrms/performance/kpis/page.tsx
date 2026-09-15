@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,6 @@ import {
   Search,
   TrendingUp,
   TrendingDown,
-  Minus,
   Target,
   Users,
   Clock,
@@ -19,9 +18,26 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// ── Mock Data ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-const MOCK_KPIS: any[] = [];
+interface KpiItem {
+  id: string;
+  userId: string;
+  name: string;
+  category: string;
+  target: number;
+  actual: number;
+  unit: string;
+  weight: number;
+  period: string;
+  status: "on_track" | "behind" | "achieved" | "not_met";
+}
+
+interface UserOption {
+  id: string;
+  displayName?: string;
+  email?: string;
+}
 
 const categoryColors: Record<string, string> = {
   productivity: "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -56,10 +72,39 @@ function formatValue(value: number, unit: string): string {
 
 export default function KpisPage() {
   const [search, setSearch] = useState("");
+  const [kpis, setKpis] = useState<KpiItem[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_KPIS.filter((k) => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [kpisRes, usersRes] = await Promise.all([
+        fetch("/api/hrm/v2/performance?type=kpis"),
+        fetch("/api/hrm/v2/users?action=list"),
+      ]);
+      const kpisData = kpisRes.ok ? await kpisRes.json() : { data: [] };
+      const usersData = usersRes.ok ? await usersRes.json() : { data: [] };
+      setKpis(kpisData.data || []);
+      setUserNames(
+        Object.fromEntries(((usersData.data || []) as UserOption[]).map((u) => [u.id, u.displayName || u.email || u.id]))
+      );
+    } catch {
+      setKpis([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const nameOf = (id: string) => userNames[id] || id || "—";
+
+  const filtered = kpis.filter((k) => {
     const q = search.toLowerCase();
-    return !search || k.name.toLowerCase().includes(q) || k.employee.toLowerCase().includes(q) || k.category.toLowerCase().includes(q);
+    return !search || k.name.toLowerCase().includes(q) || nameOf(k.userId).toLowerCase().includes(q) || k.category.toLowerCase().includes(q);
   });
 
   return (
@@ -73,7 +118,11 @@ export default function KpisPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-sm text-muted">Loading KPIs...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <BarChart3 className="h-12 w-12 text-muted mx-auto mb-4" />
           <p className="text-dark dark:text-white font-semibold text-lg">No KPIs found</p>
@@ -100,7 +149,7 @@ export default function KpisPage() {
                       <h3 className="text-sm font-semibold text-dark dark:text-white">{kpi.name}</h3>
                       <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                         <span className="text-xs text-muted flex items-center gap-1">
-                          <Users className="h-3 w-3" />{kpi.employee}
+                          <Users className="h-3 w-3" />{nameOf(kpi.userId)}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded border ${categoryColors[kpi.category] || categoryColors.other}`}>
                           {kpi.category.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
@@ -133,7 +182,7 @@ export default function KpisPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted font-medium">Weight: {kpi.weight}%</span>
-                    <Badge variant={statusColors[kpi.status]} size="sm">
+                    <Badge variant={statusColors[kpi.status] || "info"} size="sm">
                       <span className="flex items-center gap-1">
                         {statusIcons[kpi.status]}
                         {kpi.status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}

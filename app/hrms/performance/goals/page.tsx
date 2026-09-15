@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { FormInput } from "@/components/ui/form-input";
+import { FormSelect } from "@/components/ui/form-select";
+import { FormTextarea } from "@/components/ui/form-textarea";
+import { FormActions } from "@/components/ui/form-actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Target,
   Search,
@@ -14,16 +24,33 @@ import {
   Users,
   Calendar,
   TrendingUp,
-  Trophy,
   CheckCircle2,
   AlertCircle,
   Clock,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMutation } from "@/hooks/use-mutation";
+import { useToast } from "@/hooks/use-toast";
+import { Toast, ToastPortal } from "@/components/ui/toast";
 
-// ── Mock Data ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-const MOCK_GOALS: any[] = [];
+interface GoalItem {
+  id: string;
+  userId: string;
+  title: string;
+  category: string;
+  priority: "low" | "medium" | "high" | "critical";
+  status: "draft" | "in_progress" | "achieved" | "partially_achieved" | "not_achieved";
+  progress: number;
+  targetDate?: string;
+}
+
+interface UserOption {
+  id: string;
+  displayName?: string;
+  email?: string;
+}
 
 const statusBadge: Record<string, "success" | "warning" | "danger" | "info" | "primary"> = {
   draft: "info",
@@ -41,23 +68,168 @@ const statusIcons: Record<string, React.ReactNode> = {
   not_achieved: <AlertCircle className="h-3.5 w-3.5" />,
 };
 
-export default function GoalsPage() {
-  const router = useRouter();
-  const [search, setSearch] = useState("");
+const EMPTY_GOAL_FORM = {
+  title: "",
+  userId: "",
+  category: "performance",
+  priority: "medium",
+  targetDate: "",
+  description: "",
+};
 
-  const filtered = MOCK_GOALS.filter((g) => {
+export default function GoalsPage() {
+  const [search, setSearch] = useState("");
+  const [goals, setGoals] = useState<GoalItem[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [goalForm, setGoalForm] = useState(EMPTY_GOAL_FORM);
+
+  const mutation = useMutation();
+  const toast = useToast();
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [goalsRes, usersRes] = await Promise.all([
+        fetch("/api/hrm/v2/performance?type=goals"),
+        fetch("/api/hrm/v2/users?action=list"),
+      ]);
+      const goalsData = goalsRes.ok ? await goalsRes.json() : { data: [] };
+      const usersData = usersRes.ok ? await usersRes.json() : { data: [] };
+      const users = (usersData.data || []) as UserOption[];
+      setGoals(goalsData.data || []);
+      setUserOptions(users);
+      setUserNames(Object.fromEntries(users.map((u) => [u.id, u.displayName || u.email || u.id])));
+    } catch {
+      setGoals([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const nameOf = (id: string) => userNames[id] || id || "—";
+
+  const handleAddGoal = async () => {
+    if (!goalForm.title.trim()) return;
+    const result = await mutation.createRecord("/api/hrm/v2/performance", {
+      action: "create_goal",
+      title: goalForm.title,
+      userId: goalForm.userId || undefined,
+      category: goalForm.category,
+      priority: goalForm.priority,
+      targetDate: goalForm.targetDate || undefined,
+      description: goalForm.description,
+    });
+    if (result) {
+      setShowAddDialog(false);
+      setGoalForm(EMPTY_GOAL_FORM);
+      fetchData();
+      toast.success("Goal created", `"${goalForm.title}" has been added successfully.`);
+    } else {
+      toast.error("Create failed", mutation.error || "Please try again.");
+    }
+  };
+
+  const filtered = goals.filter((g) => {
     const q = search.toLowerCase();
-    return !search || g.title.toLowerCase().includes(q) || g.employee.toLowerCase().includes(q);
+    return !search || g.title.toLowerCase().includes(q) || nameOf(g.userId).toLowerCase().includes(q);
   });
 
   return (
     <AppShell title="Goals">
+      {/* Toasts */}
+      <ToastPortal>
+        <AnimatePresence>
+          {toast.toasts.map((t) => (
+            <Toast
+              key={t.id}
+              variant={t.variant}
+              message={t.message}
+              description={t.description}
+              onClose={() => toast.dismissToast(t.id)}
+            />
+          ))}
+        </AnimatePresence>
+      </ToastPortal>
+
       <PageHeader title="Goals" description="Manage and track employee goals and OKRs.">
-        <Button onClick={() => router.push("/hrms/performance")}>
+        <Button onClick={() => { setGoalForm(EMPTY_GOAL_FORM); setShowAddDialog(true); }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Goal
         </Button>
       </PageHeader>
+
+      {/* Add Goal Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Goal</DialogTitle>
+            <DialogDescription>Create a new goal for an employee.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleAddGoal(); }}>
+          <div className="space-y-4">
+            <FormInput
+              label="Title"
+              value={goalForm.title}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalForm({ ...goalForm, title: e.target.value })}
+              placeholder="e.g. Improve response time"
+              required
+            />
+            <FormSelect
+              label="Employee"
+              options={[{ value: "", label: "Select employee" }, ...userOptions.map((u) => ({ value: u.id, label: u.displayName || u.email || u.id }))]}
+              value={goalForm.userId}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGoalForm({ ...goalForm, userId: e.target.value })}
+            />
+            <FormSelect
+              label="Category"
+              options={[
+                { value: "performance", label: "Performance" },
+                { value: "development", label: "Development" },
+                { value: "career", label: "Career" },
+                { value: "personal", label: "Personal" },
+              ]}
+              value={goalForm.category}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGoalForm({ ...goalForm, category: e.target.value })}
+            />
+            <FormSelect
+              label="Priority"
+              options={[
+                { value: "low", label: "Low" },
+                { value: "medium", label: "Medium" },
+                { value: "high", label: "High" },
+                { value: "critical", label: "Critical" },
+              ]}
+              value={goalForm.priority}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGoalForm({ ...goalForm, priority: e.target.value })}
+            />
+            <FormInput
+              label="Target Date"
+              type="date"
+              value={goalForm.targetDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalForm({ ...goalForm, targetDate: e.target.value })}
+            />
+            <FormTextarea
+              label="Description"
+              value={goalForm.description}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setGoalForm({ ...goalForm, description: e.target.value })}
+              placeholder="Describe the goal and how success is measured..."
+            />
+            <FormActions
+              onCancel={() => setShowAddDialog(false)}
+              submitLabel="Create Goal"
+              loading={mutation.loading}
+            />
+          </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1 max-w-sm">
@@ -66,7 +238,11 @@ export default function GoalsPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-sm text-muted">Loading goals...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Target className="h-12 w-12 text-muted mx-auto mb-4" />
           <p className="text-dark dark:text-white font-semibold text-lg">No goals found</p>
@@ -91,12 +267,14 @@ export default function GoalsPage() {
                     <h3 className="text-sm font-semibold text-dark dark:text-white">{goal.title}</h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
-                        <Users className="h-3 w-3" />{goal.employee}
+                        <Users className="h-3 w-3" />{nameOf(goal.userId)}
                       </span>
                       <span className="text-xs text-muted">{goal.category}</span>
-                      <span className="text-xs text-muted flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />{goal.targetDate}
-                      </span>
+                      {goal.targetDate && (
+                        <span className="text-xs text-muted flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />{goal.targetDate}
+                        </span>
+                      )}
                     </div>
                     {/* Progress bar */}
                     <div className="mt-3 flex items-center gap-2 max-w-xs">
@@ -123,7 +301,7 @@ export default function GoalsPage() {
                   }`}>
                     {goal.priority.charAt(0).toUpperCase() + goal.priority.slice(1)}
                   </span>
-                  <Badge variant={statusBadge[goal.status]} size="sm">
+                  <Badge variant={statusBadge[goal.status] || "info"} size="sm">
                     <span className="flex items-center gap-1">
                       {statusIcons[goal.status]}
                       {goal.status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}

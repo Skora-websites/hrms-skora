@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
@@ -14,17 +14,26 @@ import {
   MapPin,
   Clock,
   Users,
-  CalendarCheck,
-  FileCheck,
   Pencil,
   Trash2,
   Eye,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMutation } from "@/hooks/use-mutation";
+import { useToast } from "@/hooks/use-toast";
+import { Toast, ToastPortal } from "@/components/ui/toast";
 
-// ── Mock Data ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-const MOCK_JOBS: any[] = [];
+interface Job {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  status: "open" | "paused" | "closed" | "draft";
+  applicants: number;
+}
 
 const statusBadge: Record<string, "success" | "warning" | "danger" | "info"> = {
   open: "success",
@@ -36,15 +45,64 @@ const statusBadge: Record<string, "success" | "warning" | "danger" | "info"> = {
 export default function JobsPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_JOBS.filter((j) => {
+  const fetchJobs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/hrm/v2/recruitment?type=jobs");
+      const data = res.ok ? await res.json() : { data: [] };
+      setJobs(data.data || []);
+    } catch {
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  const mutation = useMutation();
+  const toast = useToast();
+
+  const handleDelete = async (job: Job) => {
+    if (!window.confirm(`Delete job "${job.title}"? This cannot be undone.`)) return;
+    const result = await mutation.deleteRecord(`/api/hrm/v2/recruitment?id=${job.id}`);
+    if (result) {
+      toast.success("Job deleted", `"${job.title}" has been removed.`);
+      fetchJobs();
+    } else {
+      toast.error("Delete failed", mutation.error || "Please try again.");
+    }
+  };
+
+  const filtered = jobs.filter((j) => {
     const q = search.toLowerCase();
     return !search || j.title.toLowerCase().includes(q) || j.department.toLowerCase().includes(q);
   });
 
   return (
     <AppShell title="Jobs">
-      <PageHeader title="Jobs" description="Manage all job postings and track applicants per role.">          <Button onClick={() => router.push("/hrms/recruitment")}>
+      {/* Toasts */}
+      <ToastPortal>
+        <AnimatePresence>
+          {toast.toasts.map((t) => (
+            <Toast
+              key={t.id}
+              variant={t.variant}
+              message={t.message}
+              description={t.description}
+              onClose={() => toast.dismissToast(t.id)}
+            />
+          ))}
+        </AnimatePresence>
+      </ToastPortal>
+
+      <PageHeader title="Jobs" description="Manage all job postings and track applicants per role.">
+        <Button onClick={() => router.push("/hrms/recruitment")}>
           <Plus className="mr-2 h-4 w-4" />
           Post a Job
         </Button>
@@ -57,7 +115,11 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-12 text-center">
+          <p className="text-sm text-muted">Loading jobs...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Briefcase className="h-12 w-12 text-muted mx-auto mb-4" />
           <p className="text-dark dark:text-white font-semibold text-lg">No jobs found</p>
@@ -94,12 +156,21 @@ export default function JobsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant={statusBadge[job.status]} size="sm">
+                  <Badge variant={statusBadge[job.status] || "info"} size="sm">
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                   </Badge>
                   <span className="text-xs font-semibold text-dark dark:text-white bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
                     {job.applicants} applicants
                   </span>
+                  <Button variant="ghost" size="icon-sm" onClick={() => router.push(`/hrms/recruitment?job=${job.id}`)} aria-label={`View ${job.title}`}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => router.push(`/hrms/recruitment?job=${job.id}`)} aria-label={`Edit ${job.title}`}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(job)} aria-label={`Delete ${job.title}`}>
+                    <Trash2 className="h-4 w-4 text-danger" />
+                  </Button>
                 </div>
               </div>
             </motion.div>
