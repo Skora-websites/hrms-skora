@@ -24,6 +24,9 @@
 .env.test.local
 .env.production.local
 
+# Codebuff agent state
+.freebuff/
+
 # Database Files
 /data/
 *.db

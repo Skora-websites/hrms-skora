@@ -140,8 +140,17 @@ export interface HrmsAccountRole {
 }
 
 function parseHrmsAccountRoles(): Record<string, HrmsAccountRole> {
-  const raw = process.env.HRMS_ACCOUNT_ROLES_JSON;
+  let raw = process.env.HRMS_ACCOUNT_ROLES_JSON;
   if (!raw) return {};
+  // Tolerate quote-wrapped values: some dotenv-style loaders don't strip
+  // wrapping single/double quotes, leaving `'{"skorain"...}'` as the raw value.
+  const trimmed = raw.trim();
+  if (
+    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+  ) {
+    raw = trimmed.slice(1, -1);
+  }
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {

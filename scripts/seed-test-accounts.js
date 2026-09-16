@@ -61,7 +61,9 @@ const PASSWORDS = {
 // ── SRV resolution (mirrors lib/mongodb.ts) ──
 async function resolveSRV(srvUri) {
   if (!srvUri.startsWith("mongodb+srv://")) return srvUri;
-  dns.setServers ? null : null;
+  // Use public DNS servers (mirrors lib/mongodb.ts) because the system DNS
+  // often fails to resolve _mongodb._tcp SRV records.
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
   const uriBody = srvUri.replace("mongodb+srv://", "");
   const atIndex = uriBody.indexOf("@");
   const credentials = atIndex >= 0 ? uriBody.substring(0, atIndex) : "";
@@ -81,9 +83,6 @@ async function resolveSRV(srvUri) {
 
   const hosts = srvRecords.map((r) => `${r.name}:${r.port}`).join(",");
   const params = new URLSearchParams(existingQuery);
-  for (const kv of (txtRecords[0] || []).join("")) {
-    // txtRecords[0][0] is a single string like "authSource=admin&retrywrites=true"
-  }
   const txtStr = ((txtRecords[0] || [])[0] || "").trim();
   for (const pair of txtStr.split("&").filter(Boolean)) {
     const eq = pair.indexOf("=");
