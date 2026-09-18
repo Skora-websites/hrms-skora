@@ -49,12 +49,15 @@ export async function GET(request: NextRequest) {
       );
     } catch { /* non-fatal */ }
 
+    // NOTE: the PDF password is intentionally NOT returned here (no custom
+    // header). It leaks via intermediary/proxy logs and defeats the
+    // password protection. Clients fetch it from the dedicated
+    // /api/hrm/v2/offer-letters/password endpoint (owner or super_admin only).
     return new NextResponse(new Uint8Array(pdf.buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${pdf.filename}"`,
-        "X-Offer-Letter-Password": pdf.password,
       },
     });
   } catch (error: any) {

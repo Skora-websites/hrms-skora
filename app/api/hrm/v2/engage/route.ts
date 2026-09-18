@@ -6,6 +6,7 @@ import {
   updatePost,
   deletePost,
   getComments,
+  getCommentById,
   createComment,
   deleteComment,
   toggleReaction,
@@ -14,6 +15,8 @@ import {
   castVote,
 } from "@/services/hrm/engage";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
+
+const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,16 +73,21 @@ export async function POST(request: NextRequest) {
 
     let result;
 
+    // Attribution integrity: the author/voter identity is ALWAYS the
+    // authenticated caller — a client-supplied userId would let anyone post
+    // or vote as a colleague.
+    const selfBody = { ...body, userId: auth.userId };
+
     if (action === "comment") {
-      result = await createComment(tenantId, body);
+      result = await createComment(tenantId, selfBody);
     } else if (action === "react") {
-      result = await toggleReaction(tenantId, body);
+      result = await toggleReaction(tenantId, selfBody);
     } else if (action === "poll") {
-      result = await createPoll(tenantId, body);
+      result = await createPoll(tenantId, selfBody);
     } else if (action === "vote") {
-      result = await castVote(tenantId, body.pollId, body.optionId, body.userId);
+      result = await castVote(tenantId, body.pollId, body.optionId, auth.userId);
     } else {
-      result = await createPost(tenantId, body);
+      result = await createPost(tenantId, selfBody);
     }
 
     return NextResponse.json({ data: result }, { status: 201 });
@@ -101,6 +109,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+    const existing = await getPostById(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+    // IDOR guard: only the author (or HR moderators) may edit a post.
+    if (!HR_LEVEL_ROLES.has(auth.role) && (existing as any).userId !== auth.userId) {
+      return NextResponse.json({ error: "Forbidden: you can only edit your own posts" }, { status: 403 });
+    }
     const post = await updatePost(id, body);
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
@@ -128,8 +144,20 @@ export async function DELETE(request: NextRequest) {
 
     let deleted;
     if (type === "comment") {
+      // IDOR guard: only the comment author (or HR moderators) may delete.
+      const target = await getCommentById(id);
+      if (target && !HR_LEVEL_ROLES.has(auth.role) && (target as any).userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden: you can only delete your own comments" }, { status: 403 });
+      }
       deleted = await deleteComment(id);
     } else {
+      const existing = await getPostById(id);
+      if (!existing) {
+        return NextResponse.json({ error: "Record not found" }, { status: 404 });
+      }
+      if (!HR_LEVEL_ROLES.has(auth.role) && (existing as any).userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden: you can only delete your own posts" }, { status: 403 });
+      }
       deleted = await deletePost(id);
     }
 

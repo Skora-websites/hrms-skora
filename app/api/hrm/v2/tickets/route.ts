@@ -40,11 +40,27 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   // Ticket replies
   if (replies && ticketId) {
     const result = await getTicketReplies(ticketId);
+    // IDOR guard: employees may only read replies of tickets they can see.
+    if (auth.role === "employee") {
+      const parent = await getTicketById(ticketId);
+      if (!parent) return notFound("Ticket not found");
+      if (parent.createdById !== auth.userId && parent.assigneeId !== auth.userId) {
+        return forbidden("You can only view replies on your own tickets");
+      }
+    }
     return NextResponse.json({ data: result });
   }
 
   // Ticket timeline
   if (timeline && ticketId) {
+    // IDOR guard: same ownership rule as replies.
+    if (auth.role === "employee") {
+      const parent = await getTicketById(ticketId);
+      if (!parent) return notFound("Ticket not found");
+      if (parent.createdById !== auth.userId && parent.assigneeId !== auth.userId) {
+        return forbidden("You can only view your own ticket timelines");
+      }
+    }
     const result = await getTicketTimeline(ticketId);
     return NextResponse.json({ data: result });
   }
@@ -96,6 +112,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     if (!body.ticketId || !body.content) {
       return badRequest("Missing required fields: ticketId, content");
     }
+    if (typeof body.content !== "string" || body.content.length > 2000) {
+      return badRequest("Reply content must be 2000 characters or fewer");
+    }
 
     // Employees can only reply to their own tickets
     if (auth.role === "employee") {
@@ -127,8 +146,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const tenantId = "default";
 
   const body = await request.json();
-  if (!body.subject) {
-    return badRequest("Missing required field: subject");
+  if (!body.subject || typeof body.subject !== "string" || body.subject.trim().length < 3) {
+    return badRequest("Subject is required and must be at least 3 characters");
+  }
+  if (body.subject.length > 150) {
+    return badRequest("Subject must be 150 characters or fewer");
   }
 
   const ticket = await createTicket(tenantId, {

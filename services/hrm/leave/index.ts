@@ -209,6 +209,30 @@ export async function applyLeave(
     throw new Error("Insufficient leave balance");
   }
 
+  // Duplicate-submission guard: the same employee must not hold two
+  // active (pending/approved) requests whose date ranges overlap —
+  // a double-click or double-submit would otherwise deduct the balance
+  // twice and create conflicting attendance records.
+  const overlappingStatuses = ["pending", "approved"] as const;
+  for (const st of overlappingStatuses) {
+    const active = await leaveRequestsService.findManyInTenant(tenantId, {
+      where: [
+        { field: "userId", op: "==" as const, value: data.userId },
+        { field: "status", op: "==" as const, value: st },
+      ],
+    });
+    const clash = active.find(
+      (r) =>
+        new Date(r.fromDate as any).getTime() <= data.toDate.getTime() &&
+        new Date(r.toDate as any).getTime() >= data.fromDate.getTime()
+    );
+    if (clash) {
+      throw new Error(
+        `You already have a ${st} leave request overlapping these dates`
+      );
+    }
+  }
+
   const request = await leaveRequestsService.create({
     ...data,
     totalDays,

@@ -162,6 +162,15 @@ export async function processPayroll(
   periodEnd: Date,
   processedBy: string
 ): Promise<PayrollRun> {
+  // Period sanity: a payroll period must be a valid, bounded range.
+  if (
+    !Number.isFinite(periodStart.getTime()) ||
+    !Number.isFinite(periodEnd.getTime()) ||
+    periodEnd.getTime() < periodStart.getTime()
+  ) {
+    throw new Error("Invalid payroll period: end must be on or after start");
+  }
+
   // 1. Resolve or create standard pay group
   let payGroup = payGroupId && payGroupId !== "default" ? await payGroupsService.findById(payGroupId) : null;
 
@@ -183,6 +192,26 @@ export async function processPayroll(
   }
 
   const effectivePayGroupId = payGroup.id;
+
+  // Duplicate-period guard — AFTER pay-group resolution so the stored
+  // effectivePayGroupId is compared. Running payroll twice for the same
+  // pay group over an overlapping period would create a second paid
+  // transaction per employee (double disbursement on paper and inflated
+  // dashboards).
+  const existingRuns = await payrollRunsService.findManyInTenant(tenantId, {
+    where: [{ field: "payGroupId", op: "==", value: effectivePayGroupId }],
+  });
+  const duplicate = existingRuns.find(
+    (r) =>
+      r.status !== "failed" &&
+      new Date(r.periodStart as any).getTime() <= periodEnd.getTime() &&
+      new Date(r.periodEnd as any).getTime() >= periodStart.getTime()
+  );
+  if (duplicate) {
+    throw new Error(
+      `Payroll for this pay group already covers a period overlapping ${periodStart.toISOString().slice(0, 10)} – ${periodEnd.toISOString().slice(0, 10)} (run ${duplicate.id})`
+    );
+  }
 
   // 2. Fetch all active workforce employees (excluding super_admin)
   const { getEmployees } = await import("@/services/hrm/employee");

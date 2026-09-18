@@ -17,9 +17,33 @@ import {
   deleteKpi,
 } from "@/services/hrm/performance";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
-import { withErrorHandler, badRequest, notFound } from "@/lib/api-handler";
+import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
 import { getTasks } from "@/services/hrm/tasks";
 import { getAttendanceRecords } from "@/lib/db/attendance";
+import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "mongodb";
+
+const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
+
+async function isDirectReportOf(managerId: string, employeeId: string): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+    const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
+    return (employee as any)?.reportingManager === managerId;
+  } catch {
+    return false;
+  }
+}
+
+/** Who may act on someone else's performance record: HR always, managers for
+ *  their direct reports, everyone else never. */
+async function canActOn(caller: { userId: string; role: string }, targetUserId: string): Promise<boolean> {
+  if (caller.userId === targetUserId) return true;
+  if (HR_LEVEL_ROLES.has(caller.role)) return true;
+  if (caller.role === "manager") return isDirectReportOf(caller.userId, targetUserId);
+  return false;
+}
 
 // "My Performance" payload for the employee self-view: task completion +
 // attendance-derived metrics, computed server-side from real records.
@@ -156,12 +180,24 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   // Create goal
   if (action === "create_goal") {
-    if (!body.title) return badRequest("Missing required field: title");
+    if (!body.title || typeof body.title !== "string" || body.title.trim().length < 3) {
+      return badRequest("Goal title is required (min 3 characters)");
+    }
+    if (body.title.length > 150) {
+      return badRequest("Goal title must be 150 characters or fewer");
+    }
+
+    // Ownership: employees can only create goals for themselves; managers for
+    // direct reports; HR for anyone.
+    const targetUserId = body.userId || auth.userId;
+    if (!(await canActOn(auth, targetUserId))) {
+      return forbidden("You can only create goals for yourself or your direct reports");
+    }
 
     const goal = await createGoal({
       ...body,
       tenantId,
-      userId: body.userId || auth.userId,
+      userId: targetUserId,
       status: body.status || "draft",
       progress: body.progress || 0,
       weight: body.weight || 1,
@@ -173,6 +209,16 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   if (action === "create_review") {
     if (!body.userId || !body.reviewerId) {
       return badRequest("Missing required fields: userId, reviewerId");
+    }
+    // The reviewer identity is always the authenticated caller — a spoofed
+    // reviewerId would let anyone impersonate a reviewer.
+    if (body.reviewerId !== auth.userId) {
+      return forbidden("Reviewer must be the logged-in user");
+    }
+    // Employees cannot open reviews on other people; managers only on direct
+    // reports; HR on anyone.
+    if (!(await canActOn(auth, body.userId))) {
+      return forbidden("You can only create reviews for your direct reports");
     }
     const review = await createReview({
       ...body,
@@ -200,14 +246,28 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
   const body = await request.json();
 
   if (type === "goal") {
+    const existing: any = await getGoalById(id);
+    if (!existing) return notFound("Goal not found");
+    // Ownership: only the goal owner, their manager, or HR can update it.
+    if (!(await canActOn(auth, existing.userId))) {
+      return forbidden("You can only update your own goals");
+    }
+    // Ownership transfer via PATCH is an HR action.
+    if (body.userId && body.userId !== existing.userId && !HR_LEVEL_ROLES.has(auth.role)) {
+      return forbidden("Only HR can reassign goals");
+    }
     const goal = await updateGoal(id, body);
-    if (!goal) return notFound("Goal not found");
     return NextResponse.json({ data: goal });
   }
 
   if (type === "review") {
+    const existing: any = await getReviewById(id);
+    if (!existing) return notFound("Review not found");
+    // Only the reviewer, the review subject, or HR can update a review.
+    if (existing.reviewerId !== auth.userId && existing.userId !== auth.userId && !HR_LEVEL_ROLES.has(auth.role)) {
+      return forbidden("You can only update reviews you authored or own");
+    }
     const review = await updateReview(id, body);
-    if (!review) return notFound("Review not found");
     return NextResponse.json({ data: review });
   }
 

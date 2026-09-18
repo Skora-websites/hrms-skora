@@ -9,6 +9,7 @@ import {
   signInWithMongo,
   createSession,
   destroySession,
+  signCookieValue,
   SESSION_COOKIE_OPTIONS,
   SESSION_EXPIRES_IN_MS,
 } from "@/lib/auth";
@@ -81,8 +82,9 @@ export async function signup(prevState: AuthState | undefined, formData: FormDat
     // Create session
     const sessionToken = await createSession(newUser.id);
     const cookieStore = await cookies();
-    cookieStore.set("session", sessionToken, { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
-    cookieStore.set("user_role", role, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+    cookieStore.set("session", await signCookieValue(sessionToken), { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+    cookieStore.set("user_role", await signCookieValue(role), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+    cookieStore.set("user_status", await signCookieValue("active"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 3600 });
     redirect(ROLE_DASHBOARDS[role] || "/hrms/employee");
   } catch (error) {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") throw error;
@@ -99,8 +101,8 @@ export async function login(prevState: AuthState | undefined, formData: FormData
     const user = await signInWithMongo(email, password);
     const sessionToken = await createSession(user.id);
     const cookieStore = await cookies();
-    cookieStore.set("session", sessionToken, { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
-    cookieStore.set("user_role", user.role, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+    cookieStore.set("session", await signCookieValue(sessionToken), { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+    cookieStore.set("user_role", await signCookieValue(user.role), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
     redirect(ROLE_DASHBOARDS[user.role] || "/hrms/employee");
   } catch (error) {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") throw error;
@@ -113,6 +115,8 @@ export async function logout() {
   await destroySession();
   const cookieStore = await cookies();
   cookieStore.delete("user_role");
+  cookieStore.delete("user_status");
+  cookieStore.delete("must_change_password");
   redirect("/hrms/login");
 }
 

@@ -7,7 +7,7 @@ import type { Post, Comment } from "@/types";
  * Hook to fetch posts.
  */
 export function usePosts(params?: Record<string, string>) {
-  return useCollection<Post>("/api/hrm/v2/engage/posts", params);
+  return useCollection<Post>("/api/hrm/v2/engage", params);
 }
 
 /**
@@ -15,7 +15,7 @@ export function usePosts(params?: Record<string, string>) {
  */
 export function useComments(postId: string | null) {
   return useCollection<Comment>(
-    postId ? `/api/hrm/v2/engage/comments?postId=${postId}` : null
+    postId ? `/api/hrm/v2/engage?type=comments&postId=${postId}` : null
   );
 }
 
@@ -23,5 +23,5 @@ export function useComments(postId: string | null) {
  * Hook to fetch the social feed.
  */
 export function useFeed(params?: Record<string, string>) {
-  return useCollection("/api/hrm/v2/engage/feed", params);
+  return useCollection("/api/hrm/v2/engage", { type: "feed", ...params });
 }

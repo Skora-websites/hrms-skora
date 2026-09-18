@@ -76,16 +76,23 @@ export default function EmployeeOfferLettersPage() {
 
   const handleDownload = async (letter: OfferLetter) => {
     try {
-      const { ok, headers } = await downloadFileFromUrl(
+      const { ok } = await downloadFileFromUrl(
         "/api/hrm/v2/offer-letters/download?id=" + letter.id,
         "offer-letter-" + letter.employeeName.replace(/\s+/g, "-") + ".pdf"
       );
       if (ok) {
-        const pw = headers.get("X-Offer-Letter-Password");
-        if (pw) {
-          setPassword(pw);
-          setShowPwModal(true);
-        }
+        // The PDF password is fetched from the dedicated endpoint (owner or
+        // super_admin only) — never transported in a download header.
+        try {
+          const pwRes = await fetch("/api/hrm/v2/offer-letters/password?id=" + letter.id);
+          if (pwRes.ok) {
+            const pwData = await pwRes.json();
+            if (pwData?.data?.password) {
+              setPassword(pwData.data.password);
+              setShowPwModal(true);
+            }
+          }
+        } catch { /* password prompt is optional */ }
         loadLetters();
       }
     } catch { /* empty */ }

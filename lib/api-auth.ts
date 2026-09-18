@@ -3,6 +3,7 @@ import { cache } from "react";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getDb } from "@/lib/db/mongo-helper";
+import { verifyCookieValue } from "@/lib/edge-cookies";
 import { normalizeRole, hasPermission, type PermissionKey } from "@/lib/rbac";
 import { ObjectId } from "mongodb";
 import { logger } from "@/lib/logger";
@@ -19,12 +20,15 @@ export interface ApiAuthResult {
   userId: string;
   role: string;
   tenantId: string;
+  /** Raw session token — lets handlers revoke sessions (e.g. on password change). */
+  token: string;
 }
 
 interface SessionInfo {
   userId: string;
   role: string;
   tenantId: string;
+  token: string;
 }
 
 const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || "default";
@@ -37,10 +41,16 @@ const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || "default";
  */
 const verifySession = cache(async (): Promise<SessionInfo | null> => {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session")?.value;
-  if (!sessionToken) return null;
+  const rawCookie = cookieStore.get("session")?.value;
+  if (!rawCookie) return null;
 
   try {
+    // The cookie is "<token>.<hmac>" — verify the signature, then look up the
+    // RAW token. A direct comparison against the signed blob never matches,
+    // which used to 401 every authenticated API request.
+    const sessionToken = await verifyCookieValue(rawCookie);
+    if (!sessionToken) return null;
+
     const db = await getDb();
     if (!db) return null;
 
@@ -63,7 +73,7 @@ const verifySession = cache(async (): Promise<SessionInfo | null> => {
       : session.tenantId
         ? String(session.tenantId)
         : DEFAULT_TENANT_ID;
-    return { userId: user._id.toString(), role, tenantId };
+    return { userId: user._id.toString(), role, tenantId, token: sessionToken };
   } catch (e) {
     logger.error("[api-auth] verifySession failed", e);
     return null;

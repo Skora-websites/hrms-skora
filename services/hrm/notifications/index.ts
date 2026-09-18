@@ -1,8 +1,10 @@
 import "server-only";
+import { ObjectId } from "mongodb";
 import {
   notificationsService,
   notificationTemplatesService,
 } from "@/lib/hrm/firestore";
+import { getDb } from "@/lib/db/mongo-helper";
 import type {
   Notification,
   NotificationTemplate,
@@ -100,15 +102,160 @@ export async function markAsRead(id: string): Promise<Notification | null> {
 }
 
 export async function markAllAsRead(userId: string): Promise<void> {
-  const unread = await getUserNotifications(userId, { unreadOnly: true });
-  for (const notif of unread) {
-    await markAsRead(notif.id);
-  }
+  // Single bulk update — the previous per-document loop did one DB write per
+  // unread notification (N sequential round-trips on busy accounts).
+  await notificationsService.updateWhere(
+    [
+      { field: 'userId', op: '==', value: userId },
+      { field: 'isRead', op: '==', value: false },
+    ],
+    { isRead: true, readAt: new Date() } as any
+  );
 }
 
 export async function getUnreadCount(userId: string): Promise<number> {
   const unread = await getUserNotifications(userId, { unreadOnly: true });
   return unread.length;
+}
+
+// ── Role / Department fan-out helpers ──────────────────
+//
+// The notification bell only shows what is written to the `notifications`
+// collection. Business events (project created, project assigned, task
+// assigned, member added) must fan out to the right audience or the user
+// never learns about them. These helpers centralize audience resolution.
+
+/** Full user record lookup (id may be ObjectId string or legacy `id`). */
+export async function getUserById(userId: string): Promise<Record<string, any> | null> {
+  try {
+    const db = await getDb();
+    if (!db || !userId) return null;
+    const users = db.collection("users");
+    if (ObjectId.isValid(userId)) {
+      const byId = await users.findOne({ _id: new ObjectId(userId) });
+      if (byId) return byId;
+    }
+    return await users.findOne({ id: userId });
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve a user's displayName from the users collection. */
+export async function getUserName(userId: string): Promise<string> {
+  try {
+    const db = await getDb();
+    if (!db) return "Someone";
+    const user = ObjectId.isValid(userId)
+      ? await db.collection("users").findOne({ _id: new ObjectId(userId) })
+      : null;
+    return (user as any)?.displayName || (user as any)?.email || "Someone";
+  } catch {
+    return "Someone";
+  }
+}
+
+/** All active user ids with a given role in the tenant. */
+export async function getUserIdsByRole(
+  tenantId: string,
+  role: string,
+  excludeUserId?: string
+): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const docs = await db
+    .collection("users")
+    .find({
+      tenantId,
+      role,
+      status: { $nin: ["disabled", "inactive"] },
+      ...(excludeUserId && ObjectId.isValid(excludeUserId)
+        ? { _id: { $ne: new ObjectId(excludeUserId) } }
+        : {}),
+    })
+    .project<{ _id: ObjectId }>({ _id: 1 })
+    .toArray();
+  return docs.map((d) => d._id.toString());
+}
+
+/** All active employee ids in a department (matched on either field name). */
+export async function getEmployeeIdsByDepartment(
+  tenantId: string,
+  department: string,
+  excludeUserId?: string
+): Promise<string[]> {
+  if (!department) return [];
+  const db = await getDb();
+  if (!db) return [];
+  const docs = await db
+    .collection("users")
+    .find({
+      tenantId,
+      role: { $in: ["employee", "agent"] },
+      status: { $nin: ["disabled", "inactive"] },
+      $or: [{ department: department }, { departmentName: department }],
+      ...(excludeUserId && ObjectId.isValid(excludeUserId)
+        ? { _id: { $ne: new ObjectId(excludeUserId) } }
+        : {}),
+    })
+    .project<{ _id: ObjectId }>({ _id: 1 })
+    .toArray();
+  return docs.map((d) => d._id.toString());
+}
+
+/**
+ * Notify a set of users in bulk, skipping the actor themselves and
+ * de-duplicating ids. Failures are logged but never block the business
+ * action that triggered them.
+ */
+export async function notifyUsers(
+  data: {
+    tenantId: string;
+    userIds: string[];
+    title: string;
+    body: string;
+    type: Notification["type"];
+    referenceId?: string;
+    referenceType?: string;
+  },
+  options: { excludeUserId?: string } = {}
+): Promise<number> {
+  const seen = new Set<string>();
+  const docs: Array<Record<string, unknown>> = [];
+  for (const userId of data.userIds) {
+    if (!userId || seen.has(userId) || userId === options.excludeUserId) continue;
+    seen.add(userId);
+    docs.push({
+      tenantId: data.tenantId,
+      userId,
+      title: data.title,
+      body: data.body,
+      type: data.type,
+      referenceId: data.referenceId,
+      referenceType: data.referenceType,
+      isRead: false,
+    });
+  }
+  if (docs.length === 0) return 0;
+  try {
+    // One bulk insert instead of N sequential round-trips — project creation
+    // fans out to entire departments, so per-user awaits made POSTs take 15s+.
+    const result = await notificationsService.createMany(docs as any);
+    return result ?? docs.length;
+  } catch (err) {
+    console.error("[notifications] bulk notify failed, falling back to per-user", err);
+    // Last-resort fallback: still deliver, one at a time.
+    let sent = 0;
+    for (const doc of docs) {
+      try {
+        await sendNotification(doc as any);
+        sent += 1;
+      } catch (e) {
+        console.error("[notifications] failed to notify user", doc.userId, e);
+      }
+    }
+    return sent;
+  }
 }
 
 // ── Template Rendering ─────────────────────────────────

@@ -98,10 +98,21 @@ export async function POST(request: NextRequest) {
       // Approval: issue a server-side employee code and activate the account.
       if (body.status === "approved") {
         const employeeCode = await generateEmployeeCode();
+        // Copy the department the applicant requested at registration onto the
+        // user record — it was only stored on the onboarding task, so
+        // department-scoped features (project fan-out, team rosters) saw a
+        // blank department until HR edited the profile by hand.
+        let requestedDepartment: string | undefined;
+        if (db) {
+          const taskFilter = ObjectId.isValid(body.taskId) ? { _id: new ObjectId(body.taskId) } : { id: body.taskId };
+          const taskDoc = await db.collection("employee_onboarding_tasks").findOne(taskFilter).catch(() => null);
+          requestedDepartment = (taskDoc as any)?.department || (taskDoc as any)?.departmentName || undefined;
+        }
         await hrmUsersService.update((updated as any).userId, {
           status: "active",
           onboardingStatus: "approved",
           employeeCode,
+          ...(requestedDepartment ? { department: requestedDepartment, departmentName: requestedDepartment } : {}),
         } as any);
         if (db) {
           const taskFilter = ObjectId.isValid(body.taskId) ? { _id: new ObjectId(body.taskId) } : { id: body.taskId };

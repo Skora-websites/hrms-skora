@@ -44,7 +44,11 @@ function LoginForm() {
         throw new Error(data.error || "Invalid credentials");
       }
 
-      router.push(callbackUrl);
+      // Hard navigation, NOT router.push: Next's client router cache holds
+      // stale role-based redirects (e.g. /hrms → /hrms/manager) from the
+      // previous session, so the freshly logged-in user could land on the
+      // wrong dashboard or /hrms/access-denied until a manual reload.
+      window.location.assign(callbackUrl);
     } catch (err: any) {
       setError(err.message);
     } finally {

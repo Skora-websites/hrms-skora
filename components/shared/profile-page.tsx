@@ -10,7 +10,7 @@ interface UserProfile { id: string; name: string; email: string; phone?: string;
 interface ProfilePageProps { roleLabel: string; backHref: string; }
 
 export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, refresh, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -104,11 +104,17 @@ export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
         setProfile((prev) => prev ? { ...prev, image: result.url } : prev);
 
         // Also save to user profile
-        await fetch("/api/hrm/v2/users", {
+        const profileRes = await fetch("/api/hrm/v2/users", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.id, action: "profile", image: result.url }),
         });
+        if (!profileRes.ok) {
+          console.error("Failed to persist profile image:", await profileRes.text());
+        } else {
+          // Refresh the auth context so navbar/sidebar avatars update now.
+          refresh();
+        }
       }
     } catch (err: any) {
       console.error("Upload failed:", err);
@@ -122,16 +128,29 @@ export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
   const handleSave = async () => {
     if (!user?.id) return;
     setSaving(true);
+    let saveFailed = false;
     try {
-      await fetch("/api/hrm/v2/users", {
+      const res = await fetch("/api/hrm/v2/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id, action: "profile", displayName: name, phone, department, designation }),
       });
-    } catch {}
+      if (!res.ok) {
+        saveFailed = true;
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to save profile. Please try again.");
+      }
+    } catch {
+      saveFailed = true;
+      alert("Network error while saving profile.");
+    }
+    if (!saveFailed) {
+      // Pull the fresh profile into the auth context (navbar + sidebar).
+      refresh();
+    }
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaved(!saveFailed);
+    if (!saveFailed) setTimeout(() => setSaved(false), 3000);
   };
 
   const displayName = name || profile?.name || user?.name || "User";

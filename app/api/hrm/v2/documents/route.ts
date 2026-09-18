@@ -12,6 +12,23 @@ import {
   createDocumentTemplate,
 } from "@/services/hrm/documents";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "mongodb";
+import { validateUpload } from "@/lib/upload-security";
+
+const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
+
+/** Managers may only act on their direct reports' documents. */
+async function isDirectReport(managerId: string, employeeId: string): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+    const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
+    return (employee as any)?.reportingManager === managerId;
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,9 +58,16 @@ export async function GET(request: NextRequest) {
       if (!doc) {
         return NextResponse.json({ error: "Document not found" }, { status: 404 });
       }
-      // Employees can only view their own documents
-      if (auth.role === "employee" && doc.userId !== auth.userId) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // IDOR guard: employees only their own documents; managers only their
+      // own plus their direct reports'; HR can see everything.
+      const docUserId = (doc as any).userId;
+      if (!HR_LEVEL_ROLES.has(auth.role)) {
+        const allowed =
+          docUserId === auth.userId ||
+          (auth.role === "manager" && (await isDirectReport(auth.userId, docUserId)));
+        if (!allowed) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
       }
       return NextResponse.json({ data: doc });
     }
@@ -89,6 +113,20 @@ export async function POST(request: NextRequest) {
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
+      // Content-signature validation + size cap (previously unlimited).
+      const check = validateUpload(buffer, file.name, {
+        allowedTypes: [
+          "application/pdf",
+          "image/png",
+          "image/jpeg",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+        maxBytes: 10 * 1024 * 1024,
+      });
+      if (!check.ok) {
+        return NextResponse.json({ error: check.reason }, { status: 400 });
+      }
       const doc = await uploadDocument(tenantId, {
         categoryId: categoryId || "",
         userId: docUserId,
@@ -96,7 +134,7 @@ export async function POST(request: NextRequest) {
         description: description || undefined,
         file: buffer,
         fileName: file.name,
-        mimeType: file.type,
+        mimeType: check.mime,
       });
 
       return NextResponse.json({ data: doc }, { status: 201 });
@@ -141,7 +179,9 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
 
     if (body.verify) {
-      const doc = await verifyDocument(id, body.verifiedById);
+      // Attribution integrity: the verifier is ALWAYS the authenticated caller.
+      // A spoofed verifiedById would forge audit-relevant verification records.
+      const doc = await verifyDocument(id, auth.userId);
       if (!doc) {
         return NextResponse.json({ error: "Document not found" }, { status: 404 });
       }

@@ -36,6 +36,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === "reviews" && userId) {
+      // IDOR guard: employees may only view their own probation reviews.
+      if (auth.role === "employee" && userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       const reviews = await getProbationReviews(userId);
       return NextResponse.json({ data: reviews });
     }
@@ -49,6 +53,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (due === "true") {
+      // The due-reviews queue is HR data — employees are excluded.
+      if (auth.role === "employee") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       const dueReviews = await getDueProbationReviews(tenantId);
       return NextResponse.json({ data: dueReviews });
     }

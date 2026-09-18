@@ -41,12 +41,28 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   // Task comments
   if (comments && taskId) {
+    // IDOR guard: employees may only read comments on their own tasks.
+    if (auth.role === "employee") {
+      const task = await getTaskById(taskId);
+      if (!task) return notFound("Task not found");
+      if ((task as any).assigneeId !== auth.userId) {
+        return forbidden("You can only view comments on your own tasks");
+      }
+    }
     const result = await getTaskComments(taskId);
     return NextResponse.json({ data: result });
   }
 
   // Task audit logs
   if (auditLogs && taskId) {
+    // Audit trail is an admin/assignee view.
+    if (auth.role === "employee") {
+      const task = await getTaskById(taskId);
+      if (!task) return notFound("Task not found");
+      if ((task as any).assigneeId !== auth.userId) {
+        return forbidden("You can only view audit logs of your own tasks");
+      }
+    }
     const result = await getTaskAuditLogs(taskId);
     return NextResponse.json({ data: result });
   }
@@ -96,6 +112,16 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const body = await request.json();
     if (!body.taskId || !body.content) {
       return badRequest("Missing required fields: taskId, content");
+    }
+
+    // Employees may only comment on tasks assigned to them; attribution is
+    // always the authenticated caller.
+    if (auth.role === "employee") {
+      const task = await getTaskById(body.taskId);
+      if (!task) return notFound("Task not found");
+      if ((task as any).assigneeId !== auth.userId) {
+        return forbidden("You can only comment on tasks assigned to you");
+      }
     }
 
     const comment = await createTaskComment(tenantId, {

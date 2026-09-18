@@ -47,6 +47,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (noticePeriod === "true" && userId) {
+      if (auth.role === "employee" && userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       const period = await getEmployeeNoticePeriod(userId);
       return NextResponse.json({ data: period });
     }
@@ -55,6 +58,10 @@ export async function GET(request: NextRequest) {
       const exit = await getEmployeeExitById(id);
       if (!exit) {
         return NextResponse.json({ error: "Exit record not found" }, { status: 404 });
+      }
+      // IDOR guard: employees may only view their own exit record.
+      if (auth.role === "employee" && exit.userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       return NextResponse.json({ data: exit });
     }

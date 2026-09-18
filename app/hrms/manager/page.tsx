@@ -201,7 +201,7 @@ export default function ManagerDashboardPage() {
               Welcome back, {user?.name || "Manager"}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              (managerDepartment ? managerDepartment + " Department" : isCeo ? "All Teams" : "Team Overview") + " · Approvals · Real-Time AUX · Attendance"
+              {(managerDepartment ? `${managerDepartment} Department` : isCeo ? "All Teams" : "Team Overview")} · Approvals · Real-Time AUX · Attendance
             </p>
             <div className="flex items-center gap-3 mt-3 text-xs">
               <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">

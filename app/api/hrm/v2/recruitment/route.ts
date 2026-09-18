@@ -11,7 +11,7 @@ import {
   getApplications,
 } from "@/services/hrm/recruitment";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
-import { withErrorHandler, badRequest, notFound } from "@/lib/api-handler";
+import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
 
 // ── GET ─────────────────────────────────────────────────
 
@@ -43,14 +43,20 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: jobs });
   }
 
-  // Candidates
+  // Candidates — PII of external applicants; HR-level only.
   if (type === "candidates") {
+    if (auth.role === "employee" || auth.role === "manager") {
+      return forbidden("Only HR admins can view candidate data");
+    }
     const candidates = await getCandidates(tenantId);
     return NextResponse.json({ data: candidates });
   }
 
-  // Applications
+  // Applications — same PII concern as candidates.
   if (type === "applications") {
+    if (auth.role === "employee" || auth.role === "manager") {
+      return forbidden("Only HR admins can view application data");
+    }
     const applications = await getApplications(tenantId);
     return NextResponse.json({ data: applications });
   }
@@ -68,6 +74,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   const body = await request.json();
   const action = body.action || "create_job";
+
+  // Creating jobs/candidates is an HR function.
+  if (auth.role === "employee" || auth.role === "manager") {
+    return forbidden("Only HR admins can create recruitment records");
+  }
 
   // Create job
   if (action === "create_job") {

@@ -15,6 +15,21 @@ interface AuditEntry {
   ip?: string;
 }
 
+/** Map the API document (performedByName/targetUserEmail/details) to the
+ *  display shape. All fields are defensive — a malformed log row must never
+ *  crash the whole page (previously .toLowerCase() on undefined did). */
+function mapAuditEntry(raw: any): AuditEntry {
+  return {
+    id: String(raw?.id ?? raw?._id ?? ""),
+    timestamp: raw?.createdAt ? new Date(raw.createdAt).toISOString() : "",
+    userId: String(raw?.performedById ?? ""),
+    userName: String(raw?.performedByName ?? "Unknown"),
+    action: String(raw?.action ?? "unknown"),
+    resource: String(raw?.targetUserEmail ?? raw?.targetUserId ?? ""),
+    details: String(raw?.details ?? ""),
+  };
+}
+
 export default function SuperAdminAuditLogsPage() {
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,15 +44,17 @@ export default function SuperAdminAuditLogsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/hrm/v2/audit-logs");
-      if (res.ok) setLogs((await res.json()).data || []);
+      if (res.ok) setLogs(((await res.json()).data || []).map(mapAuditEntry));
     } catch { /* empty */ }
     setLoading(false);
   };
 
   const filtered = logs.filter((l) => {
-    const matchSearch = l.userName.toLowerCase().includes(search.toLowerCase()) ||
-      l.action.toLowerCase().includes(search.toLowerCase()) ||
-      l.resource.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = l.userName.toLowerCase().includes(q) ||
+      l.action.toLowerCase().includes(q) ||
+      l.resource.toLowerCase().includes(q) ||
+      l.details.toLowerCase().includes(q);
     const matchFilter = filterAction === "all" || l.action === filterAction;
     return matchSearch && matchFilter;
   });

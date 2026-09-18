@@ -21,6 +21,7 @@ import {
   FileText,
   MessageSquare,
   ClipboardList,
+  ListTodo,
   LogOut,
   Sun,
   Moon,
@@ -68,6 +69,7 @@ const iconMap: Record<string, React.ElementType> = {
   FileText,
   MessageSquare,
   ClipboardList,
+  ListTodo,
   LogOut,
   Sun,
   UserCheck,
@@ -94,6 +96,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { isMobile, isTablet } = useBreakpoint();
   const { user } = useAuth();
   const [searchFocused, setSearchFocused] = useState(false);
+  const [navSearch, setNavSearch] = useState("");
 
   // Track which expandable groups are open/closed
   const [expandedGroups, setExpandedGroups] = useState<Set<NavGroup>>(
@@ -137,9 +140,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const isCollapsed = isSidebarMini && !isMobile && !isTablet;
 
   const roleNavItems = (user?.role && NAV_ITEMS_BY_ROLE[user.role]) || NAV_ITEMS;
-  // Filter nav items based on the user's role
+  // Filter nav items based on the user's role, then by the quick-search term
+  // (case-insensitive substring match on the item title).
   const visibleNavItems = roleNavItems.filter((item) =>
     canAccessRoute(user?.role ?? null, item.href)
+  ).filter((item) =>
+    navSearch.trim() === "" ||
+    item.title.toLowerCase().includes(navSearch.trim().toLowerCase())
   );
 
   // Group visible items by their group field, preserving order
@@ -411,6 +418,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               />
               <input
                 placeholder="Quick search..."
+                value={navSearch}
+                onChange={(e) => setNavSearch(e.target.value)}
                 className="flex-1 bg-transparent text-xs text-sidebar-accent-foreground placeholder:text-sidebar-foreground/30 outline-none border-none"
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}

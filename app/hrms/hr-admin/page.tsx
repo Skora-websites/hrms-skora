@@ -78,6 +78,12 @@ export default function HrAdminDashboardPage() {
   const [pendingCandidates, setPendingCandidates] = useState<PendingCandidate[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   // Add employee modal
   const [showAddEmployee, setShowAddEmployee] = useState(false);
@@ -113,55 +119,37 @@ export default function HrAdminDashboardPage() {
 
   const handleApproveCandidate = async (candidate: PendingCandidate) => {
     const id = candidate.id || candidate._id || "";
-    const code = `EMP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    if (!id) return;
     try {
-      // 1. Mark onboarding task as completed
+      // Single canonical call: the server issues a collision-free employee
+      // code, activates the account, clears the pending-verification fence,
+      // stores onboardingStatus:"approved" and notifies the new hire.
       const res = await fetch("/api/hrm/v2/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update_task", taskId: id, status: "completed" }),
+        body: JSON.stringify({ action: "update_task", taskId: id, status: "approved" }),
       });
-      // 2. Update user status to active and assign employee code
-      if (candidate.userId || candidate.email) {
-        await fetch("/api/hrm/v2/users", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: candidate.userId || candidate.email,
-            action: "status",
-            status: "active",
-          }),
-        });
-        // 3. Assign employee code to user record
-        await fetch("/api/hrm/v2/users", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: candidate.userId || candidate.email,
-            employeeCode: code,
-          }),
-        });
-        // 4. Update the onboarding task with the employee code
-        await fetch("/api/hrm/v2/onboarding", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "update_task", taskId: id, status: "completed", employeeCode: code }),
-        });
-      }
       if (res.ok) {
+        const result = await res.json().catch(() => null);
+        const code = result?.data?.employeeCode || "";
         setPendingCandidates((prev) =>
           prev.map((c) =>
-            (c.id || c._id) === id ? { ...c, status: "completed", employeeCode: code } : c
+            (c.id || c._id) === id ? { ...c, status: "approved", employeeCode: code } : c
           )
         );
+        showToast(`Candidate approved${code ? ` — employee code ${code}` : ""}.`, "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to approve candidate", "error");
       }
-    } catch (err) {
-      console.error("Failed to approve candidate:", err);
+    } catch {
+      showToast("Network error while approving candidate", "error");
     }
   };
 
   const handleRejectCandidate = async (candidate: PendingCandidate) => {
     const id = candidate.id || candidate._id || "";
+    if (!id) return;
     try {
       const res = await fetch("/api/hrm/v2/onboarding", {
         method: "POST",
@@ -172,13 +160,17 @@ export default function HrAdminDashboardPage() {
         setPendingCandidates((prev) =>
           prev.map((c) =>
             (c.id || c._id) === id
-              ? { ...c, status: "rejected", deadlineHoursRemaining: 48 }
+              ? { ...c, status: "rejected_48h", deadlineHoursRemaining: 48 }
               : c
           )
         );
+        showToast("Candidate rejected — 48h resubmission clock started.", "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to reject candidate", "error");
       }
-    } catch (err) {
-      console.error("Failed to reject candidate:", err);
+    } catch {
+      showToast("Network error while rejecting candidate", "error");
     }
   };
 
@@ -200,10 +192,14 @@ export default function HrAdminDashboardPage() {
           reportingManager: "",
           employmentType: "permanent",
         });
+        showToast("Employee added successfully.", "success");
         loadData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to add employee", "error");
       }
     } catch {
-      // ignore
+      showToast("Network error while adding employee", "error");
     }
   };
 
@@ -212,13 +208,17 @@ export default function HrAdminDashboardPage() {
       const res = await fetch("/api/hrm/v2/leaves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve", id: request.id, approvedById: user?.id }),
+        body: JSON.stringify({ action: "approve", id: request.id }),
       });
       if (res.ok) {
         setLeaveRequests((prev) => prev.map((l) => l.id === request.id ? { ...l, status: "approved" as const } : l));
+        showToast(`Leave request approved for ${request.employeeName}.`, "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to approve leave", "error");
       }
-    } catch (err) {
-      console.error("Failed to approve leave:", err);
+    } catch {
+      showToast("Network error while approving leave", "error");
     }
   };
 
@@ -227,13 +227,17 @@ export default function HrAdminDashboardPage() {
       const res = await fetch("/api/hrm/v2/leaves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reject", id: request.id, approvedById: user?.id, reason: "Rejected by HR Admin" }),
+        body: JSON.stringify({ action: "reject", id: request.id, reason: "Rejected by HR Admin" }),
       });
       if (res.ok) {
         setLeaveRequests((prev) => prev.map((l) => l.id === request.id ? { ...l, status: "rejected" as const } : l));
+        showToast(`Leave request rejected for ${request.employeeName}.`, "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to reject leave", "error");
       }
-    } catch (err) {
-      console.error("Failed to reject leave:", err);
+    } catch {
+      showToast("Network error while rejecting leave", "error");
     }
   };
 
@@ -243,6 +247,26 @@ export default function HrAdminDashboardPage() {
 
   return (
     <AppShell title="HR Admin Dashboard">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4">
+          <div
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-md ${
+              toast.type === "success"
+                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
+                : "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-300"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            )}
+            <span>{toast.msg}</span>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Header Banner — Personal Profile ═══ */}
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

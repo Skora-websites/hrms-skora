@@ -102,6 +102,10 @@ export async function getComments(postId: string): Promise<Comment[]> {
   });
 }
 
+export async function getCommentById(id: string): Promise<Comment | null> {
+  return commentsService.findById(id);
+}
+
 export async function createComment(
   tenantId: string,
   data: {

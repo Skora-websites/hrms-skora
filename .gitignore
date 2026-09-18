@@ -27,6 +27,9 @@
 # Codebuff agent state
 .freebuff/
 
+# DB cleanup backup (contains password hashes of deleted dummy accounts)
+scripts/backup-cleanup.json
+
 # Database Files
 /data/
 *.db

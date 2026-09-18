@@ -5,6 +5,31 @@ import bcrypt from "bcryptjs";
 import { requireAuth, requireAdmin, requireSuperAdmin, isErrorResponse } from "@/lib/api-auth";
 import { recordAuditLog, getAuditLogs } from "@/services/hrm/audit";
 import type { AuditAction } from "@/services/hrm/audit";
+import { ROLE_HIERARCHY } from "@/lib/rbac";
+import { parseBody, profileUpdateSchema } from "@/lib/validations";
+import { getDb } from "@/lib/db/mongo-helper";
+import crypto from "crypto";
+
+const VALID_STATUSES = new Set(["active", "inactive", "disabled", "pending_verification"]);
+
+/**
+ * Hierarchy guard: the caller may only act on users strictly below their own
+ * role level (managers additionally only on their direct reports). Prevents
+ * privilege-escalation paths like a manager editing an HR admin's email and
+ * then triggering a password-reset takeover.
+ */
+async function canActOnTarget(callerRole: string, callerId: string, target: any): Promise<boolean> {
+  if (callerRole === "super_admin") return true;
+  const callerLevel = ROLE_HIERARCHY[callerRole as keyof typeof ROLE_HIERARCHY] ?? 0;
+  const targetRole = String(target?.role || "employee");
+  const targetLevel = ROLE_HIERARCHY[targetRole as keyof typeof ROLE_HIERARCHY] ?? 20;
+  if (callerLevel < targetLevel) return false;
+  // Managers may only manage their own direct reports.
+  if (callerRole === "manager") {
+    return String(target?.reportingManager || "") === callerId;
+  }
+  return true;
+}
 
 // ── GET: List users, get single user, get audit logs ───
 
@@ -121,9 +146,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+    }
+
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
+        { error: "Password must be at least 8 characters" },
         { status: 400 }
       );
     }
@@ -190,7 +223,7 @@ export async function PATCH(request: NextRequest) {
     const tenantId = "default";
 
     const body = await request.json();
-    const { userId, action: updateAction, role, status, displayName, firstName, lastName, email, phone, emergencyContact, bankAccount, reportingManager, managerEmail, domainWork, allottedTeam } = body;
+    const { userId, action: updateAction, role, status, displayName, firstName, lastName, email, phone, emergencyContact, bankAccount, reportingManager, managerEmail, domainWork, allottedTeam, department, designation } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
@@ -235,17 +268,39 @@ export async function PATCH(request: NextRequest) {
             { status: 403 }
           );
         }
+        // Validate the status value (mass-assignment guard)
+        if (!status || !VALID_STATUSES.has(status)) {
+          return NextResponse.json(
+            { error: "Invalid status. Use: active, inactive, disabled, pending_verification" },
+            { status: 400 }
+          );
+        }
+        // Hierarchy guard: no acting on equal-or-higher roles (and no
+        // disabling yourself, which would lock you out mid-session).
+        if (!(await canActOnTarget(auth.role, auth.userId, targetUser))) {
+          return NextResponse.json(
+            { error: "Forbidden: you cannot change the status of this account" },
+            { status: 403 }
+          );
+        }
+        if (resolvedUserId === auth.userId) {
+          return NextResponse.json(
+            { error: "You cannot change your own account status" },
+            { status: 400 }
+          );
+        }
         await hrmUsersService.update(resolvedUserId, { status } as any);
         auditAction = status === "active" ? "login_enabled" : "login_disabled";
         auditDetails = `Changed status from ${(targetUser as any).status} to ${status}`;
 
-        // If disabling, revoke refresh tokens
+        // Disabling an account must kill its live sessions immediately —
+        // otherwise a disabled user keeps their 5-day cookie until expiry.
         if (status === "disabled" || status === "inactive") {
           try {
-            // sessions cleared
-          } catch {
-            // Token revocation may fail if user doesn't exist in Auth
-          }
+            const { getDb } = await import("@/lib/db/mongo-helper");
+            const db2 = await getDb();
+            if (db2) await db2.collection("sessions").deleteMany({ userId: resolvedUserId });
+          } catch { /* best-effort */ }
         }
         break;
       }
@@ -254,34 +309,88 @@ export async function PATCH(request: NextRequest) {
         const adminAuth = await requireAdmin();
         if (isErrorResponse(adminAuth)) return adminAuth;
         const loginStatus = body.loginStatus;
+        if (!["enabled", "disabled"].includes(loginStatus)) {
+          return NextResponse.json({ error: "Invalid loginStatus. Use: enabled, disabled" }, { status: 400 });
+        }
+        if (!(await canActOnTarget(auth.role, auth.userId, targetUser))) {
+          return NextResponse.json(
+            { error: "Forbidden: you cannot manage this account" },
+            { status: 403 }
+          );
+        }
         await hrmUsersService.update(resolvedUserId, { loginStatus } as any);
         auditAction = loginStatus === "disabled" ? "login_disabled" : "login_enabled";
         auditDetails = `Changed login status to ${loginStatus}`;
 
         if (loginStatus === "disabled") {
-          try { const { getDb } = require("@/lib/db/mongo-helper"); const db = await getDb(); if (db) await db.collection("sessions").deleteMany({ userId }); } catch {}
+          try { const db = await getDb(); if (db) await db.collection("sessions").deleteMany({ userId: resolvedUserId }); } catch {}
         }
         break;
       }
 
       case "profile": {
-        // Users can update their own profile; admins can update any
-        if (auth.role === "employee" && userId !== auth.userId) {
+        // Users can update their own profile; admins can update any (within
+        // hierarchy rules — a manager cannot edit an HR admin's profile).
+        if (userId !== auth.userId && !(await canActOnTarget(auth.role, auth.userId, targetUser))) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
         const updateData: Record<string, any> = {};
         if (displayName !== undefined) updateData.displayName = displayName;
         if (firstName !== undefined) updateData.firstName = firstName;
         if (lastName !== undefined) updateData.lastName = lastName;
-        if (email !== undefined) updateData.email = email;
+        if (email !== undefined) {
+          // Email changes are sensitive: only self or super_admin.
+          if (userId !== auth.userId && auth.role !== "super_admin") {
+            return NextResponse.json(
+              { error: "Forbidden: only Super Admin can change another user's email" },
+              { status: 403 }
+            );
+          }
+          const emailNorm = String(email).toLowerCase().trim();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+            return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+          }
+          const duplicate = await hrmUsersService.findOneInTenant(tenantId, "email", emailNorm);
+          if (duplicate && String((duplicate as any).id) !== resolvedUserId) {
+            return NextResponse.json(
+              { error: "An account with this email already exists" },
+              { status: 409 }
+            );
+          }
+          updateData.email = emailNorm;
+        }
         if (phone !== undefined) updateData.phone = phone;
+        // Department/designation are stored under both naming conventions —
+        // the profile UI reads/writes `department`, the HRMUser model uses
+        // `departmentName`. Keeping both in sync fixes silent data loss where
+        // the profile page said "Saved" but the fields never persisted.
+        if (department !== undefined) {
+          updateData.department = department;
+          updateData.departmentName = department;
+        }
+        if (designation !== undefined) {
+          updateData.designation = designation;
+          updateData.designationName = designation;
+        }
         if (emergencyContact !== undefined) updateData.emergencyContact = emergencyContact;
         if (bankAccount !== undefined) updateData.bankAccount = bankAccount;
-        if (reportingManager !== undefined) updateData.reportingManager = reportingManager;
+        if (reportingManager !== undefined) {
+          // Reassignment changes reporting structure — HR-level only.
+          if (auth.role === "manager") {
+            return NextResponse.json(
+              { error: "Forbidden: HR access required to change reporting manager" },
+              { status: 403 }
+            );
+          }
+          updateData.reportingManager = reportingManager;
+        }
         if (managerEmail !== undefined) updateData.managerEmail = managerEmail;
         if (domainWork !== undefined) updateData.domainWork = domainWork;
         if (allottedTeam !== undefined) updateData.allottedTeam = allottedTeam;
         if (body.image !== undefined) updateData.image = body.image;
+        if (Object.keys(updateData).length === 0) {
+          return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+        }
         await hrmUsersService.update(resolvedUserId, updateData as any);
         auditAction = "update_user";
         auditDetails = `Updated profile fields: ${Object.keys(updateData).join(", ")}`;
@@ -296,9 +405,16 @@ export async function PATCH(request: NextRequest) {
             { status: 403 }
           );
         }
+        // Hierarchy guard: prevents a manager from resetting an HR admin's
+        // password and hijacking the privileged account.
+        if (userId !== auth.userId && !(await canActOnTarget(auth.role, auth.userId, targetUser))) {
+          return NextResponse.json(
+            { error: "Forbidden: you cannot reset this account's password" },
+            { status: 403 }
+          );
+        }
         // Issue a real single-use token (1h) and email the reset link — same
         // flow as the self-service forgot-password route.
-        const crypto = require("crypto");
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
         const { getDb } = await import("@/lib/db/mongo-helper");
@@ -335,8 +451,15 @@ export async function PATCH(request: NextRequest) {
         if (!cp || !np) {
           return NextResponse.json({ error: "Current and new password are required" }, { status: 400 });
         }
-        if (np.length < 6) {
-          return NextResponse.json({ error: "New password must be at least 6 characters" }, { status: 400 });
+        // Self-service only — admins use reset-password for other users.
+        if (userId !== auth.userId) {
+          return NextResponse.json({ error: "Can only change your own password here" }, { status: 403 });
+        }
+        if (np.length < 8) {
+          return NextResponse.json({ error: "New password must be at least 8 characters" }, { status: 400 });
+        }
+        if (!/[a-zA-Z]/.test(np) || !/[0-9]/.test(np)) {
+          return NextResponse.json({ error: "Password must contain at least one letter and one number" }, { status: 400 });
         }
         const targetUserForPw = await hrmUsersService.findById(userId);
         if (!targetUserForPw) {
@@ -352,15 +475,25 @@ export async function PATCH(request: NextRequest) {
         }
         const newHash = await bcrypt.hash(np, 12);
         await hrmUsersService.update(resolvedUserId, { passwordHash: newHash, mustChangePassword: false } as any);
+        // Invalidate every OTHER session for this user — a password change must
+        // not leave a stolen session (or an old device) still authenticated.
+        try {
+          const { getDb } = await import("@/lib/db/mongo-helper");
+          const sessionDb = await getDb();
+          if (sessionDb) {
+            await sessionDb.collection("sessions").deleteMany({
+              userId: resolvedUserId,
+              token: { $ne: auth.token },
+            });
+          }
+        } catch { /* best-effort */ }
         auditAction = "update_user";
         auditDetails = "Password changed";
         // Clear must_change_password cookie if present
         const pwResponse = NextResponse.json({ success: true });
         pwResponse.cookies.set("must_change_password", "", { path: "/", maxAge: 0 });
-        // Record audit log
-        if (auth.userId !== userId) {
-          await recordAuditLog({ tenantId, action: auditAction, performedById: auth.userId, performedByName: body._performedByName || "Admin", targetUserId: resolvedUserId, targetUserEmail, details: auditDetails });
-        }
+        // Record audit log (self-service change is still worth logging)
+        await recordAuditLog({ tenantId, action: auditAction, performedById: auth.userId, performedByName: body._performedByName || "Self", targetUserId: resolvedUserId, targetUserEmail, details: auditDetails });
         return pwResponse;
       }
 
@@ -390,7 +523,7 @@ export async function PATCH(request: NextRequest) {
 
       default: {
         // Legacy PATCH support (direct field updates)
-        if (auth.role === "employee" && userId !== auth.userId) {
+        if (userId !== auth.userId && !(await canActOnTarget(auth.role, auth.userId, targetUser))) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
         if (auth.role === "employee") {
@@ -468,7 +601,7 @@ export async function DELETE(request: NextRequest) {
     const targetUserEmail = (targetUser as any)?.email || "unknown";
 
     // Delete sessions for this user
-    try { const { getDb } = require("@/lib/db/mongo-helper"); const db = await getDb(); if (db) await db.collection("sessions").deleteMany({ userId }); } catch {}
+    try { const db = await getDb(); if (db) await db.collection("sessions").deleteMany({ userId }); } catch {}
 
     // Delete from MongoDB
     await hrmUsersService.delete(userId);

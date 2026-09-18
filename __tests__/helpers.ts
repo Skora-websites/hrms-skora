@@ -129,13 +129,19 @@ export const api = {
 // ── Auth Helpers ───────────────────────────────────────────
 
 export async function registerUser(user: TestUser): Promise<ApiResponse> {
-  const res = await api.post("/api/hrm/v2/auth", {
-    action: "register",
-    email: user.email,
-    password: user.password,
-    displayName: user.displayName,
-    role: "employee", // Registration always creates employees
-  });
+  // Pass the user context so apiRequest captures the Set-Cookie session into
+  // the jar — registration auto-creates a session, exactly like the real flow.
+  const res = await api.post(
+    "/api/hrm/v2/auth",
+    {
+      action: "register",
+      email: user.email,
+      password: user.password,
+      displayName: user.displayName,
+      role: "employee", // Registration always creates employees
+    },
+    { user }
+  );
   return res;
 }
 
@@ -143,10 +149,15 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<ApiResponse> {
-  const res = await api.post("/api/auth/login", {
-    email,
-    password,
-  });
+  // CRITICAL: pass a user context keyed by email so apiRequest stores the
+  // signed session cookie in the jar. Without this, every subsequent
+  // api.get/post with { user } silently sent NO cookie and the suite's
+  // auth-dependent tests were vacuous (401 → early-return skips).
+  const res = await api.post(
+    "/api/auth/login",
+    { email, password },
+    { user: { email, password, displayName: "" } }
+  );
   return res;
 }
 

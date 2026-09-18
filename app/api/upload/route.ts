@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
+import { validateUpload } from "@/lib/upload-security";
 
 /**
  * GET /api/upload?userId=xxx — Load profile image for a user
@@ -50,19 +51,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ error: "File must be under 2MB" }, { status: 400 });
-    }
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Only JPEG, PNG, GIF, WebP allowed" }, { status: 400 });
-    }
-
-    // Convert to base64 data URL
+    // Content-signature validation: the declared MIME/extension is ignored —
+    // the bytes must match an allowlisted image format.
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const dataUrl = "data:" + file.type + ";base64," + base64;
+    const buffer = Buffer.from(arrayBuffer);
+    const check = validateUpload(buffer, file.name, {
+      allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+      maxBytes: 2 * 1024 * 1024,
+    });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.reason }, { status: 400 });
+    }
+
+    const base64 = buffer.toString("base64");
+    const dataUrl = "data:" + check.mime + ";base64," + base64;
 
     // Always use authenticated userId - never trust client input
     const userId = auth.userId;

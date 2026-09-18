@@ -44,10 +44,16 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 export async function auth(): Promise<Session> {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session")?.value;
-  if (!sessionToken) return { user: null };
+  const rawCookie = cookieStore.get("session")?.value;
+  if (!rawCookie) return { user: null };
 
   try {
+    // The cookie holds "<token>.<hmac>" — verify the signature and use the
+    // RAW token for the DB lookup. Comparing the signed blob directly would
+    // never match and silently break every authenticated API call.
+    const sessionToken = await verifyCookieValue(rawCookie);
+    if (!sessionToken) return { user: null };
+
     const db = await getDbWithTimeout();
     if (!db) return { user: null };
     const session = await db.collection("sessions").findOne({
@@ -101,11 +107,15 @@ export async function createSession(userId: string): Promise<string> {
 
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session")?.value;
-  if (sessionToken) {
+  const rawCookie = cookieStore.get("session")?.value;
+  if (rawCookie) {
     try {
-      const db = await getDb();
-      if (db) await db.collection("sessions").deleteOne({ token: sessionToken });
+      // Strip the HMAC — the sessions collection stores the raw token.
+      const sessionToken = await verifyCookieValue(rawCookie);
+      if (sessionToken) {
+        const db = await getDb();
+        if (db) await db.collection("sessions").deleteOne({ token: sessionToken });
+      }
     } catch { /* ignore */ }
   }
   cookieStore.delete("session");
@@ -154,3 +164,9 @@ export async function isSubmittedAdminAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
   return Boolean(cookieStore.get("admin_session")?.value);
 }
+
+// Signed-cookie helpers live in lib/edge-cookies.ts (pure Web Crypto, no
+// Node built-ins) so the Edge middleware can import them without pulling
+// MongoDB/dns into the Edge runtime. Re-exported here for API-route callers.
+import { signCookieValue, verifyCookieValue } from "./edge-cookies";
+export { signCookieValue, verifyCookieValue };

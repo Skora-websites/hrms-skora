@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data: await getAttendanceStats(tenantId, requestedUserId, m, y) });
     }
 
+    // IDOR guard: employees may only list their OWN attendance — a client
+    // ?userId=… must never widen the query for non-privileged roles.
+    if (auth.role === "employee" && requestedUserId && requestedUserId !== auth.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const effectiveUserId = auth.role === "employee" ? auth.userId : requestedUserId || undefined;
     let records = await getAttendanceRecords(tenantId, { userId: effectiveUserId, date: date || undefined, status: status || undefined });
     if (auth.role === "manager") records = records.filter((rec: any) => managerUserIds!.includes(String(rec.userId)));

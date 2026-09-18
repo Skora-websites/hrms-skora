@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
+import { validateUpload } from "@/lib/upload-security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,42 +17,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type (by MIME, falling back to extension — some browsers
-    // send an empty MIME type for .docx/.doc).
-    const allowedTypes = [
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    const allowedExtensions = [".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx"];
-    const lowerName = file.name.toLowerCase();
-    const typeOk = allowedTypes.includes(file.type) || (file.type === "" && allowedExtensions.some((e) => lowerName.endsWith(e)));
-    if (!typeOk) {
-      return NextResponse.json(
-        { error: "Invalid file type. Allowed: PDF, PNG, JPG, DOC, DOCX" },
-        { status: 400 }
-      );
-    }
-
-    // Max 10MB
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size: 10MB" },
-        { status: 400 }
-      );
+    // Content-signature validation: the declared MIME/extension is ignored —
+    // the bytes must match an allowlisted document/image format. Blocks
+    // renamed executables, scripts, HTML and SVG payloads.
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const check = validateUpload(buffer, file.name, {
+      allowedTypes: [
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ],
+      maxBytes: 10 * 1024 * 1024,
+    });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.reason }, { status: 400 });
     }
 
     const timestamp = Date.now();
-    const fileName = `onboarding/${userId}/${timestamp}_${file.name}`;
+    const safeName = file.name.replace(/[\\/\x00-\x1f\x7f]/g, "_");
+    const fileName = `onboarding/${userId}/${timestamp}_${safeName}`;
 
-    // Convert File to Base64
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
     const base64 = buffer.toString("base64");
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    const dataUrl = `data:${check.mime};base64,${base64}`;
 
     // Save metadata and document to MongoDB
     const db = await getDb();

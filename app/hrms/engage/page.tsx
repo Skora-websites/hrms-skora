@@ -45,9 +45,8 @@ export default function EngagePage() {
 
   const handleCreatePost = async () => {
     if (!newPost.trim()) return;
-    const result = await mutation.createRecord("/api/hrm/v2/engage/posts", {
+    const result = await mutation.createRecord("/api/hrm/v2/engage", {
       content: newPost.trim(),
-      userId: "current_user",
     });
     if (result) {
       setNewPost("");
@@ -58,7 +57,7 @@ export default function EngagePage() {
   const handleEdit = async () => {
     if (!editingPost) return;
     const result = await mutation.updateRecord(
-      `/api/hrm/v2/engage/posts?id=${editingPost.id}`,
+      `/api/hrm/v2/engage?id=${editingPost.id}`,
       { content: editContent }
     );
     if (result) {
@@ -71,7 +70,7 @@ export default function EngagePage() {
   const handleDelete = async () => {
     if (!deletePost) return;
     const result = await mutation.deleteRecord(
-      `/api/hrm/v2/engage/posts?id=${deletePost.id}`
+      `/api/hrm/v2/engage?id=${deletePost.id}`
     );
     if (result) {
       setDeletePost(null);

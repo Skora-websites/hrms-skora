@@ -5,9 +5,15 @@ import { ROLE_DEFINITIONS } from "@/services/hrm/auth";
 import { normalizeRole, ROLE_HIERARCHY } from "@/lib/rbac";
 import { requireAuth, requireAdmin, requireSuperAdmin, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
-import { createSession, SESSION_COOKIE_OPTIONS, SESSION_EXPIRES_IN_MS } from "@/lib/auth";
+import { createSession, signCookieValue, SESSION_COOKIE_OPTIONS, SESSION_EXPIRES_IN_MS } from "@/lib/auth";
 import { getDb } from "@/lib/db/mongo-helper";
 import { sendPasswordResetEmail } from "@/lib/email";
+import crypto from "crypto";
+import { checkRateLimit, recordFailure, clearFailures, clientIp, type RateLimitOptions } from "@/lib/rate-limit";
+
+// Abuse guards: registration spam and password-reset email bombing.
+const REGISTER_LIMITS: RateLimitOptions = { max: 10, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
+const RESET_LIMITS: RateLimitOptions = { max: 5, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
   const body = await request.json();
@@ -16,6 +22,13 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   switch (action) {
     case "register": {
       const { email, password, displayName, firstName, lastName } = body;
+      const regKey = `register:${clientIp(request.headers)}`;
+      if (checkRateLimit(regKey, REGISTER_LIMITS).locked) {
+        return NextResponse.json(
+          { error: "Too many registration attempts. Please try again later." },
+          { status: 429, headers: { "Retry-After": "900" } }
+        );
+      }
       if (!email || !password) return badRequest("Email and password are required");
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) return badRequest("Please enter a valid email address");
@@ -27,7 +40,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
       const normalizedEmail = email.toLowerCase().trim();
       const existingUser = await hrmUsersService.findOneInTenant("default", "email", normalizedEmail);
-      if (existingUser) return badRequest("An account with this email already exists");
+      if (existingUser) {
+        recordFailure(regKey, REGISTER_LIMITS);
+        return badRequest("An account with this email already exists");
+      }
+      clearFailures(regKey);
 
       const role = "employee";
       const passwordHash = await bcrypt.hash(password, 12);
@@ -36,6 +53,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
         firstName: firstName || displayName || "", lastName: lastName || "", role,
         status: "pending_verification", loginStatus: "enabled", passwordHash, tenantId: "default",
         onboardingStatus: "pending", mustChangePassword: false,
+        // Persist the requested department on the user record (both naming
+        // conventions) so department-scoped features (project fan-out, team
+        // rosters) work from the moment the account is approved — the
+        // onboarding task alone stores it and nothing copies it back.
+        department: body.department || "",
+        departmentName: body.department || "",
       } as any);
 
       const db = await getDb();
@@ -57,11 +80,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
       const sessionToken = await createSession(newUser.id);
       const response = NextResponse.json({ data: { uid: newUser.id, email: normalizedEmail, displayName: displayName || firstName || normalizedEmail, role } }, { status: 201 });
-      response.cookies.set("session", sessionToken, { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
-      response.cookies.set("user_role", role, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+      response.cookies.set("session", await signCookieValue(sessionToken), { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
+      response.cookies.set("user_role", await signCookieValue(role), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
       // Middleware gates pending accounts to a narrow route set for 1h;
       // refreshed on every login so approval lifts the restriction.
-      response.cookies.set("user_status", "pending_verification", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 3600 });
+      response.cookies.set("user_status", await signCookieValue("pending_verification"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 3600 });
       return response;
     }
 
@@ -69,10 +92,20 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const { email } = body;
       if (!email) return badRequest("Email is required");
       const normalizedEmail = email.toLowerCase().trim();
+      const resetKey = `reset:${normalizedEmail}|${clientIp(request.headers)}`;
+      if (checkRateLimit(resetKey, RESET_LIMITS).locked) {
+        return NextResponse.json(
+          { data: { message: "If the email exists, a reset link has been sent." } },
+          { status: 429 }
+        );
+      }
       const user = await hrmUsersService.findOneInTenant("default", "email", normalizedEmail);
-      if (!user) return NextResponse.json({ data: { message: "If the email exists, a reset link has been sent." } });
+      if (!user) {
+        // Same generic message; the failure still counts toward the limit.
+        recordFailure(resetKey, RESET_LIMITS);
+        return NextResponse.json({ data: { message: "If the email exists, a reset link has been sent." } });
+      }
 
-      const crypto = require("crypto");
       const resetToken = crypto.randomBytes(32).toString("hex");
       const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
       const db = await getDb();
@@ -88,6 +121,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const sent = resetUrl ? await sendPasswordResetEmail({ to: normalizedEmail, resetUrl }) : false;
       if (!sent) {
         await db.collection("password_resets").deleteOne({ userId: user.id });
+        recordFailure(resetKey, RESET_LIMITS);
+      } else {
+        clearFailures(resetKey);
       }
       return NextResponse.json({ data: { message: "If the email exists, a reset link has been sent." } });
     }

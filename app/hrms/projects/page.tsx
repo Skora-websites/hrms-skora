@@ -238,7 +238,9 @@ export default function ProjectsPage() {
         title="Projects"
         description="Manage projects, tasks, teams, and milestones."
       >
-        <Button onClick={() => setShowCreate(true)}><Plus className="mr-2 h-4 w-4" />Add Project</Button>
+        {user?.role !== "employee" && (
+          <Button onClick={() => setShowCreate(true)}><Plus className="mr-2 h-4 w-4" />Add Project</Button>
+        )}
         <Link href="/hrms/projects/all">
           <Button variant="outline"><Plus className="mr-2 h-4 w-4" />View All</Button>
         </Link>

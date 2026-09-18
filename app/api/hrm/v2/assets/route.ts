@@ -55,6 +55,13 @@ export async function GET(request: NextRequest) {
       if (!asset) {
         return NextResponse.json({ error: "Asset not found" }, { status: 404 });
       }
+      // IDOR guard: employees may only view assets assigned to them.
+      if (auth.role === "employee") {
+        const assignedTo = (asset as any).assignedToUserId || (asset as any).assignedTo || null;
+        if (assignedTo !== auth.userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
       return NextResponse.json({ data: asset });
     }
 

@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   await destroySession();
   const response = NextResponse.json({ success: true });
+  // Clear every auth-adjacent cookie so no stale role/status fencing survives logout.
   response.cookies.delete("session");
   response.cookies.delete("user_role");
+  response.cookies.delete("user_status");
+  response.cookies.delete("must_change_password");
   return response;
 }

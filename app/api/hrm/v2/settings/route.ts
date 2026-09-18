@@ -29,7 +29,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database not connected" }, { status: 500 });
     }
 
-    const key = userId ? `${role}_${userId}` : role;
+    // Key must stay in lockstep with the GET handler below: the Super Admin
+    // settings page saves system-wide rules with userId="system", and every
+    // other page reads them back WITHOUT a userId. A previous mismatch
+    // ("super_admin_system" vs "super_admin") silently dropped all saves.
+    const key = userId && userId !== "system" ? `${role}_${userId}` : role;
     await db.collection("settings").updateOne(
       { key },
       {

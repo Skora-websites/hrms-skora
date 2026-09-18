@@ -14,6 +14,7 @@ import {
   Loader2,
   ClipboardList,
   MessageSquare,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -92,7 +93,19 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
           const data = await res.json();
           const items = data.data || [];
           setNotifications(items.slice(0, 5));
-          setUnreadCount(items.filter((n: any) => !n.isRead).length);
+          // The dropdown shows 5, but the badge must reflect ALL unread —
+          // fetch the authoritative count from the count endpoint.
+          try {
+            const cRes = await fetch(`/api/hrm/v2/notifications?userId=${user.id}&count=true`);
+            if (cRes.ok) {
+              const cData = await cRes.json();
+              setUnreadCount(cData?.data?.unreadCount ?? items.filter((n: any) => !n.isRead).length);
+            } else {
+              setUnreadCount(items.filter((n: any) => !n.isRead).length);
+            }
+          } catch {
+            setUnreadCount(items.filter((n: any) => !n.isRead).length);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch notifications:", err);
@@ -132,7 +145,8 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (type: string, referenceType?: string) => {
+    if (referenceType === "project") return FolderKanban;
     switch (type) {
       case "task": return ClipboardList;
       case "ticket": return MessageSquare;
@@ -278,16 +292,24 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
           ) : (
             <div className="space-y-1 p-2">
               {notifications.map((notif) => {
-                const NotifIcon = getNotificationIcon(notif.type);
+                const NotifIcon = getNotificationIcon(notif.type, notif.referenceType);
                 return (
                   <div
                     key={notif.id}
                     onClick={() => {
                       if (!notif.isRead) handleMarkAsRead(notif.id);
                       if (notif.referenceType === "task" && notif.referenceId) {
-                        router.push(`/hrms/tasks?id=${notif.referenceId}`);
+                        router.push(`/hrms/projects/tasks?taskId=${notif.referenceId}`);
                       } else if (notif.referenceType === "ticket" && notif.referenceId) {
                         router.push(`/hrms/tickets?id=${notif.referenceId}`);
+                      } else if (notif.referenceType === "project" && notif.referenceId) {
+                        // Managers/admins land on the shared projects board;
+                        // employees see their assigned projects.
+                        router.push(
+                          notif.type === "general" && user?.role === "employee"
+                            ? "/hrms/projects"
+                            : `/hrms/projects/all?id=${notif.referenceId}`
+                        );
                       }
                     }}
                     className={cn(
@@ -299,12 +321,14 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
                   >
                     <div className={cn(
                       "mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                      notif.referenceType === "project" ? "bg-emerald-500/10" :
                       notif.type === "task" ? "bg-info/10" :
                       notif.type === "ticket" ? "bg-primary/10" :
                       "bg-muted/30"
                     )}>
                       <NotifIcon className={cn(
                         "h-4 w-4",
+                        notif.referenceType === "project" ? "text-emerald-500" :
                         notif.type === "task" ? "text-info" :
                         notif.type === "ticket" ? "text-primary" :
                         "text-muted"

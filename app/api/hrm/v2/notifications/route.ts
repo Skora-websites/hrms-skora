@@ -20,6 +20,12 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const unreadOnly = searchParams.get("unreadOnly") === "true";
     const count = searchParams.get("count");
+    // Honor the client's requested page size (the bell asks for 5); clamped
+    // to sane bounds so a huge value can't force a full-collection scan.
+    const limitCountRaw = parseInt(searchParams.get("limitCount") || "", 10);
+    const limitCount = Number.isFinite(limitCountRaw) && limitCountRaw > 0
+      ? Math.min(limitCountRaw, 50)
+      : undefined;
 
     // Employees can only view their own notifications
     if (auth.role === "employee" && userId !== auth.userId) {
@@ -42,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (userId) {
-      const notifications = await getUserNotifications(userId, { unreadOnly });
+      const notifications = await getUserNotifications(userId, { unreadOnly, limitCount });
       return NextResponse.json({ data: notifications });
     }
 

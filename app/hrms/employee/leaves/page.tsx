@@ -39,9 +39,17 @@ export default function EmployeeLeavesPage() {
   const [loading, setLoading] = useState(true);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showRegModal, setShowRegModal] = useState(false);
+  const [leaveTypes, setLeaveTypes] = useState<{ id: string; name: string }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   // Leave form state
-  const [leaveType, setLeaveType] = useState("casual");
+  const [leaveTypeId, setLeaveTypeId] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [isHalfDay, setIsHalfDay] = useState(false);
@@ -59,9 +67,10 @@ export default function EmployeeLeavesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [leaveRes, regRes] = await Promise.allSettled([
+      const [leaveRes, regRes, typesRes] = await Promise.allSettled([
         fetch("/api/hrm/v2/leaves").then(r => r.ok ? r.json() : null),
         fetch("/api/hrm/v2/attendance/regularization").then(r => r.ok ? r.json() : null),
+        fetch("/api/hrm/v2/leaves?type=types").then(r => r.ok ? r.json() : null),
       ]);
       if (regRes.status === "fulfilled" && regRes.value) {
         const rows = Array.isArray(regRes.value.data) ? regRes.value.data : [];
@@ -81,41 +90,82 @@ export default function EmployeeLeavesPage() {
           status: l.status || "pending",
         })));
       }
+      if (typesRes.status === "fulfilled" && typesRes.value) {
+        const types = Array.isArray(typesRes.value.data) ? typesRes.value.data : [];
+        const mapped = types.map((t: any) => ({ id: t.id || t._id, name: t.name || t.code || "Leave" }));
+        setLeaveTypes(mapped);
+        if (mapped.length > 0 && !mapped.some((t: { id: string }) => t.id === leaveTypeId)) {
+          setLeaveTypeId(mapped[0].id);
+        }
+      }
     } catch { /* empty */ }
     setLoading(false);
   };
 
   const handleApplyLeave = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Client-side date validation (mirrors the server schema).
+    if (!leaveTypeId) {
+      showToast("Please select a leave type", "error");
+      return;
+    }
+    if (fromDate && toDate && new Date(toDate) < new Date(fromDate)) {
+      showToast("End date must be on or after the start date", "error");
+      return;
+    }
+    if ((reason || "").trim().length < 3) {
+      showToast("Please provide a reason (at least 3 characters)", "error");
+      return;
+    }
+    setSubmitting(true);
     try {
-      await fetch("/api/hrm/v2/leaves", {
+      const res = await fetch("/api/hrm/v2/leaves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "apply", userId: "current", leaveTypeId: leaveType, fromDate, toDate, reason: (reason || "") + (isHalfDay ? " (Half Day - " + (halfDaySlot === "first_half" ? "Morning" : "Afternoon") + ")" : "") }),
+        body: JSON.stringify({ action: "apply", userId: "current", leaveTypeId, fromDate, toDate, reason: (reason || "") + (isHalfDay ? " (Half Day - " + (halfDaySlot === "first_half" ? "Morning" : "Afternoon") + ")" : "") }),
       });
-      setShowApplyModal(false);
-      resetLeaveForm();
-      loadData();
-    } catch { /* empty */ }
+      if (res.ok) {
+        showToast("Leave request submitted for approval.", "success");
+        setShowApplyModal(false);
+        resetLeaveForm();
+        loadData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to submit leave request", "error");
+      }
+    } catch {
+      showToast("Network error while submitting leave request", "error");
+    }
+    setSubmitting(false);
   };
 
   const handleApplyRegularization = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
-      await fetch("/api/hrm/v2/attendance/regularization", {
+      const res = await fetch("/api/hrm/v2/attendance/regularization", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: regDate, reason: regReason }),
       });
-      setShowRegModal(false);
-      setRegDate("");
-      setRegReason("");
-      loadData();
-    } catch { /* empty */ }
+      if (res.ok) {
+        showToast("Regularization request submitted.", "success");
+        setShowRegModal(false);
+        setRegDate("");
+        setRegReason("");
+        loadData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to submit regularization", "error");
+      }
+    } catch {
+      showToast("Network error while submitting regularization", "error");
+    }
+    setSubmitting(false);
   };
 
   const resetLeaveForm = () => {
-    setLeaveType("casual");
+    setLeaveTypeId(leaveTypes[0]?.id || "");
     setFromDate("");
     setToDate("");
     setIsHalfDay(false);
@@ -128,6 +178,26 @@ export default function EmployeeLeavesPage() {
 
   return (
     <AppShell title="Leave Requests">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4">
+          <div
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-md ${
+              toast.type === "success"
+                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
+                : "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-300"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            )}
+            <span>{toast.msg}</span>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Leave Requests</h2>
@@ -232,11 +302,14 @@ export default function EmployeeLeavesPage() {
             <form onSubmit={handleApplyLeave} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold mb-1">Leave Type</label>
-                <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none">
-                  <option value="casual">Casual Leave</option>
-                  <option value="sick">Sick Leave</option>
-                  <option value="annual">Annual Leave</option>
-                  <option value="unpaid">Unpaid Leave</option>
+                <select value={leaveTypeId} onChange={(e) => setLeaveTypeId(e.target.value)} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none">
+                  {leaveTypes.length === 0 ? (
+                    <option value="">No leave types configured — contact HR</option>
+                  ) : (
+                    leaveTypes.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -280,7 +353,9 @@ export default function EmployeeLeavesPage() {
 
               <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
                 <Button type="button" variant="outline" onClick={() => { setShowApplyModal(false); resetLeaveForm(); }}>Cancel</Button>
-                <Button type="submit" className="bg-primary text-white font-bold gap-1">Submit Request</Button>
+                <Button type="submit" disabled={submitting} className="bg-primary text-white font-bold gap-1">
+                  {submitting ? "Submitting…" : "Submit Request"}
+                </Button>
               </div>
             </form>
           </div>

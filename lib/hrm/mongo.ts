@@ -108,6 +108,16 @@ export function createMongoService<T extends { id?: string; tenantId?: string }>
       return { ...doc, id: result.insertedId.toString() } as unknown as T;
     },
 
+    /** Bulk insert — one round-trip for N docs. Returns the number inserted. */
+    async createMany(docs: Array<Partial<T>>): Promise<number> {
+      if (!docs || docs.length === 0) return 0;
+      const c = await col();
+      const now = new Date();
+      const payload = docs.map((d) => ({ ...d, createdAt: now, updatedAt: now }));
+      const result = await c.insertMany(payload);
+      return result.insertedCount ?? payload.length;
+    },
+
     async createWithId(id: string, data: Partial<T>): Promise<T> {
       const c = await col();
       const now = new Date();
@@ -141,7 +151,21 @@ export function createMongoService<T extends { id?: string; tenantId?: string }>
       }
     },
 
-    async countInTenant(tenantId: string, options: { where?: WhereClause[] } = {}): Promise<number> {
+    /**
+     * Bulk update matching the given where clauses — one round-trip.
+     * Used for fan-out style operations (e.g. markAllAsRead) where a
+     * per-document loop would do N sequential DB writes.
+     */
+    async updateWhere(clauses: WhereClause[], data: Partial<T>): Promise<number> {
+      const c = await col();
+      const updateData = { ...data, updatedAt: new Date() } as Record<string, unknown>;
+      delete updateData.id;
+      delete updateData._id;
+      const r = await c.updateMany(buildFilter(clauses), { "$set": updateData });
+      return r.modifiedCount ?? 0;
+    },
+
+async countInTenant(tenantId: string, options: { where?: WhereClause[] } = {}): Promise<number> {
       const c = await col();
       return c.countDocuments(buildFilter(tenantWhere(tenantId, options)));
     },
