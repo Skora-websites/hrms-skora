@@ -57,7 +57,7 @@ jobs:
 
       - name: Start production server
         run: |
-          nohup npm run start > .server.log 2>&1 &
+          nohup npm run start > server.log 2>&1 &
           for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w "%{http_code}" -m 10 http://localhost:3000/api/health || echo "000")
             if [ "$code" = "200" ]; then
@@ -67,7 +67,7 @@ jobs:
             sleep 2
           done
           echo "Server failed to become healthy — log follows"
-          tail -n 100 .server.log
+          tail -n 100 server.log
           exit 1
 
       - name: Run tests
@@ -78,5 +78,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-log
-          path: .server.log
+          path: server.log
           retention-days: 7

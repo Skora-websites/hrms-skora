@@ -76,12 +76,26 @@ async function resolveSRV(srvUri: string): Promise<string> {
   }
 }
 
+// TLS: Atlas (mongodb+srv) requires it. An explicit tls/ssl param in the URI
+// always wins — CI uses mongodb://localhost:27017/...?tls=false against a
+// local standalone mongod, where forcing tls=true makes the driver abort with
+// "All values of tls/ssl must be the same." (Mirrors scripts/seed-test-accounts.js.)
+function uriTlsParam(uri: string): string | null {
+  const params = new URLSearchParams(uri.split("?")[1] || "");
+  return params.get("tls") || params.get("ssl");
+}
+
+// Standalone servers (CI's mongo:7 container) don't support retryable writes
+// or majority write concern; downgrade when the URI opts out of TLS.
+const uriDisablesTls = Boolean(uri && uriTlsParam(uri) === "false");
+
 const clientOptions: MongoClientOptions = {
   serverSelectionTimeoutMS: 15000,
   connectTimeoutMS: 15000,
-  tls: true,
-  retryWrites: true,
-  w: "majority" as any,
+  ...(uri && !uriTlsParam(uri) ? { tls: true } : {}),
+  ...(uriDisablesTls
+    ? { retryWrites: false, w: 1 as any }
+    : { retryWrites: true, w: "majority" as any }),
 };
 
 async function connectWithRetry(retries = 2): Promise<MongoClient | null> {
