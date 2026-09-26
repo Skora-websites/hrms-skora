@@ -125,7 +125,11 @@ export async function POST(request: NextRequest) {
             const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
             const rand = crypto.randomBytes(8);
             tempPassword = "Skora-" + Array.from(rand, (b) => alphabet[b % alphabet.length]).join("");
-            const passwordHash = await bcrypt.hash(tempPassword, 12);
+            // E2E hook: when set, welcome emails advertise this fixed password
+            // instead of the random one (the suite cannot read inboxes), so the
+            // stored hash must match what the email delivers.
+            const effectivePassword = process.env.E2E_TEST_PASSWORD || tempPassword;
+            const passwordHash = await bcrypt.hash(effectivePassword, 12);
             const displayName = (taskDoc as any)?.employeeName && !(taskDoc as any).employeeName.includes("@")
               ? (taskDoc as any).employeeName
               : email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());

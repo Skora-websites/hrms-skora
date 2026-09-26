@@ -319,6 +319,12 @@ export async function sendWelcomeEmail({
   employeeCode,
   companyName = "SKORA",
 }: WelcomeEmailInput): Promise<boolean> {
+  // E2E test hook: with E2E_TEST_PASSWORD set, all welcome emails report a
+  // fixed password so the API test suite can complete the invite lifecycle
+  // (SMTP is configured in dev, so the fallback "email failed → surface the
+  // temp password" branch never runs there). Never set this in production.
+  const e2ePassword = process.env.E2E_TEST_PASSWORD;
+  const effectivePassword = e2ePassword || tempPassword;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
   const loginUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/hrms/login` : "/hrms/login";
   const html = `
@@ -332,7 +338,7 @@ export async function sendWelcomeEmail({
       <div style="background:#f0f6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:18px 0;">
         <p style="margin:0 0 8px 0;font-size:14px;">Here are your login details:</p>
         <p style="margin:0;font-size:14px;"><strong>Login Email:</strong> ${to}</p>
-        <p style="margin:0;font-size:14px;"><strong>Temporary Password:</strong> <span style="font-family:monospace;font-size:15px;font-weight:bold;color:#2563eb;">${tempPassword}</span></p>
+        <p style="margin:0;font-size:14px;"><strong>Temporary Password:</strong> <span style="font-family:monospace;font-size:15px;font-weight:bold;color:#2563eb;">${effectivePassword}</span></p>
         ${employeeCode ? `<p style="margin:8px 0 0 0;font-size:13px;color:#555;">Your Employee Code: <strong>${employeeCode}</strong></p>` : ""}
       </div>
       <p style="font-size:14px;"><a href="${loginUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:bold;">Sign in to ${companyName} HRMS</a></p>

@@ -140,7 +140,8 @@ export const api = {
  */
 export async function registerUser(user: TestUser): Promise<ApiResponse> {
   const HR: TestUser = {
-    email: process.env.TEST_HR_EMAIL || "hr-admin@company.com",
+    // Seeded by scripts/seed-test-accounts.js (parsed from api-suite.test.ts).
+    email: process.env.TEST_HR_EMAIL || "hr-admin-api-test@company.com",
     password: process.env.TEST_HR_PASSWORD || "HRAdmin@123",
     displayName: "Test HR Admin",
   };
@@ -168,10 +169,19 @@ export async function registerUser(user: TestUser): Promise<ApiResponse> {
   if (!approve.ok) {
     return { ok: false, status: approve.status, error: approve.error || "approval failed" };
   }
-  // tempPassword is surfaced to the approver only when the welcome email
-  // could not be delivered (CI has no SMTP); otherwise use the suite password.
-  const tempPassword: string = approve.data?.tempPassword || user.password;
-  user.id = approve.data?.userId || (approve.data?._id ? String(approve.data._id) : undefined);
+  // The task row stores the email as userId until approval links it to the
+  // real account; the approval response reflects the linked id.
+  user.id = approve.data?.userId;
+  if (approve.data?._id && !user.id) user.id = String(approve.data._id);
+
+  // The temp password is surfaced to the approver only when the welcome
+  // email could not be delivered (CI has no SMTP). When SMTP IS configured,
+  // the server hashes E2E_TEST_PASSWORD into the account and the welcome
+  // email advertises it, so the suite learns the password from the env var.
+  const tempPassword: string = approve.data?.tempPassword || process.env.E2E_TEST_PASSWORD || process.env.TEST_TEMP_PASSWORD || "";
+  if (!tempPassword) {
+    return { ok: false, status: approve.status, error: "temp password unavailable (set TEST_TEMP_PASSWORD when SMTP is configured)" };
+  }
 
   // 3. First login with the temp password (mustChangePassword fence active).
   const firstLogin = await loginUser(user.email, tempPassword);
@@ -190,7 +200,14 @@ export async function registerUser(user: TestUser): Promise<ApiResponse> {
   }
 
   // 5. Log in normally so the session jar holds a full session.
-  return loginUser(user.email, user.password);
+  const finalLogin = await loginUser(user.email, user.password);
+  if (!finalLogin.ok) {
+    return { ok: false, status: finalLogin.status, error: finalLogin.error || "final login failed" };
+  }
+  // Suites read `regRes.data.uid` (the old register response shape). Keep
+  // that contract — registration previously auto-created the session, and
+  // callers depend on the uid being present here.
+  return { ok: true, status: 201, data: { uid: user.id, email: user.email, displayName: user.displayName, role: "employee" } };
 }
 
 export async function loginUser(
