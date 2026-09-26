@@ -221,7 +221,15 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: employee });
   }
 
-  const employee = await updateEmployee(id, body);
+  // Reporting structure is CEO-controlled: strip reportingManager from any
+  // non-CEO update so HR edits cannot silently reassign reporting lines.
+  const updateBody: Record<string, unknown> = { ...body };
+  if (auth.role !== "super_admin") {
+    delete updateBody.reportingManager;
+    delete updateBody.managerEmail;
+  }
+
+  const employee = await updateEmployee(id, updateBody as any);
   if (!employee) {
     return notFound("Employee not found");
   }

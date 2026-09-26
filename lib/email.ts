@@ -298,6 +298,60 @@ export async function sendPayslipEmail({
   });
 }
 
+interface WelcomeEmailInput {
+  to: string;
+  employeeName: string;
+  tempPassword: string;
+  employeeCode?: string;
+  companyName?: string;
+}
+
+/**
+ * Welcome + credentials email sent when HR approves an account request.
+ * The temporary password must be changed at first login (mustChangePassword
+ * fence forces /hrms/force-change-password). Returns false when no transport
+ * is configured or sending failed.
+ */
+export async function sendWelcomeEmail({
+  to,
+  employeeName,
+  tempPassword,
+  employeeCode,
+  companyName = "SKORA",
+}: WelcomeEmailInput): Promise<boolean> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const loginUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/hrms/login` : "/hrms/login";
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; border-bottom: 3px double #2563eb; padding-bottom: 16px; margin-bottom: 20px;">
+        <h1 style="color: #2563eb; letter-spacing: 2px; margin: 0;">${companyName}</h1>
+        <p style="color: #666; font-size: 12px; margin-top: 5px;">Welcome Aboard</p>
+      </div>
+      <p>Dear <strong>${employeeName}</strong>,</p>
+      <p>Your account request has been <strong style="color:#16a34a;">approved</strong> — welcome to ${companyName}!</p>
+      <div style="background:#f0f6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:18px 0;">
+        <p style="margin:0 0 8px 0;font-size:14px;">Here are your login details:</p>
+        <p style="margin:0;font-size:14px;"><strong>Login Email:</strong> ${to}</p>
+        <p style="margin:0;font-size:14px;"><strong>Temporary Password:</strong> <span style="font-family:monospace;font-size:15px;font-weight:bold;color:#2563eb;">${tempPassword}</span></p>
+        ${employeeCode ? `<p style="margin:8px 0 0 0;font-size:13px;color:#555;">Your Employee Code: <strong>${employeeCode}</strong></p>` : ""}
+      </div>
+      <p style="font-size:14px;"><a href="${loginUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:bold;">Sign in to ${companyName} HRMS</a></p>
+      <p style="color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:16px;">
+        🔐 For security, you will be asked to <strong>create your own password</strong> the first time you sign in. This temporary password works only once for that purpose.
+      </p>
+      <p style="margin-top:24px;">Warm regards,<br><strong>HR Team</strong><br>${companyName}</p>
+      <div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 30px; font-size: 11px; color: #999; text-align: center;">
+        <p>Please do not share these credentials with anyone. HR will never ask for your password.</p>
+      </div>
+    </div>`;
+
+  return sendMail({
+    to,
+    subject: `Welcome to ${companyName} HRMS — your login credentials`,
+    html,
+  });
+}
+
 interface ExperienceLetterEmailInput {
   to: string;
   employeeName: string;

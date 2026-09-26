@@ -374,17 +374,19 @@ export async function PATCH(request: NextRequest) {
         }
         if (emergencyContact !== undefined) updateData.emergencyContact = emergencyContact;
         if (bankAccount !== undefined) updateData.bankAccount = bankAccount;
-        if (reportingManager !== undefined) {
-          // Reassignment changes reporting structure — HR-level only.
-          if (auth.role === "manager") {
+        if (reportingManager !== undefined || managerEmail !== undefined) {
+          // Reporting structure is CEO-controlled: nobody else (HR included)
+          // may change reporting manager names/emails. Employees see these
+          // read-only; the CEO toggle in the superadmin panel drives it.
+          if (auth.role !== "super_admin") {
             return NextResponse.json(
-              { error: "Forbidden: HR access required to change reporting manager" },
+              { error: "Forbidden: only the CEO can change the reporting manager" },
               { status: 403 }
             );
           }
-          updateData.reportingManager = reportingManager;
+          if (reportingManager !== undefined) updateData.reportingManager = reportingManager;
+          if (managerEmail !== undefined) updateData.managerEmail = managerEmail;
         }
-        if (managerEmail !== undefined) updateData.managerEmail = managerEmail;
         if (domainWork !== undefined) updateData.domainWork = domainWork;
         if (allottedTeam !== undefined) updateData.allottedTeam = allottedTeam;
         if (body.image !== undefined) updateData.image = body.image;
@@ -537,8 +539,11 @@ export async function PATCH(request: NextRequest) {
           await hrmUsersService.update(resolvedUserId, updateData as any);
           auditDetails = `Updated profile: ${Object.keys(updateData).join(", ")}`;
         } else {
-          // Admin/manager: allowlist safe fields only — never allow role, passwordHash, status, loginStatus
-          const SAFE_FIELDS = ["displayName", "firstName", "lastName", "email", "phone", "image", "department", "designation", "reportingManager", "joiningDate", "employeeCode"];
+          // Admin/manager: allowlist safe fields only — never allow role,
+          // passwordHash, status, loginStatus, or reportingManager/managerEmail
+          // (the reporting structure is CEO-controlled and must not leak in
+          // through this legacy path).
+          const SAFE_FIELDS = ["displayName", "firstName", "lastName", "email", "phone", "image", "department", "designation", "joiningDate", "employeeCode"];
           const updateData: Record<string, any> = {};
           for (const field of SAFE_FIELDS) {
             if (body[field] !== undefined) updateData[field] = body[field];

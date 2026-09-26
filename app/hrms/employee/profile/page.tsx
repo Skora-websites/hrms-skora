@@ -174,8 +174,6 @@ export default function EmployeeProfilePage() {
           phone,
           emergencyContact,
           bankAccount,
-          reportingManager,
-          managerEmail,
           domainWork,
           allottedTeam,
         }),
@@ -405,20 +403,15 @@ export default function EmployeeProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs p-4 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/5">
               <div>
                 <label className="text-slate-500 dark:text-slate-400 block mb-1 font-semibold">Reporting Authority</label>
-                <input
-                  type="text"
-                  value={reportingManager}
-                  onChange={(e) => setReportingManager(e.target.value)}
-                  placeholder="Manager name"
-                  className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-                <input
-                  type="text"
-                  value={managerEmail}
-                  onChange={(e) => setManagerEmail(e.target.value)}
-                  placeholder="Manager email"
-                  className="w-full mt-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-1.5 text-[11px] text-primary focus:border-primary focus:outline-none"
-                />
+                {/* Read-only: the reporting structure is set by the CEO and
+                    reflects here automatically. (was editable inputs) */}
+                <div className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-slate-100/70 dark:bg-black/60 px-3 py-2 text-sm text-slate-900 dark:text-white">
+                  {reportingManager || <span className="text-slate-400">To be assigned</span>}
+                </div>
+                <div className="w-full mt-2 rounded-lg border border-gray-200 dark:border-white/10 bg-slate-100/70 dark:bg-black/60 px-3 py-1.5 text-[11px] text-primary">
+                  {managerEmail || <span className="text-slate-400">—</span>}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5">Assigned by the CEO — changes reflect here automatically</p>
               </div>
 
               <div>

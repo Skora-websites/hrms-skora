@@ -128,21 +128,69 @@ export const api = {
 
 // ── Auth Helpers ───────────────────────────────────────────
 
+/**
+ * Create an employee through the real invite flow:
+ *   1. POST /api/hrm/v2/auth {action:"request-invite"} — email + department only
+ *   2. HR approves the onboarding request → account created with a temp password
+ *   3. Login with the temp password and change it to the requested one
+ *
+ * Returns the final login response; `user.id` is set on success. Suites
+ * treat registerUser failures as non-fatal, so any step may fail gracefully
+ * when the DB/email transport is unavailable.
+ */
 export async function registerUser(user: TestUser): Promise<ApiResponse> {
-  // Pass the user context so apiRequest captures the Set-Cookie session into
-  // the jar — registration auto-creates a session, exactly like the real flow.
-  const res = await api.post(
-    "/api/hrm/v2/auth",
-    {
-      action: "register",
-      email: user.email,
-      password: user.password,
-      displayName: user.displayName,
-      role: "employee", // Registration always creates employees
-    },
-    { user }
-  );
-  return res;
+  const HR: TestUser = {
+    email: process.env.TEST_HR_EMAIL || "hr-admin@company.com",
+    password: process.env.TEST_HR_PASSWORD || "HRAdmin@123",
+    displayName: "Test HR Admin",
+  };
+
+  // 1. Account request (public, no session).
+  await api.post("/api/hrm/v2/auth", {
+    action: "request-invite",
+    email: user.email,
+    department: "Software Engineering",
+  });
+
+  // 2. HR login + approve the request.
+  await loginUser(HR.email, HR.password);
+  const queue = await api.get("/api/hrm/v2/onboarding?pending=true", { user: HR });
+  const rows: any[] = Array.isArray(queue.data) ? queue.data : [];
+  const request = rows.find((r) => r.email === user.email && r.status === "invite_requested");
+  if (!request) {
+    return { ok: false, status: queue.status || 404, error: "invite request not found in HR queue" };
+  }
+  const approve = await api.post("/api/hrm/v2/onboarding", {
+    action: "update_task",
+    taskId: request.id || request._id,
+    status: "approved",
+  }, { user: HR });
+  if (!approve.ok) {
+    return { ok: false, status: approve.status, error: approve.error || "approval failed" };
+  }
+  // tempPassword is surfaced to the approver only when the welcome email
+  // could not be delivered (CI has no SMTP); otherwise use the suite password.
+  const tempPassword: string = approve.data?.tempPassword || user.password;
+  user.id = approve.data?.userId || (approve.data?._id ? String(approve.data._id) : undefined);
+
+  // 3. First login with the temp password (mustChangePassword fence active).
+  const firstLogin = await loginUser(user.email, tempPassword);
+  if (!firstLogin.ok) {
+    return { ok: false, status: firstLogin.status, error: firstLogin.error || "temp-password login failed" };
+  }
+
+  // 4. Create the real password.
+  const changeRes = await api.patch("/api/hrm/v2/users", {
+    userId: user.id,
+    action: "force-change-password",
+    newPassword: user.password,
+  }, { user: { email: user.email, password: tempPassword, displayName: user.displayName } });
+  if (!changeRes.ok) {
+    return { ok: false, status: changeRes.status, error: changeRes.error || "force-change-password failed" };
+  }
+
+  // 5. Log in normally so the session jar holds a full session.
+  return loginUser(user.email, user.password);
 }
 
 export async function loginUser(

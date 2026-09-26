@@ -28,9 +28,9 @@ import {
   updateMilestone,
   deleteMilestone,
 } from "@/services/hrm/projects";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAuth, requireAdmin, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
-import { getUserName, getUserById } from "@/services/hrm/notifications";
+import { getUserName } from "@/services/hrm/notifications";
 
 // ── GET ─────────────────────────────────────────────────
 
@@ -241,9 +241,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: attachment }, { status: 201 });
   }
 
-  // Task creation
+  // Task creation — HR-level only (managers are view-and-comment).
   if (action === "task") {
-    const auth = await requireAuth();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const tenantId = "default";
@@ -251,14 +251,6 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const body = earlyBody || (await request.json());
     if (!body.projectId || !body.title) {
       return badRequest("Missing required fields: projectId, title");
-    }
-    // Employees may only create tasks inside projects they belong to.
-    if (auth.role === "employee") {
-      const members = await getProjectMembers(String(body.projectId));
-      const isMember = members.some((m: any) => m.userId === auth.userId);
-      if (!isMember) {
-        return forbidden("You can only create tasks in projects you are assigned to");
-      }
     }
 
     const task = await createProjectTask(tenantId, {
@@ -289,8 +281,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: member }, { status: 201 });
   }
 
-  // Project creation
-  const auth = await requireAdmin();
+  // Project creation — HR-level only (managers are view-and-comment).
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";
@@ -302,20 +294,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return badRequest("Missing required field: name");
   }
 
-  // Manager-created projects scope their audience to the MANAGER's own
-  // department (from the user record) — not an optional client-supplied
-  // field. Otherwise the fan-out either misses the real team or (worse)
-  // notifies every employee in the tenant.
-  let department = (body as any).department as string | undefined;
-  if (auth.role === "manager" && !department) {
-    department = (await getUserById(auth.userId))?.department || undefined;
-  }
-
   const project = await createProject(tenantId, {
     ...body,
     ownerId: body.ownerId || auth.userId,
     creatorRole: auth.role,
-    department,
+    department: (body as any).department,
   });
   return NextResponse.json({ data: project }, { status: 201 });
 }, { label: "Projects" });
@@ -330,7 +313,8 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
   // Task status transitions are allowed for the ASSIGNEE without admin
   // rights — the employee "complete my task" flow was previously impossible
   // because this whole handler sat behind requireAdmin. Assignees may only
-  // change `status`; everything else still requires admin.
+  // change `status`; everything else still requires admin. Managers are
+  // view-and-comment only, so their task edits go through requireAdmin.
   if (type === "task" && taskId) {
     const assigneeAuth = await requireAuth();
     if (isErrorResponse(assigneeAuth)) return assigneeAuth;
@@ -340,6 +324,8 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     if ((task as any).assigneeId !== assigneeAuth.userId) {
       const adminAuth = await requireAdmin();
       if (isErrorResponse(adminAuth)) return adminAuth;
+    } else if (assigneeAuth.role === "manager") {
+      return forbidden("Managers have view-and-comment access only; task edits require HR-level access");
     } else if (taskBody.status === undefined || Object.keys(taskBody).some((k) => k !== "status")) {
       return badRequest("Assignees can only update the task status");
     }
@@ -418,8 +404,11 @@ export const DELETE = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ success: true });
   }
 
-  // Task delete
+  // Task delete — managers are view-and-comment only.
   if (type === "task" && taskId) {
+    if (!["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+      return forbidden("Managers have view-and-comment access only; task deletion requires HR-level access");
+    }
     const deleted = await deleteProjectTask(taskId);
     if (!deleted) return notFound("Task not found");
     return NextResponse.json({ success: true });

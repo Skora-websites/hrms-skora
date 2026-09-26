@@ -5,7 +5,6 @@ import { ROLE_DEFINITIONS } from "@/services/hrm/auth";
 import { normalizeRole, ROLE_HIERARCHY } from "@/lib/rbac";
 import { requireAuth, requireAdmin, requireSuperAdmin, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
-import { createSession, signCookieValue, SESSION_COOKIE_OPTIONS, SESSION_EXPIRES_IN_MS } from "@/lib/auth";
 import { getDb } from "@/lib/db/mongo-helper";
 import { sendPasswordResetEmail } from "@/lib/email";
 import crypto from "crypto";
@@ -20,23 +19,23 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const action = body.action;
 
   switch (action) {
-    case "register": {
-      const { email, password, displayName, firstName, lastName } = body;
+    // ── Account request: email + department only ──────────────────────
+    // No account is created and no session is issued. HR (or the CEO)
+    // approves the request in the onboarding queue; only then does the
+    // applicant receive a welcome email with a temporary password.
+    case "request-invite": {
+      const { email, department } = body;
       const regKey = `register:${clientIp(request.headers)}`;
       if (checkRateLimit(regKey, REGISTER_LIMITS).locked) {
         return NextResponse.json(
-          { error: "Too many registration attempts. Please try again later." },
+          { error: "Too many account requests. Please try again later." },
           { status: 429, headers: { "Retry-After": "900" } }
         );
       }
-      if (!email || !password) return badRequest("Email and password are required");
+      if (!email) return badRequest("Email is required");
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) return badRequest("Please enter a valid email address");
-      if (password.length < 8) return badRequest("Password must be at least 8 characters");
-      if (password.length > 128) return badRequest("Password must be less than 128 characters");
-      const name = displayName || firstName;
-      if (!name || name.trim().length < 2) return badRequest("Name must be at least 2 characters");
-      if (name.length > 100) return badRequest("Name must be less than 100 characters");
+      if (!department || typeof department !== "string") return badRequest("Please choose your department");
 
       const normalizedEmail = email.toLowerCase().trim();
       const existingUser = await hrmUsersService.findOneInTenant("default", "email", normalizedEmail);
@@ -44,48 +43,51 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
         recordFailure(regKey, REGISTER_LIMITS);
         return badRequest("An account with this email already exists");
       }
-      clearFailures(regKey);
-
-      const role = "employee";
-      const passwordHash = await bcrypt.hash(password, 12);
-      const newUser = await hrmUsersService.create({
-        email: normalizedEmail, emailVerified: false, displayName: displayName || firstName || normalizedEmail,
-        firstName: firstName || displayName || "", lastName: lastName || "", role,
-        status: "pending_verification", loginStatus: "enabled", passwordHash, tenantId: "default",
-        onboardingStatus: "pending", mustChangePassword: false,
-        // Persist the requested department on the user record (both naming
-        // conventions) so department-scoped features (project fan-out, team
-        // rosters) work from the moment the account is approved — the
-        // onboarding task alone stores it and nothing copies it back.
-        department: body.department || "",
-        departmentName: body.department || "",
-      } as any);
 
       const db = await getDb();
-      if (db) {
-        await db.collection("employee_onboarding_tasks").insertOne({
-          userId: newUser.id, tenantId: "default", employeeName: displayName || firstName || normalizedEmail,
-          email: normalizedEmail, department: body.department || "", documentName: body.documentName || "",
-          documentUrl: body.documentUrl || "", status: "pending", submittedAt: new Date(), createdAt: new Date(), updatedAt: new Date(),
-        });
-        const hrAdmins = await db.collection("users").find({ role: { $in: ["hr_admin", "admin"] }, tenantId: "default" }).toArray();
-        for (const admin of hrAdmins) {
-          await db.collection("notifications").insertOne({
-            userId: admin._id.toString(), title: "New Employee Registration",
-            body: `${displayName || firstName || normalizedEmail} (${normalizedEmail}) has registered and submitted documents for verification.`,
-            type: "onboarding", isRead: false, referenceType: "onboarding", referenceId: newUser.id, createdAt: new Date(), tenantId: "default",
-          });
-        }
+      if (!db) return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+
+      // Idempotent: a pending request for this email is a success, not an error.
+      const existingRequest = await db.collection("employee_onboarding_tasks").findOne({
+        email: normalizedEmail, status: "invite_requested", tenantId: "default",
+      });
+      if (existingRequest) {
+        clearFailures(regKey);
+        return NextResponse.json({ data: { message: "Your account request is already awaiting approval." } }, { status: 200 });
       }
 
-      const sessionToken = await createSession(newUser.id);
-      const response = NextResponse.json({ data: { uid: newUser.id, email: normalizedEmail, displayName: displayName || firstName || normalizedEmail, role } }, { status: 201 });
-      response.cookies.set("session", await signCookieValue(sessionToken), { ...SESSION_COOKIE_OPTIONS, maxAge: SESSION_EXPIRES_IN_MS / 1000 });
-      response.cookies.set("user_role", await signCookieValue(role), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: SESSION_EXPIRES_IN_MS / 1000 });
-      // Middleware gates pending accounts to a narrow route set for 1h;
-      // refreshed on every login so approval lifts the restriction.
-      response.cookies.set("user_status", await signCookieValue("pending_verification"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 3600 });
-      return response;
+      const result = await db.collection("employee_onboarding_tasks").insertOne({
+        userId: normalizedEmail, // resolved to the real user id at approval time
+        tenantId: "default",
+        employeeName: normalizedEmail.split("@")[0], // display only; HR sees the email as the identity
+        email: normalizedEmail,
+        department: department.trim(),
+        status: "invite_requested",
+        requestedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const hrAdmins = await db.collection("users").find({ role: { $in: ["hr_admin", "admin", "super_admin"] }, tenantId: "default" }).toArray();
+      for (const admin of hrAdmins) {
+        await db.collection("notifications").insertOne({
+          userId: admin._id.toString(), title: "New Account Request",
+          body: `${normalizedEmail} requested an account in ${department.trim()}.",`,
+          type: "onboarding", isRead: false, referenceType: "onboarding",
+          referenceId: result.insertedId.toString(), createdAt: new Date(), tenantId: "default",
+        });
+      }
+      clearFailures(regKey);
+      return NextResponse.json({ data: { message: "Request sent to HR. You'll receive a welcome email with a temporary password once approved." } }, { status: 201 });
+    }
+
+    // Legacy self-registration is retired — the only door in is an approved
+    // invite. Old clients get a clear pointer to the new flow.
+    case "register": {
+      return NextResponse.json(
+        { error: "Self-registration has been retired. Submit an account request (action: \"request-invite\") with your email and department; HR will email you a temporary password." },
+        { status: 410 }
+      );
     }
 
     case "reset-password": {

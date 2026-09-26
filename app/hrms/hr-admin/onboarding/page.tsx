@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle } from "lucide-react";
+import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -13,10 +13,11 @@ interface Candidate {
   department: string;
   documentName: string;
   documentUrl?: string;
-  status: "pending" | "approved" | "rejected_48h";
+  status: "invite_requested" | "pending" | "approved" | "rejected_48h";
   employeeCode?: string;
   submittedAt: string;
   deadlineHoursRemaining?: number;
+  inviteEmailed?: boolean;
 }
 
 export default function HrAdminOnboardingPage() {
@@ -38,16 +39,20 @@ export default function HrAdminOnboardingPage() {
           id: t.id || t._id || "",
           name: t.employeeName || t.name || "",
           email: t.email || "",
-          role: t.role || "Employee",
+          role: t.role || (t.status === "invite_requested" ? "Account Request" : "Employee"),
           department: t.department || "—",
           documentName: t.documentName || "",
           documentUrl: t.documentUrl || "",
-          status: (t.status === "rejected" || t.status === "escalated" ? "rejected_48h" : t.status === "approved" ? "approved" : "pending") as Candidate["status"],
+          status: (t.status === "rejected" || t.status === "escalated" ? "rejected_48h"
+            : t.status === "approved" ? "approved"
+            : t.status === "invite_requested" ? "invite_requested"
+            : "pending") as Candidate["status"],
           employeeCode: t.employeeCode,
-          submittedAt: t.submittedAt ? new Date(t.submittedAt).toLocaleDateString() : "—",
+          submittedAt: t.submittedAt ? new Date(t.submittedAt).toLocaleDateString() : (t.requestedAt ? new Date(t.requestedAt).toLocaleDateString() : "—"),
           deadlineHoursRemaining: t.rejectionDeadline
             ? Math.max(0, Math.round((new Date(t.rejectionDeadline).getTime() - Date.now()) / 3600000))
             : undefined,
+          inviteEmailed: t.inviteEmailed === true,
         })));
       }
     } catch { /* empty */ }
@@ -56,7 +61,8 @@ export default function HrAdminOnboardingPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      // Server issues the employee code, activates the account, and persists it.
+      // Server creates the account (when needed), issues the employee code,
+      // emails the temporary password, and persists everything.
       const res = await fetch("/api/hrm/v2/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,7 +71,11 @@ export default function HrAdminOnboardingPage() {
       if (res.ok) {
         const data = await res.json();
         const code = data.data?.employeeCode;
-        setCandidates((prev) => prev.map((c) => c.id === id ? { ...c, status: "approved" as const, employeeCode: code } : c));
+        const emailed = data.data?.inviteEmailed && data.data?.emailSent !== false;
+        setCandidates((prev) => prev.map((c) => c.id === id ? { ...c, status: "approved" as const, employeeCode: code, inviteEmailed: emailed } : c));
+        if (emailed === false) {
+          console.error("Approve succeeded but the welcome email failed to send.");
+        }
         return;
       }
       console.error("Approve failed:", (await res.json().catch(() => ({}))).error);
@@ -90,22 +100,22 @@ export default function HrAdminOnboardingPage() {
   return (
     <AppShell title="Onboarding & Document Verification">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Onboarding &amp; Document Verification</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Onboarding &amp; Account Requests</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Review candidate documents, issue Employee Codes, or trigger 48-hour resubmission deadlines
+          Approve account requests to email a temporary password, verify documents, or trigger 48-hour resubmission deadlines
         </p>
       </div>
 
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <UserCheck className="h-5 w-5 text-primary" /> Registered Applications
+          <UserCheck className="h-5 w-5 text-primary" /> Requests &amp; Applications
         </h3>
 
         {loading ? (
-          <div className="p-8 text-center text-slate-500 text-xs">Loading candidates...</div>
+          <div className="p-8 text-center text-slate-500 text-xs">Loading requests...</div>
         ) : candidates.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
-            No pending onboarding applications.
+            No pending account requests or applications.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -135,15 +145,22 @@ export default function HrAdminOnboardingPage() {
                       )}
                     </td>
                     <td className="py-3">
-                      {c.status === "approved" ? <Chip color="emerald">VERIFIED</Chip>
+                      {c.status === "invite_requested" ? <Chip color="blue">NEW REQUEST</Chip>
+                        : c.status === "approved" ? (c.inviteEmailed ? <Chip color="emerald">INVITED ✓</Chip> : <Chip color="yellow">APPROVED (EMAIL FAILED)</Chip>)
                         : c.status === "rejected_48h" ? <Chip color="red">REJECTED ({c.deadlineHoursRemaining}h)</Chip>
-                        : <Chip color="yellow">PENDING</Chip>}
+                        : <Chip color="yellow">PENDING DOCS</Chip>}
                     </td>
                     <td className="py-3 font-mono font-bold text-primary">{c.employeeCode || <span className="text-slate-400 font-normal text-[10px]">Pending</span>}</td>
-                    <td className="py-3 text-right">
+                    <td className="py-3">
                       {c.status === "pending" && (
                         <div className="flex justify-end gap-1">
                           <Button size="sm" onClick={() => handleApprove(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2"><ShieldCheck className="h-3 w-3 mr-0.5" />Approve</Button>
+                          <Button size="sm" variant="danger" onClick={() => handleReject(c.id)} className="text-[10px] font-bold h-7 px-2"><XCircle className="h-3 w-3 mr-0.5" />Reject</Button>
+                        </div>
+                      )}
+                      {c.status === "invite_requested" && (
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" onClick={() => handleApprove(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2"><MailPlus className="h-3 w-3 mr-0.5" />Approve &amp; Email Invite</Button>
                           <Button size="sm" variant="danger" onClick={() => handleReject(c.id)} className="text-[10px] font-bold h-7 px-2"><XCircle className="h-3 w-3 mr-0.5" />Reject</Button>
                         </div>
                       )}
@@ -166,6 +183,7 @@ function Chip({ children, color }: { children: React.ReactNode; color: string })
     emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     yellow: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
     red: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   };
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${colors[color]}`}>{children}</span>;
 }

@@ -242,6 +242,7 @@ export default function HrAdminDashboardPage() {
   };
 
   const pendingLeaves = leaveRequests.filter((l) => l.status === "pending");
+  const actionableCandidates = pendingCandidates.filter((c) => c.status === "pending" || c.status === "invite_requested");
   const managerLeaves = pendingLeaves.filter((l) => l.requestedBy === "manager");
   const employeeLeaves = pendingLeaves.filter((l) => l.requestedBy === "employee");
 
@@ -282,7 +283,7 @@ export default function HrAdminDashboardPage() {
                 <Users className="h-3.5 w-3.5" /> {employees.length} Employees
               </span>
               <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-                <Clock className="h-3.5 w-3.5" /> {pendingCandidates.filter((c) => c.status === "pending").length} Pending Onboarding
+                <Clock className="h-3.5 w-3.5" /> {actionableCandidates.length} Pending Onboarding
               </span>
               <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
                 <CalendarDays className="h-3.5 w-3.5" /> {pendingLeaves.length} Leave Requests
@@ -300,7 +301,7 @@ export default function HrAdminDashboardPage() {
       {/* ═══ Stats Row ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MiniStat icon={<Users className="h-5 w-5 text-primary" />} label="Total Employees" value={employees.length} />
-        <MiniStat icon={<UserCheck className="h-5 w-5 text-emerald-500" />} label="Pending Onboarding" value={pendingCandidates.filter((c) => c.status === "pending").length} />
+        <MiniStat icon={<UserCheck className="h-5 w-5 text-emerald-500" />} label="Pending Onboarding" value={actionableCandidates.length} />
         <MiniStat icon={<CalendarDays className="h-5 w-5 text-orange-500" />} label="Pending Leaves" value={pendingLeaves.length} />
         <MiniStat icon={<ClipboardList className="h-5 w-5 text-blue-500" />} label="Manager Requests" value={managerLeaves.length} />
       </div>
@@ -357,18 +358,20 @@ export default function HrAdminDashboardPage() {
                           <StatusChip color="emerald">VERIFIED</StatusChip>
                         ) : c.status === "rejected_48h" ? (
                           <StatusChip color="red">REJECTED ({c.deadlineHoursRemaining}h)</StatusChip>
+                        ) : c.status === "invite_requested" ? (
+                          <StatusChip color="blue">NEW REQUEST</StatusChip>
                         ) : (
-                          <StatusChip color="yellow">PENDING</StatusChip>
+                          <StatusChip color="yellow">PENDING DOCS</StatusChip>
                         )}
                       </td>
                       <td className="py-2 font-mono font-bold text-primary">
                         {c.employeeCode || <span className="text-slate-400 font-normal text-[10px]">Pending</span>}
                       </td>
                       <td className="py-2 text-right">
-                        {c.status === "pending" && (
+                        {(c.status === "pending" || c.status === "invite_requested") && (
                           <div className="flex justify-end gap-1">
                             <Button size="sm" onClick={() => handleApproveCandidate(c)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2">
-                              <Shield className="h-3 w-3 mr-0.5" /> Approve
+                              <Shield className="h-3 w-3 mr-0.5" /> {c.status === "invite_requested" ? "Approve & Email Invite" : "Approve"}
                             </Button>
                             <Button size="sm" variant="danger" onClick={() => handleRejectCandidate(c)} className="text-[10px] font-bold h-7 px-2">
                               <XCircle className="h-3 w-3 mr-0.5" /> Reject
@@ -522,7 +525,11 @@ export default function HrAdminDashboardPage() {
               <ModalInput label="Email" value={newEmployee.email} onChange={(v) => setNewEmployee({ ...newEmployee, email: v })} type="email" required />
               <ModalInput label="Department" value={newEmployee.department} onChange={(v) => setNewEmployee({ ...newEmployee, department: v })} required />
               <ModalInput label="Designation" value={newEmployee.designation} onChange={(v) => setNewEmployee({ ...newEmployee, designation: v })} required />
-              <ModalInput label="Reporting Manager" value={newEmployee.reportingManager} onChange={(v) => setNewEmployee({ ...newEmployee, reportingManager: v })} />
+              {/* Reporting manager is CEO-controlled — HR assigns it later in
+                  the superadmin panel, or the CEO sets it on the profile. */}
+              <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/30 px-3 py-2 text-[10px] text-slate-500 dark:text-slate-400">
+                Reporting Manager is assigned by the CEO after the account is created.
+              </div>
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Employment Type</label>
                 <select

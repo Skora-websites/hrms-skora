@@ -107,6 +107,9 @@ export default function TasksPage() {
   const { user } = useAuth();
   const { data: projects } = useProjects();
   const toast = useToast();
+  // Managers are view-and-comment only: creation/edit/delete are HR-level
+  // (mirrors the server guards on /api/hrm/v2/projects).
+  const canManageTasks = user?.role === "super_admin" || user?.role === "hr_admin" || user?.role === "admin";
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [tasks, setTasks] = useState<TaskData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -379,10 +382,12 @@ export default function TasksPage() {
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <Button onClick={openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Task
-          </Button>
+          {canManageTasks && (
+            <Button onClick={openCreateDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Task
+            </Button>
+          )}
         </div>
       </PageHeader>
 
@@ -436,20 +441,22 @@ export default function TasksPage() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-semibold text-dark dark:text-white leading-tight">{task.title}</p>
-                          <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}
-                              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              <Edit3 className="h-3 w-3 text-muted" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
-                              className="p-1 rounded hover:bg-danger/10"
-                            >
-                              <Trash2 className="h-3 w-3 text-danger" />
-                            </button>
-                          </div>
+                          {canManageTasks && (
+                            <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openEditDialog(task); }}
+                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                              >
+                                <Edit3 className="h-3 w-3 text-muted" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
+                                className="p-1 rounded hover:bg-danger/10"
+                              >
+                                <Trash2 className="h-3 w-3 text-danger" />
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {task.description && (
@@ -532,7 +539,7 @@ export default function TasksPage() {
             <Separator />
 
             {/* Quick edit buttons */}
-            {viewingTask && (
+            {viewingTask && canManageTasks && (
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="xs" onClick={() => { closeDetailDialog(); openEditDialog(viewingTask); }}>
                   <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit Task

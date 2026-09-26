@@ -50,6 +50,9 @@ export default function ManagerProjectsPage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  // Managers are view-only on projects: the create button stays visible but
+  // disabled, mirroring the HR-level guard on /api/hrm/v2/projects.
+  const canCreateProjects = user?.role === "super_admin" || user?.role === "hr_admin" || user?.role === "admin";
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -207,10 +210,12 @@ export default function ManagerProjectsPage() {
               className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
             />
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-primary text-white gap-2 font-bold text-xs">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+          {canCreateProjects && (
+            <Button onClick={() => setShowCreate(true)} className="bg-primary text-white gap-2 font-bold text-xs">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          )}
         </div>
       </div>
 

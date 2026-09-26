@@ -840,7 +840,10 @@ export interface EmployeeOnboardingTask extends BaseEntity {
   title: string;
   assignedTo: string;
   assignedToUserId?: string;
-  status: "pending" | "in_progress" | "completed" | "overdue";
+  /** Lifecycle actually used by the HR queue (types/index.ts previously
+   *  listed only program-task statuses while the API stored approved,
+   *  rejected, escalated, and invite_requested rows). */
+  status: "invite_requested" | "pending" | "in_progress" | "completed" | "overdue" | "approved" | "rejected" | "escalated";
   completedAt?: Timestamp;
   completedById?: string;
   dueDate: Timestamp;

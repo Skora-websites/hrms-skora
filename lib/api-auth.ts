@@ -131,6 +131,25 @@ export async function requireAdmin(): Promise<ApiAuthResult | NextResponse> {
 }
 
 /**
+ * Require authentication AND an HR-level role (super_admin, hr_admin, admin).
+ * Managers are deliberately excluded: they are view-and-comment only for
+ * tasks/projects, and reporting-manager assignments are CEO-controlled.
+ */
+const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
+
+export async function requireHrLevel(): Promise<ApiAuthResult | NextResponse> {
+  const auth = await requireAuth();
+  if (isErrorResponse(auth)) return auth;
+  if (!HR_LEVEL_ROLES.has(auth.role)) {
+    return NextResponse.json(
+      { error: "Forbidden: HR-level access required" },
+      { status: 403 }
+    );
+  }
+  return auth;
+}
+
+/**
  * Require authentication AND super_admin role.
  */
 export async function requireSuperAdmin(): Promise<ApiAuthResult | NextResponse> {

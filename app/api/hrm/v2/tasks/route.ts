@@ -11,7 +11,7 @@ import {
   deleteTaskComment,
   getTaskAuditLogs,
 } from "@/services/hrm/tasks";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAuth, requireAdmin, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
 
 // ── GET ─────────────────────────────────────────────────
@@ -132,8 +132,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: comment }, { status: 201 });
   }
 
-  // Task creation
-  const auth = await requireAdmin();
+  // Task creation — managers are view-and-comment only; HR-level creates.
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";
@@ -164,7 +164,8 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
 
   const body = await request.json();
 
-  // Employees can only update status of tasks assigned to them
+  // Employees can only update status of tasks assigned to them; managers are
+  // view-and-comment only — task edits are HR-level.
   if (auth.role === "employee") {
     const task = await getTaskById(id);
     if (!task) return notFound("Task not found");
@@ -183,6 +184,11 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     const taskUpdated = await updateTask(id, updateData, auth.userId, auth.role);
     if (!taskUpdated) return notFound("Task not found");
     return NextResponse.json({ data: taskUpdated });
+  }
+
+  // Managers may not edit tasks — HR-level only.
+  if (!["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+    return forbidden("Managers have view-and-comment access only; task edits require HR-level access");
   }
 
   const task = await updateTask(id, body, auth.userId, auth.role);

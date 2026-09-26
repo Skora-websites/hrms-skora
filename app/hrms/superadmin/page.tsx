@@ -168,6 +168,7 @@ interface UserRecord {
   email: string;
   role: string;
   status: string;
+  reportingManager?: string;
 }
 
 // ── Main Component ─────────────────────────────────────────
@@ -188,6 +189,7 @@ export default function SuperadminOverviewPage() {
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [editRole, setEditRole] = useState("");
   const [editStatus, setEditStatus] = useState("");
+  const [editReportingManager, setEditReportingManager] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<UserRecord | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -354,6 +356,18 @@ export default function SuperadminOverviewPage() {
     if (!editingUser) return;
     setSaving(true);
     try {
+      // CEO-controlled reporting structure: only sent when changed.
+      if (editReportingManager !== (editingUser.reportingManager || "")) {
+        await fetch("/api/hrm/v2/users", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: editingUser.id,
+            action: "profile",
+            reportingManager: editReportingManager,
+          }),
+        });
+      }
       if (editRole && editRole !== editingUser.role) {
         await fetch("/api/hrm/v2/users", {
           method: "PATCH",
@@ -1091,6 +1105,7 @@ export default function SuperadminOverviewPage() {
                         setEditingUser(u);
                         setEditRole(u.role);
                         setEditStatus(u.status);
+                        setEditReportingManager(u.reportingManager || "");
                       }}
                       onDelete={() => setConfirmDelete(u)}
                     />
@@ -1118,6 +1133,7 @@ export default function SuperadminOverviewPage() {
                         setEditingUser(u);
                         setEditRole(u.role);
                         setEditStatus(u.status);
+                        setEditReportingManager(u.reportingManager || "");
                       }}
                       onDelete={() => setConfirmDelete(u)}
                     />
@@ -1314,6 +1330,20 @@ export default function SuperadminOverviewPage() {
                   <option value="manager">Manager</option>
                   <option value="employee">Employee</option>
                 </select>
+              </div>
+              {/* CEO-only: assign the reporting manager */}
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  Reporting Manager <span className="text-[9px] font-bold text-primary uppercase">(CEO only)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editReportingManager}
+                  onChange={(e) => setEditReportingManager(e.target.value)}
+                  placeholder="Manager name — the employee sees this read-only"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Assign the employee&apos;s reporting manager. Changes reflect on their profile immediately.</p>
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">

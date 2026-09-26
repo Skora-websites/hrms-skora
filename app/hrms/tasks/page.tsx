@@ -72,7 +72,9 @@ export default function TasksPage() {
   const [showDetailDialog, setShowDetailDialog] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "hr_admin" || user?.role === "manager";
+  // Managers are view-and-comment only: task creation/edits/deletes are
+  // HR-level (mirrors the server guard in /api/hrm/v2/tasks).
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "hr_admin";
 
   // ── Create Task ──────────────────────────────────────
   const handleCreateTask = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
@@ -310,7 +312,7 @@ export default function TasksPage() {
                   {/* Status icon */}
                   <button
                     onClick={() => {
-                      if (!isAdmin && task.assigneeId !== user?.id) return;
+                      if (user?.role === "employee" && task.assigneeId !== user?.id) return;
                       const nextStatus = task.status === "pending" ? "in_progress"
                         : task.status === "in_progress" ? "completed"
                         : task.status === "completed" ? "on_hold"
@@ -408,7 +410,7 @@ export default function TasksPage() {
                       <DropdownMenuItem onClick={() => setShowDetailDialog(task.id)}>
                         <Eye className="mr-2 h-4 w-4" /> View Details
                       </DropdownMenuItem>
-                      {(isAdmin || task.assigneeId === user?.id) && (
+                      {isAdmin && (
                         <>
                           <DropdownMenuItem onClick={() => setShowEditDialog(task.id)}>
                             <Edit3 className="mr-2 h-4 w-4" /> Edit

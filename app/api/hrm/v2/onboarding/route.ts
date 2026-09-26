@@ -16,6 +16,9 @@ import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "mongodb";
 import { generateEmployeeCode } from "@/lib/hrm/employee-code";
 import { hrmUsersService } from "@/lib/hrm/firestore";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   try {
@@ -88,69 +91,150 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "update_task" && body.taskId) {
-      const updated = await updateOnboardingTaskStatus(body.taskId, body.status, body.completedById);
-      if (!updated) {
-        return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      // Approvals are HR/CEO decisions — managers are view-and-comment only.
+      if (!["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: only HR admins and the CEO can approve account requests" }, { status: 403 });
       }
 
       const db = await getDb();
+      const taskFilter = ObjectId.isValid(body.taskId) ? { _id: new ObjectId(body.taskId) } : { id: body.taskId };
+      const taskDoc = db ? await db.collection("employee_onboarding_tasks").findOne(taskFilter).catch(() => null) : null;
 
-      // Approval: issue a server-side employee code and activate the account.
+      // ── Approved ────────────────────────────────────────────────
+      // New flow (invite_requested): the applicant never had an account.
+      // Approval CREATES it: server-generated temporary password, welcome
+      // email with credentials, mustChangePassword forces a real password at
+      // first login. Legacy flow (pending document): account already exists.
       if (body.status === "approved") {
         const employeeCode = await generateEmployeeCode();
-        // Copy the department the applicant requested at registration onto the
-        // user record — it was only stored on the onboarding task, so
-        // department-scoped features (project fan-out, team rosters) saw a
-        // blank department until HR edited the profile by hand.
-        let requestedDepartment: string | undefined;
-        if (db) {
-          const taskFilter = ObjectId.isValid(body.taskId) ? { _id: new ObjectId(body.taskId) } : { id: body.taskId };
-          const taskDoc = await db.collection("employee_onboarding_tasks").findOne(taskFilter).catch(() => null);
-          requestedDepartment = (taskDoc as any)?.department || (taskDoc as any)?.departmentName || undefined;
+        const requestedDepartment = (taskDoc as any)?.department || (taskDoc as any)?.departmentName || undefined;
+
+        if ((taskDoc as any)?.status === "invite_requested" || ((taskDoc as any)?.userId && String((taskDoc as any).userId).includes("@"))) {
+          if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
+          if (!taskDoc) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+
+          const email = String((taskDoc as any).email || (taskDoc as any).userId).toLowerCase().trim();
+          const existing = await hrmUsersService.findOneInTenant("default", "email", email);
+          let emailSent: boolean | undefined;
+          let tempPassword: string | undefined; // surfaced to the approver only when the email could not be sent
+          if (existing) {
+            // Request raced with an HR "add employee" — reconcile instead of failing.
+            await hrmUsersService.update(String((existing as any).id), { status: "active", onboardingStatus: "approved", employeeCode, mustChangePassword: false } as any);
+          } else {
+            // Readable temporary password: Skora- + 8 crypto-random alphanumerics.
+            const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+            const rand = crypto.randomBytes(8);
+            tempPassword = "Skora-" + Array.from(rand, (b) => alphabet[b % alphabet.length]).join("");
+            const passwordHash = await bcrypt.hash(tempPassword, 12);
+            const displayName = (taskDoc as any)?.employeeName && !(taskDoc as any).employeeName.includes("@")
+              ? (taskDoc as any).employeeName
+              : email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+            const newUser = await hrmUsersService.create({
+              email, emailVerified: true, displayName,
+              firstName: displayName.split(" ")[0] || displayName, lastName: displayName.split(" ").slice(1).join(" "),
+              role: "employee", status: "active", loginStatus: "enabled", passwordHash,
+              tenantId: "default", onboardingStatus: "approved", employeeCode,
+              mustChangePassword: true,
+              ...(requestedDepartment ? { department: requestedDepartment, departmentName: requestedDepartment } : {}),
+            } as any);
+
+            emailSent = await sendWelcomeEmail({
+              to: email, employeeName: displayName, tempPassword, employeeCode,
+            }).catch(() => false);
+
+            if (db) {
+              await db.collection("notifications").insertOne({
+                userId: String((newUser as any).id),
+                title: "Welcome to the team!",
+                body: emailSent
+                  ? `Your account was approved. A welcome email with your temporary password was sent to ${email}.`
+                  : `Your account was approved (employee code ${employeeCode}), but the welcome email could NOT be sent — contact HR for your credentials.`,
+                type: "onboarding", isRead: false, createdAt: new Date(), tenantId: "default",
+              }).catch(() => undefined);
+            }
+          }
+
+          const createdUser = existing
+            ? existing
+            : await hrmUsersService.findOneInTenant("default", "email", email);
+          const createdUserId = String((createdUser as any)?.id || (taskDoc as any).userId);
+
+          const approvedTask = await updateOnboardingTaskStatus(body.taskId, "approved", body.completedById || auth.userId, {
+            employeeCode,
+            approvedAt: new Date(),
+            approvedById: auth.userId,
+            inviteEmailed: true,
+            userId: createdUserId, // link the request row to the real account
+          });
+
+          if (db) {
+            await db.collection("employee_onboarding_tasks").updateOne(
+              taskFilter,
+              { $set: { userId: createdUserId, employeeCode, updatedAt: new Date() } }
+            ).catch(() => undefined);
+          }
+
+          // When the welcome email could not be delivered (no SMTP in CI/dev),
+          // surface the temp password to the approver so credentials can be
+          // handed over manually. It is forced to change at first login.
+          return NextResponse.json({ data: { ...(approvedTask || taskDoc), employeeCode, inviteEmailed: true, emailSent, ...(emailSent ? {} : { tempPassword }) } });
         }
-        await hrmUsersService.update((updated as any).userId, {
+
+        // Legacy approval: activate the existing pending_verification account.
+        const legacyUserId = String((taskDoc as any)?.userId || "");
+        if (!legacyUserId) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+        await hrmUsersService.update(legacyUserId, {
           status: "active",
           onboardingStatus: "approved",
           employeeCode,
           ...(requestedDepartment ? { department: requestedDepartment, departmentName: requestedDepartment } : {}),
         } as any);
         if (db) {
-          const taskFilter = ObjectId.isValid(body.taskId) ? { _id: new ObjectId(body.taskId) } : { id: body.taskId };
           await db.collection("employee_onboarding_tasks").updateOne(
             taskFilter,
             { $set: { employeeCode, updatedAt: new Date() } }
           ).catch(() => undefined);
           await db.collection("notifications").insertOne({
-            userId: (updated as any).userId,
+            userId: legacyUserId,
             title: "Onboarding Approved",
             body: `Your documents were verified. Welcome aboard! Your employee code is ${employeeCode}.`,
             type: "onboarding", isRead: false, createdAt: new Date(), tenantId: "default",
           });
         }
-        return NextResponse.json({ data: { ...updated, employeeCode } });
+        return NextResponse.json({ data: { ...(taskDoc || {}), employeeCode } });
       }
 
-      // Rejection: start the 48h resubmission clock.
+      // ── Rejected ────────────────────────────────────────────────
       if (body.status === "rejected") {
         const now = new Date();
         const deadline = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-        await hrmUsersService.update((updated as any).userId, { onboardingStatus: "rejected" } as any);
-        const rejectUpdate = await updateOnboardingTaskStatus(body.taskId, body.status, body.completedById, {
+        // Invite requests have no user account to flag — only the task.
+        const isInvite = (taskDoc as any)?.status === "invite_requested";
+        if (!isInvite) {
+          await hrmUsersService.update(String((taskDoc as any)?.userId || ""), { onboardingStatus: "rejected" } as any);
+        }
+        const rejectUpdate = await updateOnboardingTaskStatus(body.taskId, "rejected", body.completedById, {
           lastRejectionDate: now,
           rejectionDeadline: deadline,
         });
         if (db) {
           await db.collection("notifications").insertOne({
-            userId: (updated as any).userId,
-            title: "Documents Rejected",
-            body: "Your onboarding document was rejected. Please re-upload within 48 hours.",
+            userId: isInvite ? "admin" : String((taskDoc as any)?.userId || "admin"),
+            title: isInvite ? "Account Request Rejected" : "Documents Rejected",
+            body: isInvite
+              ? `The account request for ${(taskDoc as any)?.email || "an applicant"} was rejected. They may submit a new request.`
+              : "Your onboarding document was rejected. Please re-upload within 48 hours.",
             type: "onboarding", isRead: false, createdAt: now, tenantId: "default",
           });
         }
-        return NextResponse.json({ data: rejectUpdate || updated });
+        return NextResponse.json({ data: rejectUpdate || taskDoc });
       }
 
-      return NextResponse.json({ data: updated });
+      const updated2 = await updateOnboardingTaskStatus(body.taskId, body.status, body.completedById);
+      if (!updated2) {
+        return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      }
+      return NextResponse.json({ data: updated2 });
     }
 
     if (!body.name) {
