@@ -181,7 +181,13 @@ export async function POST(request: NextRequest) {
           // When the welcome email could not be delivered (no SMTP in CI/dev),
           // surface the temp password to the approver so credentials can be
           // handed over manually. It is forced to change at first login.
-          return NextResponse.json({ data: { ...(approvedTask || taskDoc), employeeCode, inviteEmailed: true, emailSent, ...(emailSent ? {} : { tempPassword }) } });
+          // Surface the EFFECTIVE password to the approver when the welcome
+          // email could not be delivered (no SMTP in CI/dev, or E2E hook):
+          // credentials must be handed over manually in that case, and the
+          // E2E suite (which cannot read inboxes) also depends on this value
+          // matching what was hashed. It is forced to change at first login.
+          const effectiveTempPassword = process.env.E2E_TEST_PASSWORD || tempPassword;
+          return NextResponse.json({ data: { ...(approvedTask || taskDoc), employeeCode, inviteEmailed: true, emailSent, ...(emailSent ? {} : { tempPassword: effectiveTempPassword }) } });
         }
 
         // Legacy approval: activate the existing pending_verification account.

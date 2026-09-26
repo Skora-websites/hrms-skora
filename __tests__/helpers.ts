@@ -174,11 +174,11 @@ export async function registerUser(user: TestUser): Promise<ApiResponse> {
   user.id = approve.data?.userId;
   if (approve.data?._id && !user.id) user.id = String(approve.data._id);
 
-  // The temp password is surfaced to the approver only when the welcome
-  // email could not be delivered (CI has no SMTP). When SMTP IS configured,
-  // the server hashes E2E_TEST_PASSWORD into the account and the welcome
-  // email advertises it, so the suite learns the password from the env var.
-  const tempPassword: string = approve.data?.tempPassword || process.env.E2E_TEST_PASSWORD || process.env.TEST_TEMP_PASSWORD || "";
+  // The server hashes E2E_TEST_PASSWORD into the account when set (CI), and
+  // the welcome email advertises it. Without it (local SMTP runs), the
+  // approve response surfaces the random password when email delivery fails.
+  // E2E_TEST_PASSWORD wins so the suite always agrees with the stored hash.
+  const tempPassword: string = process.env.E2E_TEST_PASSWORD || approve.data?.tempPassword || process.env.TEST_TEMP_PASSWORD || "";
   if (!tempPassword) {
     return { ok: false, status: approve.status, error: "temp password unavailable (set TEST_TEMP_PASSWORD when SMTP is configured)" };
   }
