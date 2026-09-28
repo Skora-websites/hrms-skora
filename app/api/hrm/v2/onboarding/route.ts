@@ -13,6 +13,7 @@ import {
 } from "@/services/hrm/onboarding";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
+import { maskOnboardingDetails, populatedSensitiveFields, revealToken } from "@/lib/pii-masking";
 import { ObjectId } from "mongodb";
 import { generateEmployeeCode } from "@/lib/hrm/employee-code";
 import { hrmUsersService } from "@/lib/hrm/firestore";
@@ -48,7 +49,20 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       const tasks = await getPendingOnboardingTasks(tenantId);
-      return NextResponse.json({ data: tasks });
+      // Mask Aadhar/PAN/bank numbers in queue payloads; reveal happens one
+      // field at a time via POST ?action=reveal (audit-logged).
+      const masked = (Array.isArray(tasks) ? tasks : []).map((t: any) => {
+        if (!t?.onboardingDetails) return t;
+        const sensitive = populatedSensitiveFields(t.onboardingDetails);
+        return {
+          ...t,
+          onboardingDetails: maskOnboardingDetails(t.onboardingDetails),
+          revealTokens: Object.fromEntries(
+            sensitive.map((f) => [f, revealToken(String(t.id || t._id || ""), f, String((t.onboardingDetails as any)[f]))]),
+          ),
+        };
+      });
+      return NextResponse.json({ data: masked });
     }
 
     if (employeeTasks === "true" && userId) {
@@ -133,6 +147,14 @@ export async function POST(request: NextRequest) {
             const displayName = (taskDoc as any)?.employeeName && !(taskDoc as any).employeeName.includes("@")
               ? (taskDoc as any).employeeName
               : email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+            // Reference-form data captured at request time (personal, employment,
+            // nominee, bank details) is copied onto the account for HR/payroll use.
+            const form = ((taskDoc as any)?.onboardingDetails || {}) as Record<string, unknown>;
+            const isoToDate = (v: unknown): Date | undefined => {
+              if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined;
+              const d = new Date(v);
+              return isNaN(d.getTime()) ? undefined : d;
+            };
             const newUser = await hrmUsersService.create({
               email, emailVerified: true, displayName,
               firstName: displayName.split(" ")[0] || displayName, lastName: displayName.split(" ").slice(1).join(" "),
@@ -140,6 +162,11 @@ export async function POST(request: NextRequest) {
               tenantId: "default", onboardingStatus: "approved", employeeCode,
               mustChangePassword: true,
               ...(requestedDepartment ? { department: requestedDepartment, departmentName: requestedDepartment } : {}),
+              ...(form.designation ? { designationName: form.designation } : {}),
+              ...(isoToDate(form.dateOfJoining) ? { joiningDate: isoToDate(form.dateOfJoining) } : {}),
+              ...(form.mobileNo ? { phone: form.mobileNo } : {}),
+              ...(form.presentAddress ? { address: form.presentAddress } : {}),
+              onboardingDetails: form,
             } as any);
 
             emailSent = await sendWelcomeEmail({

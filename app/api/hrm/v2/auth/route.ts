@@ -7,6 +7,7 @@ import { requireAuth, requireAdmin, requireSuperAdmin, isErrorResponse } from "@
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
 import { getDb } from "@/lib/db/mongo-helper";
 import { sendPasswordResetEmail } from "@/lib/email";
+import type { OnboardingDetails } from "@/types";
 import crypto from "crypto";
 import { checkRateLimit, recordFailure, clearFailures, clientIp, type RateLimitOptions } from "@/lib/rate-limit";
 
@@ -14,12 +15,97 @@ import { checkRateLimit, recordFailure, clearFailures, clientIp, type RateLimitO
 const REGISTER_LIMITS: RateLimitOptions = { max: 10, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
 const RESET_LIMITS: RateLimitOptions = { max: 5, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
 
+/** Reference-form departments (Innonex HRM onboarding form). */
+const ONBOARDING_DEPARTMENTS = new Set([
+  "Software Development", "Quality Assurance", "IT Infrastructure", "DevOps",
+  "Technical Support", "Mobile Technology", "HR Recruitment",
+]);
+
+/** Validate + normalize the reference-form payload. Required fields mirror the
+ *  Innonex form; everything else passes through as optional. Returns the
+ *  sanitized OnboardingDetails or an error message. */
+function parseOnboardingDetails(input: any, department: string): { details?: OnboardingDetails; error?: string } {
+  const str = (v: unknown, max = 200): string =>
+    typeof v === "string" ? v.trim().slice(0, max) : "";
+  const required = (v: string, label: string): string | null =>
+    v ? null : `${label} is required`;
+
+  const d: OnboardingDetails = {
+    // ── Personal and Contact Details ──
+    employeeName: str(input.employeeName, 120),
+    gender: input.gender === "Female" ? "Female" : "Male",
+    designation: str(input.designation, 120),
+    dateOfJoining: str(input.dateOfJoining, 10),
+    department,
+    dateOfBirth: str(input.dateOfBirth, 10),
+    // ── Employment Details ──
+    uanNo: str(input.uanNo, 20),
+    joiningLocation: str(input.joiningLocation, 120),
+    panNo: str(input.panNo, 20).toUpperCase(),
+    mobileNo: str(input.mobileNo, 15),
+    aadharNo: str(input.aadharNo, 14),
+    presentAddress: str(input.presentAddress, 500),
+    permanentAddress: str(input.permanentAddress, 500),
+    annualCtc: str(input.annualCtc, 30),
+    maritalStatus: input.maritalStatus === "No" ? "No" : "Yes",
+    spouseName: str(input.spouseName, 120),
+    hasPf: input.hasPf === "No" ? "No" : "Yes",
+    previousPfNumber: str(input.previousPfNumber, 30),
+    epfSalary: str(input.epfSalary, 20),
+    previousEsiNo: str(input.previousEsiNo, 22),
+    esicDispensary: str(input.esicDispensary, 120),
+    // ── Nominee Details ──
+    nomineeName: str(input.nomineeName, 120),
+    nomineeDob: str(input.nomineeDob, 10),
+    nomineeAadhar: str(input.nomineeAadhar, 14),
+    nomineeRelation: str(input.nomineeRelation, 60),
+    fatherName: str(input.fatherName, 120),
+    husbandName: str(input.husbandName, 120),
+    // ── Bank Details ──
+    nameInBank: str(input.nameInBank, 120),
+    bankAccountNumber: str(input.bankAccountNumber, 25),
+    bankName: str(input.bankName, 120),
+    branchName: str(input.branchName, 120),
+    ifscCode: str(input.ifscCode, 11).toUpperCase(),
+  };
+
+  // Required per the reference form (email/department validated by the caller).
+  const missing =
+    required(d.employeeName!, "Employee Name as per Aadhar") ??
+    required(d.designation!, "Designation") ??
+    required(d.dateOfJoining!, "Date of Joining") ??
+    required(d.uanNo!, "UAN No") ??
+    required(d.panNo!, "PAN No") ??
+    required(d.mobileNo!, "Mobile No") ??
+    required(d.aadharNo!, "Aadhar No") ??
+    required(d.presentAddress!, "Present Address") ??
+    required(d.permanentAddress!, "Permanent Address") ??
+    required(d.nomineeName!, "Nominee Name") ??
+    required(d.nomineeRelation!, "Relation with Nominee") ??
+    required(d.fatherName!, "Father Name") ??
+    required(d.bankAccountNumber!, "Bank Account Number") ??
+    required(d.bankName!, "Bank Name") ??
+    required(d.branchName!, "Branch Name") ??
+    required(d.ifscCode!, "IFSC Code");
+  if (missing) return { error: missing };
+
+  // Format checks on India-specific identifiers.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.dateOfJoining!)) return { error: "Date of Joining must be a valid date" };
+  if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(d.panNo!)) return { error: "PAN No must look like ABCDE1234F" };
+  if (!/^\d{12}$/.test(d.aadharNo!)) return { error: "Aadhar No must be exactly 12 digits" };
+  if (!/^[0-9+\-\s]{10,15}$/.test(d.mobileNo!)) return { error: "Mobile No must be 10–15 digits" };
+  if (!/^\d{12}$/.test(d.uanNo!)) return { error: "UAN No must be exactly 12 digits" };
+  if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(d.ifscCode!)) return { error: "IFSC Code must look like SBIN0001234" };
+
+  return { details: d };
+}
+
 export const POST = withErrorHandler(async (request: NextRequest) => {
   const body = await request.json();
   const action = body.action;
 
   switch (action) {
-    // ── Account request: email + department only ──────────────────────
+    // ── Account request: full onboarding form + email + department ──
     // No account is created and no session is issued. HR (or the CEO)
     // approves the request in the onboarding queue; only then does the
     // applicant receive a welcome email with a temporary password.
@@ -36,8 +122,20 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) return badRequest("Please enter a valid email address");
       if (!department || typeof department !== "string") return badRequest("Please choose your department");
+      const departmentTrimmed = department.trim();
+      if (!ONBOARDING_DEPARTMENTS.has(departmentTrimmed)) {
+        return badRequest("Please choose a valid department");
+      }
 
+      // Full reference-form data (personal/employment/nominee/bank) — required
+      // since the Innonex onboarding form replaced the email+department stub.
       const normalizedEmail = email.toLowerCase().trim();
+      const parsed = parseOnboardingDetails(body, departmentTrimmed);
+      if (parsed.error) return badRequest(parsed.error);
+      const onboardingDetails = parsed.details!;
+      if (onboardingDetails.email !== undefined) onboardingDetails.email = normalizedEmail;
+      if (onboardingDetails.department !== undefined) onboardingDetails.department = departmentTrimmed;
+
       const existingUser = await hrmUsersService.findOneInTenant("default", "email", normalizedEmail);
       if (existingUser) {
         recordFailure(regKey, REGISTER_LIMITS);
@@ -59,9 +157,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const result = await db.collection("employee_onboarding_tasks").insertOne({
         userId: normalizedEmail, // resolved to the real user id at approval time
         tenantId: "default",
-        employeeName: normalizedEmail.split("@")[0], // display only; HR sees the email as the identity
+        employeeName: onboardingDetails.employeeName || normalizedEmail.split("@")[0],
         email: normalizedEmail,
-        department: department.trim(),
+        department: departmentTrimmed,
+        onboardingDetails, // full reference-form data, copied to the user at approval
         status: "invite_requested",
         requestedAt: new Date(),
         createdAt: new Date(),
@@ -72,7 +171,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       for (const admin of hrAdmins) {
         await db.collection("notifications").insertOne({
           userId: admin._id.toString(), title: "New Account Request",
-          body: `${normalizedEmail} requested an account in ${department.trim()}.",`,
+          body: `${normalizedEmail} requested an account in ${departmentTrimmed}.",`,
           type: "onboarding", isRead: false, referenceType: "onboarding",
           referenceId: result.insertedId.toString(), createdAt: new Date(), tenantId: "default",
         });

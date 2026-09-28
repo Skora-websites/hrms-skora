@@ -129,8 +129,51 @@ export const api = {
 // ── Auth Helpers ───────────────────────────────────────────
 
 /**
+ * Minimal valid reference-form payload for the request-invite endpoint.
+ * Mirrors the required fields + format rules enforced server-side
+ * (12-digit UAN/Aadhar, PAN ABCDE1234F, 10–15 digit mobile, IFSC SBIN0001234).
+ */
+export function inviteFormPayload(email: string) {
+  return {
+    employeeName: "Test Employee",
+    gender: "Male",
+    designation: "Software Engineer",
+    dateOfJoining: "2026-01-05",
+    department: "Software Development",
+    dateOfBirth: "1995-06-15",
+    email,
+    uanNo: "101234567890",
+    joiningLocation: "Kochi",
+    panNo: "ABCDE1234F",
+    mobileNo: "9876543210",
+    aadharNo: "123456789012",
+    presentAddress: "12 Test Street, Kochi",
+    permanentAddress: "12 Test Street, Kochi",
+    annualCtc: "1200000",
+    maritalStatus: "Yes",
+    spouseName: "Test Spouse",
+    hasPf: "Yes",
+    previousPfNumber: "KL/12345/678",
+    epfSalary: "15000",
+    previousEsiNo: "3100123456",
+    esicDispensary: "Kochi Dispensary",
+    nomineeName: "Test Nominee",
+    nomineeDob: "1997-02-20",
+    nomineeAadhar: "987654321098",
+    nomineeRelation: "Spouse",
+    fatherName: "Test Father",
+    husbandName: "",
+    nameInBank: "Test Employee",
+    bankAccountNumber: "1234567890123",
+    bankName: "State Bank of India",
+    branchName: "Kochi Main",
+    ifscCode: "SBIN0001234",
+  };
+}
+
+/**
  * Create an employee through the real invite flow:
- *   1. POST /api/hrm/v2/auth {action:"request-invite"} — email + department only
+ *   1. POST /api/hrm/v2/auth {action:"request-invite"} — full onboarding form
  *   2. HR approves the onboarding request → account created with a temp password
  *   3. Login with the temp password and change it to the requested one
  *
@@ -146,11 +189,10 @@ export async function registerUser(user: TestUser): Promise<ApiResponse> {
     displayName: "Test HR Admin",
   };
 
-  // 1. Account request (public, no session).
+  // 1. Account request (public, no session) with the full reference form.
   await api.post("/api/hrm/v2/auth", {
     action: "request-invite",
-    email: user.email,
-    department: "Software Engineering",
+    ...inviteFormPayload(user.email),
   });
 
   // 2. HR login + approve the request.

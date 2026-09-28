@@ -8,6 +8,7 @@ import type { AuditAction } from "@/services/hrm/audit";
 import { ROLE_HIERARCHY } from "@/lib/rbac";
 import { parseBody, profileUpdateSchema } from "@/lib/validations";
 import { getDb } from "@/lib/db/mongo-helper";
+import { maskOnboardingDetails } from "@/lib/pii-masking";
 import crypto from "crypto";
 
 const VALID_STATUSES = new Set(["active", "inactive", "disabled", "pending_verification"]);
@@ -82,7 +83,13 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        return NextResponse.json({ data: filtered });
+        // Mask Aadhar/PAN/bank numbers carried on the account from the
+        // onboarding form — list views never expose unmasked PII.
+        const masked = filtered.map((u: any) =>
+          u.onboardingDetails ? { ...u, onboardingDetails: maskOnboardingDetails(u.onboardingDetails) } : u
+        );
+
+        return NextResponse.json({ data: masked });
       }
 
       case "get": {
@@ -99,7 +106,13 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ data: user });
+        // Single-user views mask statutory PII too; employees may fetch their
+        // own record, so unmasked values must not ride the response.
+        const maskedUser = (user as any).onboardingDetails
+          ? { ...(user as any), onboardingDetails: maskOnboardingDetails((user as any).onboardingDetails) }
+          : user;
+
+        return NextResponse.json({ data: maskedUser });
       }
 
       case "audit-logs": {

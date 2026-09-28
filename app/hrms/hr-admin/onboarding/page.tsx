@@ -1,9 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus } from "lucide-react";
+import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
+
+interface OnboardingDetails {
+  // Personal
+  employeeName?: string;
+  gender?: string;
+  designation?: string;
+  dateOfJoining?: string;
+  department?: string;
+  dateOfBirth?: string;
+  // Employment
+  uanNo?: string;
+  joiningLocation?: string;
+  panNo?: string;
+  mobileNo?: string;
+  aadharNo?: string;
+  presentAddress?: string;
+  permanentAddress?: string;
+  annualCtc?: string;
+  maritalStatus?: string;
+  spouseName?: string;
+  hasPf?: string;
+  previousPfNumber?: string;
+  epfSalary?: string;
+  previousEsiNo?: string;
+  esicDispensary?: string;
+  // Nominee
+  nomineeName?: string;
+  nomineeDob?: string;
+  nomineeAadhar?: string;
+  nomineeRelation?: string;
+  fatherName?: string;
+  husbandName?: string;
+  // Bank
+  nameInBank?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  branchName?: string;
+  ifscCode?: string;
+}
 
 interface Candidate {
   id: string;
@@ -18,11 +57,17 @@ interface Candidate {
   submittedAt: string;
   deadlineHoursRemaining?: number;
   inviteEmailed?: boolean;
+  onboardingDetails?: OnboardingDetails;
+  revealTokens?: Record<string, string>;
 }
+
+const SENSITIVE_FIELDS = ["aadharNo", "nomineeAadhar", "panNo", "bankAccountNumber"] as const;
 
 export default function HrAdminOnboardingPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [revealing, setRevealing] = useState<string | null>(null);
 
   useEffect(() => {
     loadCandidates();
@@ -53,10 +98,50 @@ export default function HrAdminOnboardingPage() {
             ? Math.max(0, Math.round((new Date(t.rejectionDeadline).getTime() - Date.now()) / 3600000))
             : undefined,
           inviteEmailed: t.inviteEmailed === true,
+          onboardingDetails: t.onboardingDetails || undefined,
+          revealTokens: t.revealTokens || undefined,
         })));
       }
     } catch { /* empty */ }
     setLoading(false);
+  };
+
+  const toggleExpanded = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const revealField = async (candidate: Candidate, field: string) => {
+    const token = candidate.revealTokens?.[field];
+    if (!token) return;
+    setRevealing(`${candidate.id}:${field}`);
+    try {
+      const res = await fetch("/api/hrm/v2/onboarding/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId: candidate.id, field, token }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const value = data.data?.value;
+        setCandidates((prev) =>
+          prev.map((c) =>
+            c.id === candidate.id && c.onboardingDetails
+              ? { ...c, onboardingDetails: { ...c.onboardingDetails, [field]: value } }
+              : c
+          )
+        );
+      } else {
+        console.error("Reveal failed:", (await res.json().catch(() => ({}))).error);
+      }
+    } catch (err) {
+      console.error("Failed to reveal field:", err);
+    }
+    setRevealing(null);
   };
 
   const handleApprove = async (id: string) => {
@@ -102,7 +187,7 @@ export default function HrAdminOnboardingPage() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Onboarding &amp; Account Requests</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Approve account requests to email a temporary password, verify documents, or trigger 48-hour resubmission deadlines
+          Review the full onboarding form, approve to email a temporary password, verify documents, or trigger 48-hour resubmission deadlines
         </p>
       </div>
 
@@ -122,6 +207,7 @@ export default function HrAdminOnboardingPage() {
             <table className="w-full text-left text-xs">
               <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
                 <tr>
+                  <th className="pb-3 font-semibold w-8"></th>
                   <th className="pb-3 font-semibold">Candidate</th>
                   <th className="pb-3 font-semibold">Role / Dept</th>
                   <th className="pb-3 font-semibold">Document</th>
@@ -132,42 +218,16 @@ export default function HrAdminOnboardingPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                 {candidates.map((c) => (
-                  <tr key={c.id}>
-                    <td className="py-3 font-bold">{c.name}<span className="block text-[10px] text-slate-500 font-normal">{c.email}</span></td>
-                    <td className="py-3"><span className="font-semibold">{c.role}</span><span className="block text-[10px] text-slate-500">{c.department}</span></td>
-                    <td className="py-3">
-                      {c.documentUrl ? (
-                        <a href={c.documentUrl} target="_blank" rel="noopener noreferrer" className="text-primary font-mono text-[11px] underline hover:text-primary/80">
-                          <FileText className="h-3 w-3 inline mr-1" />{c.documentName || "View"}
-                        </a>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">{c.documentName || "No document"}</span>
-                      )}
-                    </td>
-                    <td className="py-3">
-                      {c.status === "invite_requested" ? <Chip color="blue">NEW REQUEST</Chip>
-                        : c.status === "approved" ? (c.inviteEmailed ? <Chip color="emerald">INVITED ✓</Chip> : <Chip color="yellow">APPROVED (EMAIL FAILED)</Chip>)
-                        : c.status === "rejected_48h" ? <Chip color="red">REJECTED ({c.deadlineHoursRemaining}h)</Chip>
-                        : <Chip color="yellow">PENDING DOCS</Chip>}
-                    </td>
-                    <td className="py-3 font-mono font-bold text-primary">{c.employeeCode || <span className="text-slate-400 font-normal text-[10px]">Pending</span>}</td>
-                    <td className="py-3">
-                      {c.status === "pending" && (
-                        <div className="flex justify-end gap-1">
-                          <Button size="sm" onClick={() => handleApprove(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2"><ShieldCheck className="h-3 w-3 mr-0.5" />Approve</Button>
-                          <Button size="sm" variant="danger" onClick={() => handleReject(c.id)} className="text-[10px] font-bold h-7 px-2"><XCircle className="h-3 w-3 mr-0.5" />Reject</Button>
-                        </div>
-                      )}
-                      {c.status === "invite_requested" && (
-                        <div className="flex justify-end gap-1">
-                          <Button size="sm" onClick={() => handleApprove(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2"><MailPlus className="h-3 w-3 mr-0.5" />Approve &amp; Email Invite</Button>
-                          <Button size="sm" variant="danger" onClick={() => handleReject(c.id)} className="text-[10px] font-bold h-7 px-2"><XCircle className="h-3 w-3 mr-0.5" />Reject</Button>
-                        </div>
-                      )}
-                      {c.status === "rejected_48h" && <span className="text-[10px] text-red-500 font-bold">48h Resubmission Active</span>}
-                      {c.status === "approved" && <span className="text-[10px] text-slate-400">Finalized</span>}
-                    </td>
-                  </tr>
+                  <FragmentRow
+                    key={c.id}
+                    candidate={c}
+                    expanded={expanded.has(c.id)}
+                    onToggle={() => toggleExpanded(c.id)}
+                    revealing={revealing}
+                    onReveal={revealField}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                  />
                 ))}
               </tbody>
             </table>
@@ -175,6 +235,82 @@ export default function HrAdminOnboardingPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function FragmentRow({
+  candidate: c,
+  expanded,
+  onToggle,
+  revealing,
+  onReveal,
+  onApprove,
+  onReject,
+}: {
+  candidate: Candidate;
+  expanded: boolean;
+  onToggle: () => void;
+  revealing: string | null;
+  onReveal: (c: Candidate, field: string) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+}) {
+  const d = c.onboardingDetails;
+  const hasDetails = d && Object.values(d).some((v) => typeof v === "string" && v);
+
+  return (
+    <>
+      <tr className={expanded ? "bg-primary/[0.03]" : ""}>
+        <td className="py-3">
+          {hasDetails ? (
+            <button type="button" onClick={onToggle} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5" aria-label={expanded ? "Collapse details" : "Expand details"}>
+              {expanded ? <ChevronDown className="h-4 w-4 text-primary" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+            </button>
+          ) : null}
+        </td>
+        <td className="py-3 font-bold">{c.name}<span className="block text-[10px] text-slate-500 font-normal">{c.email}</span></td>
+        <td className="py-3"><span className="font-semibold">{c.role}</span><span className="block text-[10px] text-slate-500">{c.department}</span></td>
+        <td className="py-3">
+          {c.documentUrl ? (
+            <a href={c.documentUrl} target="_blank" rel="noopener noreferrer" className="text-primary font-mono text-[11px] underline hover:text-primary/80">
+              <FileText className="h-3 w-3 inline mr-1" />{c.documentName || "View"}
+            </a>
+          ) : (
+            <span className="text-slate-400 text-[11px]">{c.documentName || "No document"}</span>
+          )}
+        </td>
+        <td className="py-3">
+          {c.status === "invite_requested" ? <Chip color="blue">NEW REQUEST</Chip>
+            : c.status === "approved" ? (c.inviteEmailed ? <Chip color="emerald">INVITED ✓</Chip> : <Chip color="yellow">APPROVED (EMAIL FAILED)</Chip>)
+            : c.status === "rejected_48h" ? <Chip color="red">REJECTED ({c.deadlineHoursRemaining}h)</Chip>
+            : <Chip color="yellow">PENDING DOCS</Chip>}
+        </td>
+        <td className="py-3 font-mono font-bold text-primary">{c.employeeCode || <span className="text-slate-400 font-normal text-[10px]">Pending</span>}</td>
+        <td className="py-3">
+          {c.status === "pending" && (
+            <div className="flex justify-end gap-1">
+              <Button size="sm" onClick={() => onApprove(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2"><ShieldCheck className="h-3 w-3 mr-0.5" />Approve</Button>
+              <Button size="sm" variant="danger" onClick={() => onReject(c.id)} className="text-[10px] font-bold h-7 px-2"><XCircle className="h-3 w-3 mr-0.5" />Reject</Button>
+            </div>
+          )}
+          {c.status === "invite_requested" && (
+            <div className="flex justify-end gap-1">
+              <Button size="sm" onClick={() => onApprove(c.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-7 px-2"><MailPlus className="h-3 w-3 mr-0.5" />Approve &amp; Email Invite</Button>
+              <Button size="sm" variant="danger" onClick={() => onReject(c.id)} className="text-[10px] font-bold h-7 px-2"><XCircle className="h-3 w-3 mr-0.5" />Reject</Button>
+            </div>
+          )}
+          {c.status === "rejected_48h" && <span className="text-[10px] text-red-500 font-bold">48h Resubmission Active</span>}
+          {c.status === "approved" && <span className="text-[10px] text-slate-400">Finalized</span>}
+        </td>
+      </tr>
+      {expanded && hasDetails && (
+        <tr className="bg-slate-50/70 dark:bg-white/[0.02]">
+          <td colSpan={7} className="py-4 px-4">
+            <DetailsPanel details={d!} revealTokens={c.revealTokens} revealing={revealing} candidateId={c.id} onReveal={onReveal} candidate={c} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 
@@ -186,4 +322,145 @@ function Chip({ children, color }: { children: React.ReactNode; color: string })
     blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   };
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${colors[color]}`}>{children}</span>;
+}
+
+function Field({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className={`block text-xs font-medium text-slate-900 dark:text-white break-words ${mono ? "font-mono" : ""}`}>
+        {value || "—"}
+      </span>
+    </div>
+  );
+}
+
+function SensitiveFieldRow({
+  label, field, value, token, revealing, candidate, onReveal,
+}: {
+  label: string;
+  field: string;
+  value?: string;
+  token?: string;
+  revealing: string | null;
+  candidate: Candidate;
+  onReveal: (c: Candidate, field: string) => void;
+}) {
+  const isMasked = value?.includes("•");
+  const busy = revealing === `${candidate.id}:${field}`;
+  return (
+    <div className="min-w-0">
+      <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className="flex items-center gap-2">
+        <span className="block text-xs font-medium font-mono text-slate-900 dark:text-white break-all">{value || "—"}</span>
+        {isMasked && token && (
+          <button
+            type="button"
+            onClick={() => onReveal(candidate, field)}
+            disabled={busy}
+            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary hover:bg-primary/20 disabled:opacity-50 shrink-0"
+            title="Reveal (audit-logged)"
+          >
+            {busy ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Eye className="h-2.5 w-2.5" />}
+            Reveal
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}
+
+function DetailsPanel({
+  details: d,
+  revealTokens,
+  revealing,
+  candidateId,
+  candidate,
+  onReveal,
+}: {
+  details: OnboardingDetails;
+  revealTokens?: Record<string, string>;
+  revealing: string | null;
+  candidateId: string;
+  candidate: Candidate;
+  onReveal: (c: Candidate, field: string) => void;
+}) {
+  return (
+    <div className="space-y-5 max-h-[480px] overflow-y-auto pr-2">
+      {/* Personal and Contact Details */}
+      <section>
+        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+          <User className="h-3 w-3 text-primary" /> Personal and Contact Details
+        </h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <Field label="Name as per Aadhar" value={d.employeeName} />
+          <Field label="Gender" value={d.gender} />
+          <Field label="Designation" value={d.designation} />
+          <Field label="Date of Joining" value={d.dateOfJoining} />
+          <Field label="Department" value={d.department} />
+          <Field label="Date of Birth" value={d.dateOfBirth} />
+        </div>
+      </section>
+
+      {/* Employment Details */}
+      <section>
+        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+          <Briefcase className="h-3 w-3 text-primary" /> Employment Details
+        </h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <SensitiveFieldRow label="UAN No" field="uanNo" value={d.uanNo} token={revealTokens?.uanNo} revealing={revealing} candidate={candidate} onReveal={onReveal} />
+          <SensitiveFieldRow label="PAN No" field="panNo" value={d.panNo} token={revealTokens?.panNo} revealing={revealing} candidate={candidate} onReveal={onReveal} />
+          <SensitiveFieldRow label="Aadhar No" field="aadharNo" value={d.aadharNo} token={revealTokens?.aadharNo} revealing={revealing} candidate={candidate} onReveal={onReveal} />
+          <Field label="Mobile No" value={d.mobileNo} />
+          <Field label="Joining Location" value={d.joiningLocation} />
+          <Field label="Annual CTC" value={d.annualCtc} />
+          <Field label="Marital Status" value={d.maritalStatus} />
+          {d.maritalStatus === "Yes" && <Field label="Spouse Name" value={d.spouseName} />}
+          <Field label="Previous Employer PF" value={d.hasPf} />
+          {d.hasPf === "Yes" && <Field label="Previous PF Number" value={d.previousPfNumber} />}
+          <Field label="EPF Salary" value={d.epfSalary} />
+          <Field label="Previous ESI No" value={d.previousEsiNo} />
+          <Field label="ESIC Dispensary" value={d.esicDispensary} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <Field label="Present Address" value={d.presentAddress} />
+          <Field label="Permanent Address" value={d.permanentAddress} />
+        </div>
+      </section>
+
+      {/* Nominee Details */}
+      <section>
+        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+          <Users className="h-3 w-3 text-primary" /> Nominee Details
+        </h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <Field label="Nominee Name" value={d.nomineeName} />
+          <Field label="Nominee DOB" value={d.nomineeDob} />
+          <SensitiveFieldRow label="Nominee Aadhar" field="nomineeAadhar" value={d.nomineeAadhar} token={revealTokens?.nomineeAadhar} revealing={revealing} candidate={candidate} onReveal={onReveal} />
+          <Field label="Relation with Nominee" value={d.nomineeRelation} />
+          <Field label="Father Name" value={d.fatherName} />
+          {d.maritalStatus === "Yes" && <Field label="Husband's Name" value={d.husbandName} />}
+        </div>
+      </section>
+
+      {/* Bank Details */}
+      <section>
+        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+          <Landmark className="h-3 w-3 text-primary" /> Bank Details
+        </h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <Field label="Name in Bank" value={d.nameInBank} />
+          <SensitiveFieldRow label="Bank Account Number" field="bankAccountNumber" value={d.bankAccountNumber} token={revealTokens?.bankAccountNumber} revealing={revealing} candidate={candidate} onReveal={onReveal} />
+          <Field label="Bank Name" value={d.bankName} />
+          <Field label="Branch Name" value={d.branchName} />
+          <Field label="IFSC Code" value={d.ifscCode} mono />
+        </div>
+      </section>
+
+      <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
+        <Eye className="h-3 w-3" />
+        Aadhar, PAN, and bank account numbers are masked. Revealing a value is recorded in the audit log.
+      </p>
+    </div>
+  );
 }

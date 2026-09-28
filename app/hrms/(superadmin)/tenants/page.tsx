@@ -12,7 +12,6 @@ interface TenantItem {
   subscriptionTier: string;
   isActive: boolean;
   modulesEnabled: {
-    pms: boolean;
     ats: boolean;
     payroll: boolean;
   };
@@ -27,7 +26,6 @@ export default function SuperadminTenantsPage() {
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
   const [tier, setTier] = useState<"basic" | "pro" | "enterprise">("pro");
-  const [pmsEnabled, setPmsEnabled] = useState(true);
   const [payrollEnabled, setPayrollEnabled] = useState(true);
   const [atsEnabled, setAtsEnabled] = useState(true);
 
@@ -67,7 +65,6 @@ export default function SuperadminTenantsPage() {
           subscriptionTier: tier,
           isActive: true,
           modulesEnabled: {
-            pms: pmsEnabled,
             ats: atsEnabled,
             payroll: payrollEnabled,
           },
@@ -131,11 +128,6 @@ export default function SuperadminTenantsPage() {
                     <td className="py-3 uppercase text-primary font-mono font-bold">{t.subscriptionTier}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
-                        {t.modulesEnabled?.pms && (
-                          <span className="rounded bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-[10px] text-blue-400 font-medium">
-                            PMS
-                          </span>
-                        )}
                         {t.modulesEnabled?.payroll && (
                           <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-400 font-medium">
                             Payroll
@@ -212,16 +204,6 @@ export default function SuperadminTenantsPage() {
               {/* Module Toggles */}
               <div className="space-y-2 pt-2 border-t border-white/10">
                 <label className="block text-slate-300 font-semibold">Enable Modules for Tenant</label>
-
-                <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={pmsEnabled}
-                    onChange={(e) => setPmsEnabled(e.target.checked)}
-                    className="rounded border-white/10 bg-black/40 text-primary"
-                  />
-                  <span>Project Management System (PMS)</span>
-                </label>
 
                 <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
                   <input
