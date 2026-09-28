@@ -1,14 +1,13 @@
 "use client";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { BarChart3, Users, Clock, DollarSign, FileText } from "lucide-react";
+import { Users, Clock, DollarSign, FileText } from "lucide-react";
 
 const REPORTS = [
   { title: "Attendance Summary", description: "Monthly attendance report with present/absent/late/WFH breakdown", icon: Clock, href: "/hrms/attendance" },
   { title: "Payroll Report", description: "Salary disbursement and deduction report by department", icon: DollarSign, href: "/hrms/payroll" },
   { title: "Employee Directory", description: "Complete employee listing with roles, departments, and status", icon: Users, href: "/hrms/employees" },
   { title: "Leave Analytics", description: "Leave utilization, balance, and trends across the organization", icon: FileText, href: "/hrms/leaves" },
-  { title: "Project Status", description: "Project progress, task completion, and team performance", icon: BarChart3, href: "/hrms/projects" },
 ];
 
 export default function ReportsPage() {

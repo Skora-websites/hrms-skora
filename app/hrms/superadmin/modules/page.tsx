@@ -18,7 +18,6 @@ interface ModuleDef {
 }
 
 const MODULES: ModuleDef[] = [
-  { key: "pms", label: "Project Management (PMS)", description: "Task boards, Gantt charts, timesheets, and project budgets" },
   { key: "ats", label: "Applicant Tracking (ATS)", description: "Job postings, candidate pipeline, interview scheduling" },
   { key: "payroll", label: "Payroll System", description: "Salary processing, deductions, payslip generation" },
 ];

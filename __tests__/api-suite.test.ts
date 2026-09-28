@@ -632,7 +632,6 @@ describe("Security: Unauthenticated Access Prevention", () => {
     "/api/hrm/v2/tickets",
     "/api/hrm/v2/payroll",
     "/api/hrm/v2/settings?role=admin",
-    "/api/hrm/v2/projects",
     "/api/hrm/v2/holidays",
     "/api/hrm/v2/escalations",
   ];

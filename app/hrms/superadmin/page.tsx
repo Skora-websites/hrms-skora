@@ -124,15 +124,6 @@ interface LeaveRequest {
   requestedBy: "employee" | "manager";
 }
 
-interface Project {
-  _id: string;
-  name: string;
-  status: string;
-  progress?: number;
-  members?: any[];
-  budget?: number;
-}
-
 interface OfferLetter {
   id: string;
   userId: string;
@@ -179,7 +170,6 @@ export default function SuperadminOverviewPage() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [escalations, setEscalations] = useState<EscalationRecord[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [hrAdmins, setHrAdmins] = useState<UserRecord[]>([]);
   const [managers, setManagers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -252,13 +242,12 @@ export default function SuperadminOverviewPage() {
 
   const loadData = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
-    try {        const [empRes, attRes, escRes, leaveRes, projRes, hrRes, mgrRes, onbRes, offerRes, liveRes] =
+    try {        const [empRes, attRes, escRes, leaveRes, hrRes, mgrRes, onbRes, offerRes, liveRes] =
         await Promise.allSettled([
           fetch("/api/hrm/v2/users?action=list").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/attendance").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/escalations").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/leaves?status=pending").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/projects").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/users?action=list&role=hr_admin").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/users?action=list&role=manager").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/onboarding?pending=true").then((r) => (r.ok ? r.json() : null)),
@@ -284,10 +273,6 @@ export default function SuperadminOverviewPage() {
       if (leaveRes.status === "fulfilled" && leaveRes.value) {
         const d = leaveRes.value.data;
         setLeaveRequests(Array.isArray(d) ? d : []);
-      }
-      if (projRes.status === "fulfilled" && projRes.value) {
-        const d = projRes.value.data;
-        setProjects(Array.isArray(d) ? d : []);
       }
       if (hrRes.status === "fulfilled" && hrRes.value) {
         const d = hrRes.value.data;
@@ -333,9 +318,6 @@ export default function SuperadminOverviewPage() {
   ).length;
   const absentCount = Math.max(0, totalEmployees - presentCount);
   const pendingLeaves = leaveRequests.filter((l) => l.status === "pending");
-  const activeProjects = projects.filter(
-    (p) => p.status === "active" || p.status === "in_progress"
-  ).length;
   const overtimeHours = todayAttendance.reduce(
     (sum, a) => sum + (a.overtimeHours || 0),
     0
@@ -438,7 +420,7 @@ export default function SuperadminOverviewPage() {
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Full visibility across your organization — employees, attendance,
-            projects, leaves, and escalations
+            leaves, and escalations
           </p>
         </div>
         <Link
@@ -483,13 +465,6 @@ export default function SuperadminOverviewPage() {
               : "All clear"
           }
           trendUp={pendingLeaves.length === 0}
-        />
-        <KPICard
-          icon={<Briefcase className="h-5 w-5 text-blue-500" />}
-          label="Active Projects"
-          value={activeProjects}
-          trend={`${projects.length} total`}
-          trendUp
         />
         <KPICard
           icon={<Clock className="h-5 w-5 text-purple-500" />}
@@ -1145,55 +1120,6 @@ export default function SuperadminOverviewPage() {
         </SectionCard>
       </div>
 
-      {/* ═══ PROJECT PROGRESS ═══ */}
-      <SectionCard
-        title="Active Projects"
-        subtitle="Project progress and budget tracking"
-        icon={<Briefcase className="h-5 w-5 text-blue-500" />}
-        count={activeProjects}
-      >
-        {projects.length === 0 ? (
-          <EmptyState message="No projects created yet. HR Admin can create projects from the HR Admin dashboard." />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.slice(0, 6).map((p, idx) => (
-              <div
-                key={p._id || p.name || idx}
-                className="p-4 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                    {p.name}
-                  </span>
-                  <ProjectStatusBadge status={p.status} />
-                </div>
-                {p.progress !== undefined && (
-                  <div>
-                    <div className="flex items-center justify-between text-[10px] mb-1">
-                      <span className="text-slate-500">Progress</span>
-                      <span className="font-bold text-primary">
-                        {p.progress}%
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${p.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                {p.members && (
-                  <p className="text-[10px] text-slate-500">
-                    {p.members.length} member{p.members.length !== 1 ? "s" : ""}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
-
       {/* ═══ PENDING ONBOARDING APPLICATIONS ═══ */}
       <SectionCard
         title="Pending Onboarding Applications"
@@ -1664,24 +1590,6 @@ function AttendanceStatusBadge({ status }: { status?: string }) {
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${s.bg} ${s.text}`}
     >
       {s.label}
-    </span>
-  );
-}
-
-function ProjectStatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    in_progress: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    completed: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
-    on_hold: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-        colors[status] || colors.active
-      }`}
-    >
-      {status.replace(/_/g, " ").toUpperCase()}
     </span>
   );
 }

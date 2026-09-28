@@ -12,15 +12,7 @@ export { useOnboardingPrograms, useEmployeeOnboardingTasks, useOnboardingDashboa
 export { useExits, useExitSettings, useNoticePeriod, useExitDashboard } from "./use-exit";
 export { useHolidays, useHolidayPlans, useHolidayDashboard } from "./use-holidays";
 export { useProbationPolicies, useProbationReviews, useProbationDashboard } from "./use-probation";
-export { useSettings, useSetting } from "./use-settings";export {
-  useProjects,
-  useProject,
-  useProjectDashboard,
-  useProjectTasks,
-  useTask,
-  useKanbanBoard,
-  useProjectMembers,
-} from "./use-projects";
+export { useSettings, useSetting } from "./use-settings";
 
 // Task & Ticket Management
 export {

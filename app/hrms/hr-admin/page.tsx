@@ -276,7 +276,7 @@ export default function HrAdminDashboardPage() {
               Welcome back, {user?.name || "HR Admin"}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Employee Directory · Onboarding · Payroll · Projects &amp; Budgets · Leave Management
+              Employee Directory · Onboarding · Payroll · Leave Management
             </p>
             <div className="flex items-center gap-3 mt-3 text-xs">
               <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
@@ -451,31 +451,6 @@ export default function HrAdminDashboardPage() {
               </div>
             )}
           </div>
-        </div>
-      </DashboardSection>
-
-      {/* ═══ Project & Budget Setup ═══ */}
-      <DashboardSection
-        title="Project & Budget Setup"
-        subtitle="Create projects, set client budgets, assign Project Managers"
-        icon={<Briefcase className="h-5 w-5 text-blue-500" />}
-        action={
-          <a href="/hrms/projects/all">
-            <Button size="sm" className="bg-primary text-white font-bold text-xs">
-              <ClipboardList className="h-3.5 w-3.5 mr-1" /> Create Project
-            </Button>
-          </a>
-        }
-      >
-        <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
-          <Briefcase className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-          <p className="font-semibold mb-1">Project & Budget Management</p>
-          <p>Create projects with client budgets and assign Project Managers.</p>
-          <a href="/hrms/projects/all">
-            <Button size="sm" className="mt-3 bg-primary text-white font-bold text-xs">
-              Create First Project
-            </Button>
-          </a>
         </div>
       </DashboardSection>
 

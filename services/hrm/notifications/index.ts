@@ -121,9 +121,9 @@ export async function getUnreadCount(userId: string): Promise<number> {
 // ── Role / Department fan-out helpers ──────────────────
 //
 // The notification bell only shows what is written to the `notifications`
-// collection. Business events (project created, project assigned, task
-// assigned, member added) must fan out to the right audience or the user
-// never learns about them. These helpers centralize audience resolution.
+// collection. Business events (task assigned, member added) must fan out to
+// the right audience or the user never learns about them. These helpers
+// centralize audience resolution.
 
 /** Full user record lookup (id may be ObjectId string or legacy `id`). */
 export async function getUserById(userId: string): Promise<Record<string, any> | null> {
@@ -238,8 +238,8 @@ export async function notifyUsers(
   }
   if (docs.length === 0) return 0;
   try {
-    // One bulk insert instead of N sequential round-trips — project creation
-    // fans out to entire departments, so per-user awaits made POSTs take 15s+.
+    // One bulk insert instead of N sequential round-trips — department-wide
+    // fan-outs made per-user awaits take 15s+.
     const result = await notificationsService.createMany(docs as any);
     return result ?? docs.length;
   } catch (err) {

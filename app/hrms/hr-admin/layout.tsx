@@ -2,7 +2,7 @@ import { generateMetadata } from "@/lib/seo";
 
 export const metadata = generateMetadata({
   title: "HR Admin Dashboard",
-  description: "HR Administration: employee management, onboarding, payroll, projects & budgets",
+  description: "HR Administration: employee management, onboarding, payroll",
   path: "/hr-admin",
 });
 

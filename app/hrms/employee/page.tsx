@@ -63,7 +63,6 @@ interface OnboardingTask {
 interface Task {
   _id: string;
   title: string;
-  projectName?: string;
   status: string;
   priority?: string;
 }
@@ -335,7 +334,6 @@ export default function EmployeeDashboardPage() {
                   <TaskStatusDot status={t.status} />
                   <div>
                     <span className="font-semibold text-slate-900 dark:text-white">{t.title}</span>
-                    <span className="block text-[10px] text-slate-500">{t.projectName || "PMS Project"}</span>
                   </div>
                 </div>
                 <a href="/hrms/employee/timesheet">

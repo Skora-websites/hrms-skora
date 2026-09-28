@@ -535,10 +535,10 @@ export default function ManagerDashboardPage() {
       {/* ═══ Quick Links ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickLink
-          href="/hrms/manager/projects"
-          icon={<Briefcase className="h-5 w-5 text-primary" />}
-          label="Project Tasks"
-          desc="Delegate & monitor team tasks"
+          href="/hrms/tasks"
+          icon={<ClipboardList className="h-5 w-5 text-primary" />}
+          label="Team Tasks"
+          desc="View & monitor team tasks"
         />
         <QuickLink
           href="/hrms/manager/timesheets"

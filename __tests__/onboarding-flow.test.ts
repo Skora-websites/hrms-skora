@@ -21,6 +21,7 @@ import {
   loginUser,
   clearSessionCookies,
   uniqueEmail,
+  inviteFormPayload,
   type TestUser,
 } from "./helpers";
 
@@ -71,8 +72,9 @@ describe("Account Request Validation", () => {
   it("1.1 Rejects request without email", async () => {
     const res = await api.post("/api/hrm/v2/auth", {
       action: "request-invite",
-      department: "Software Engineering",
-    });
+      ...inviteFormPayload("placeholder@company.com"),
+      email: undefined,
+    } as any);
     expect(res.ok).toBe(false);
     expect(res.status).toBe(400);
   });
@@ -80,8 +82,9 @@ describe("Account Request Validation", () => {
   it("1.2 Rejects request without department", async () => {
     const res = await api.post("/api/hrm/v2/auth", {
       action: "request-invite",
-      email: uniqueEmail("no-dept"),
-    });
+      ...inviteFormPayload(uniqueEmail("no-dept")),
+      department: undefined,
+    } as any);
     expect(res.ok).toBe(false);
     expect(res.status).toBe(400);
   });
@@ -89,8 +92,7 @@ describe("Account Request Validation", () => {
   it("1.3 Rejects request with invalid email format", async () => {
     const res = await api.post("/api/hrm/v2/auth", {
       action: "request-invite",
-      email: "not-an-email",
-      department: "Software Engineering",
+      ...inviteFormPayload("not-an-email"),
     });
     expect(res.ok).toBe(false);
     expect(res.status).toBe(400);
@@ -105,6 +107,71 @@ describe("Account Request Validation", () => {
     });
     expect(res.status).toBe(410);
   });
+
+  it("1.5 Rejects payload missing the onboarding form (email+department only)", async () => {
+    const res = await api.post("/api/hrm/v2/auth", {
+      action: "request-invite",
+      email: uniqueEmail("stub"),
+      department: "Software Development",
+    });
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.error).toMatch(/Employee Name/i);
+  });
+
+  it("1.6 Rejects invalid PAN format", async () => {
+    const res = await api.post("/api/hrm/v2/auth", {
+      action: "request-invite",
+      ...inviteFormPayload(uniqueEmail("bad-pan")),
+      panNo: "12345",
+    });
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.error).toMatch(/PAN/i);
+  });
+
+  it("1.7 Rejects invalid Aadhar (not 12 digits)", async () => {
+    const res = await api.post("/api/hrm/v2/auth", {
+      action: "request-invite",
+      ...inviteFormPayload(uniqueEmail("bad-aadhar")),
+      aadharNo: "12345",
+    });
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.error).toMatch(/Aadhar/i);
+  });
+
+  it("1.8 Rejects invalid IFSC format", async () => {
+    const res = await api.post("/api/hrm/v2/auth", {
+      action: "request-invite",
+      ...inviteFormPayload(uniqueEmail("bad-ifsc")),
+      ifscCode: "SBIN12",
+    });
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.error).toMatch(/IFSC/i);
+  });
+
+  it("1.9 Rejects unknown department", async () => {
+    const res = await api.post("/api/hrm/v2/auth", {
+      action: "request-invite",
+      ...inviteFormPayload(uniqueEmail("bad-dept")),
+      department: "Underwater Welding",
+    });
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.error).toMatch(/department/i);
+  });
+
+  it("1.10 Accepts a complete valid form", async () => {
+    const res = await api.post("/api/hrm/v2/auth", {
+      action: "request-invite",
+      ...inviteFormPayload(uniqueEmail("valid-form")),
+    });
+    // 500 tolerated only when the DB is unavailable.
+    if (res.status === 500) return;
+    expect(res.ok).toBe(true);
+  });
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -114,11 +181,10 @@ describe("Account Request Validation", () => {
 let requestId: string | undefined;
 
 describe("Invite Flow: Request → Approval → Welcome Email", () => {
-  it("2.1 Applicant submits email + department only — no account yet", async () => {
+  it("2.1 Applicant submits the full onboarding form — no account yet", async () => {
     const res = await api.post("/api/hrm/v2/auth", {
       action: "request-invite",
-      email: APPLICANT.email,
-      department: "Software Engineering",
+      ...inviteFormPayload(APPLICANT.email),
     });
     expect([200, 201, 500]).toContain(res.status); // 500 tolerated only if DB unavailable
     if (res.ok) expect(res.data?.message).toBeDefined();
@@ -127,13 +193,12 @@ describe("Invite Flow: Request → Approval → Welcome Email", () => {
   it("2.2 Duplicate requests are idempotent, not errors", async () => {
     const res = await api.post("/api/hrm/v2/auth", {
       action: "request-invite",
-      email: APPLICANT.email,
-      department: "Software Engineering",
+      ...inviteFormPayload(APPLICANT.email),
     });
     if (res.ok) expect(res.status).toBe(200);
   });
 
-  it("2.3 Request appears in HR queue as invite_requested", async () => {
+  it("2.3 Request appears in HR queue as invite_requested with masked PII + reveal tokens", async () => {
     const res = await api.get("/api/hrm/v2/onboarding?pending=true", { user: HR_ADMIN });
     if (res.ok) {
       const rows = Array.isArray(res.data) ? res.data : [];
@@ -141,8 +206,58 @@ describe("Invite Flow: Request → Approval → Welcome Email", () => {
       if (found) {
         expect(found.status).toBe("invite_requested");
         requestId = found.id || found._id;
+        // Statutory PII must arrive masked with per-field reveal tokens.
+        const d = found.onboardingDetails || {};
+        for (const f of ["aadharNo", "panNo", "bankAccountNumber", "nomineeAadhar"]) {
+          if (d[f]) {
+            expect(String(d[f])).toMatch(/•/);
+            expect(found.revealTokens?.[f]).toBeTruthy();
+          }
+        }
+        // The submitted form data must be present for HR review.
+        if (d.employeeName !== undefined) expect(d.employeeName).not.toMatch(/•/);
       }
     }
+  });
+
+  it("2.3b Employee cannot fetch the HR queue", async () => {
+    const res = await api.get("/api/hrm/v2/onboarding?pending=true", { user: { email: APPLICANT.email, password: APPLICANT.password, displayName: "x" } });
+    expect([401, 403]).toContain(res.status);
+  });
+
+  it("2.3c Reveal endpoint: employee rejected, HR allowed with valid token only", async () => {
+    if (!requestId) return;
+    const queue = await api.get("/api/hrm/v2/onboarding?pending=true", { user: HR_ADMIN });
+    const rows = Array.isArray(queue.data) ? queue.data : [];
+    const found: any = rows.find((r: any) => (r.id || r._id) === requestId);
+    if (!found?.revealTokens?.aadharNo) return; // nothing to reveal
+
+    // Employee (no account yet → unauthenticated-ish) must be rejected.
+    const empAttempt = await api.post("/api/hrm/v2/onboarding/reveal", {
+      taskId: requestId, field: "aadharNo", token: found.revealTokens.aadharNo,
+    });
+    expect(empAttempt.ok).toBe(false);
+    expect([401, 403]).toContain(empAttempt.status);
+
+    // Bad token must be rejected.
+    const badToken = await api.post("/api/hrm/v2/onboarding/reveal", {
+      taskId: requestId, field: "aadharNo", token: "forged-token",
+    }, { user: HR_ADMIN });
+    expect(badToken.status).toBe(403);
+
+    // Unknown field must be rejected.
+    const badField = await api.post("/api/hrm/v2/onboarding/reveal", {
+      taskId: requestId, field: "notes", token: found.revealTokens.aadharNo,
+    }, { user: HR_ADMIN });
+    expect(badField.status).toBe(400);
+
+    // Valid token + HR session reveals the plaintext value.
+    const ok = await api.post("/api/hrm/v2/onboarding/reveal", {
+      taskId: requestId, field: "aadharNo", token: found.revealTokens.aadharNo,
+    }, { user: HR_ADMIN });
+    expect(ok.status).toBe(200);
+    expect(String(ok.data?.value)).not.toMatch(/•/);
+    expect(String(ok.data?.value)).toMatch(/^\d{12}$/);
   });
 
   it("2.4 Managers cannot approve account requests (view-and-comment only)", async () => {
@@ -211,23 +326,6 @@ describe("Manager Restrictions: Tasks & Reporting Manager", () => {
   it("3.1 Manager cannot create tasks (HR-level only)", async () => {
     const res = await api.post("/api/hrm/v2/tasks", {
       title: "Manager-created task (should fail)",
-    }, { user: MANAGER });
-    expect(res.ok).toBe(false);
-    expect([401, 403]).toContain(res.status);
-  });
-
-  it("3.2 Manager cannot create project tasks", async () => {
-    const res = await api.post("/api/hrm/v2/projects?type=task", {
-      projectId: "fake-project",
-      title: "Manager task via projects API",
-    }, { user: MANAGER });
-    expect(res.ok).toBe(false);
-    expect([401, 403]).toContain(res.status);
-  });
-
-  it("3.3 Manager cannot create projects", async () => {
-    const res = await api.post("/api/hrm/v2/projects", {
-      name: "Manager-created project (should fail)",
     }, { user: MANAGER });
     expect(res.ok).toBe(false);
     expect([401, 403]).toContain(res.status);

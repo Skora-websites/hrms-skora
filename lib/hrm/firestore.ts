@@ -25,7 +25,6 @@ import type {
   EmployeeExit, EmployeeExitSetting,
   ProbationPolicy, ProbationReview, NoticePeriod,
   NotificationTemplate, Notification, Setting, Language, Translation, ContactSupport,
-  Project, ProjectMember, ProjectTask, TaskComment, TaskAttachment, Milestone,
   IDCardTemplate, AIChatMessage, AuditLog,
   Goal, PerformanceReview, PerformanceFeedback, Kpi,
   HRMTask, HRMTaskComment, TaskAuditLog,
@@ -104,12 +103,6 @@ export const COLLECTIONS = {
   languages: "languages",
   translations: "translations",
   contactSupport: "contact_support",
-  projects: "projects",
-  projectMembers: "project_members",
-  projectTasks: "project_tasks",
-  taskComments: "task_comments",
-  taskAttachments: "task_attachments",
-  milestones: "milestones",
   idCardTemplates: "id_card_templates",
   aiChatMessages: "ai_chat_messages",
   sessions: "sessions",
@@ -240,14 +233,6 @@ export const translationsService = createFirestoreService<Translation>(COLLECTIO
 // ── Support ────────────────────────────────────────────
 export const contactSupportService = createFirestoreService<ContactSupport>(COLLECTIONS.contactSupport);
 
-// ── Projects ───────────────────────────────────────────
-export const projectsService = createFirestoreService<Project>(COLLECTIONS.projects);
-export const projectMembersService = createFirestoreService<ProjectMember>(COLLECTIONS.projectMembers);
-export const projectTasksService = createFirestoreService<ProjectTask>(COLLECTIONS.projectTasks);
-export const taskCommentsService = createFirestoreService<TaskComment>(COLLECTIONS.taskComments);
-export const taskAttachmentsService = createFirestoreService<TaskAttachment>(COLLECTIONS.taskAttachments);
-export const milestonesService = createFirestoreService<Milestone>(COLLECTIONS.milestones);
-
 // ── Other ──────────────────────────────────────────────
 export const idCardTemplatesService = createFirestoreService<IDCardTemplate>(COLLECTIONS.idCardTemplates);
 export const aiChatMessagesService = createFirestoreService<AIChatMessage>(COLLECTIONS.aiChatMessages);
@@ -303,11 +288,6 @@ export type {
   EmployeeExit,
   ProbationPolicy,
   NoticePeriod,
-  Project,
-  ProjectTask,
-  Milestone,
-  TaskComment,
-  TaskAttachment,
   Role,
   Permission,
   ApprovalChain,

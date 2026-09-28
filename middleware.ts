@@ -65,7 +65,6 @@ const protectedHrmsRoutes = [
   "/hrms/documents",
   "/hrms/organization",
   "/hrms/settings",
-  "/hrms/projects",
   "/hrms/recruitment",
   "/hrms/performance",
   "/hrms/onboarding",

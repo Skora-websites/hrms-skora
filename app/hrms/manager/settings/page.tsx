@@ -167,7 +167,6 @@ export default function ManagerSettingsPage() {
               >
                 <option value="overview">Overview</option>
                 <option value="approvals">Approvals</option>
-                <option value="projects">Projects</option>
                 <option value="analytics">Analytics</option>
               </select>
             </div>

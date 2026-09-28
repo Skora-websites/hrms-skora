@@ -833,6 +833,50 @@ export interface OnboardingTask {
   isMandatory: boolean;
 }
 
+/** Full statutory onboarding form captured at account request
+ *  (mirrors the Innonex HRM reference form: personal/contact, employment,
+ *  nominee, and bank details). Stored on the invite request and copied onto
+ *  the user record when HR approves. */
+export interface OnboardingDetails {
+  // ── Personal and Contact Details ──
+  employeeName?: string; // Employee Name as per Aadhar
+  gender?: "Male" | "Female";
+  designation?: string;
+  dateOfJoining?: string; // YYYY-MM-DD
+  department?: string;
+  dateOfBirth?: string; // YYYY-MM-DD
+  email?: string;
+  // ── Employment Details ──
+  uanNo?: string;
+  joiningLocation?: string;
+  panNo?: string;
+  mobileNo?: string;
+  aadharNo?: string;
+  presentAddress?: string;
+  permanentAddress?: string;
+  annualCtc?: string;
+  maritalStatus?: "Yes" | "No"; // married?
+  spouseName?: string;
+  previousPfNumber?: string;
+  hasPf?: "Yes" | "No";
+  epfSalary?: string;
+  previousEsiNo?: string;
+  esicDispensary?: string;
+  // ── Nominee Details ──
+  nomineeName?: string;
+  nomineeDob?: string; // YYYY-MM-DD
+  nomineeAadhar?: string;
+  nomineeRelation?: string;
+  fatherName?: string;
+  husbandName?: string;
+  // ── Bank Details ──
+  nameInBank?: string;
+  bankAccountNumber?: string;
+  bankName?: string;
+  branchName?: string;
+  ifscCode?: string;
+}
+
 export interface EmployeeOnboardingTask extends BaseEntity {
   onboardingId: string;
   userId: string;
@@ -840,6 +884,8 @@ export interface EmployeeOnboardingTask extends BaseEntity {
   title: string;
   assignedTo: string;
   assignedToUserId?: string;
+  /** Full reference-form data captured at request time (invite flow). */
+  onboardingDetails?: OnboardingDetails;
   /** Lifecycle actually used by the HR queue (types/index.ts previously
    *  listed only program-task statuses while the API stored approved,
    *  rejected, escalated, and invite_requested rows). */
@@ -1082,67 +1128,6 @@ export interface ContactSupport {
   priority: "low" | "medium" | "high" | "urgent";
   createdAt: Timestamp;
   updatedAt: Timestamp;
-}
-
-// ── Projects ───────────────────────────────────────────
-
-export interface Project extends BaseEntity {
-  name: string;
-  description?: string;
-  startDate: Timestamp;
-  endDate?: Timestamp;
-  status: "planning" | "in_progress" | "completed" | "on_hold" | "cancelled";
-  priority: "low" | "medium" | "high" | "critical";
-  ownerId: string;
-  budget?: number;
-  progress?: number; // 0-100, calculated from completed tasks / total tasks
-}
-
-export interface ProjectMember extends BaseEntity {
-  projectId: string;
-  userId: string;
-  role: "manager" | "member" | "viewer";
-  allocationPercentage?: number;
-}
-
-export interface ProjectTask extends BaseEntity {
-  projectId: string;
-  assigneeId?: string;
-  title: string;
-  description?: string;
-  status: "todo" | "in_progress" | "review" | "completed";
-  priority: "low" | "medium" | "high" | "critical";
-  startDate?: Timestamp;
-  dueDate?: Timestamp;
-  completedAt?: Timestamp;
-  estimatedHours?: number;
-  actualHours?: number;
-}
-
-export interface TaskComment extends BaseEntity {
-  taskId: string;
-  userId: string;
-  userDisplayName: string;
-  userPhotoURL?: string;
-  content: string;
-}
-
-export interface TaskAttachment extends BaseEntity {
-  taskId: string;
-  userId: string;
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  fileURL: string;
-}
-
-export interface Milestone extends BaseEntity {
-  projectId: string;
-  title: string;
-  description?: string;
-  dueDate?: Timestamp;
-  status: "pending" | "in_progress" | "completed" | "delayed";
-  completedAt?: Timestamp;
 }
 
 // ── ID Card / Badge ────────────────────────────────────

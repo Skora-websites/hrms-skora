@@ -1,7 +1,7 @@
 "use client";
 
 import { useCollection, useFirestoreQuery } from "./use-firestore-query";
-import type { HRMTask, TaskComment, TaskAuditLog } from "@/types";
+import type { HRMTask, HRMTaskComment, TaskAuditLog } from "@/types";
 
 // ── Task Hooks ─────────────────────────────────────────
 
@@ -30,7 +30,7 @@ export function useTaskDashboard() {
 // ── Comment Hooks ──────────────────────────────────────
 
 export function useTaskComments(taskId: string | null) {
-  return useCollection<TaskComment>(
+  return useCollection<HRMTaskComment>(
     taskId ? `/api/hrm/v2/tasks?comments=true&taskId=${taskId}` : null
   );
 }

@@ -117,16 +117,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
-    key: "projects",
-    label: "Projects",
-    children: [
-      { key: "projects.view", label: "View Projects", group: "Projects" },
-      { key: "projects.create", label: "Create Projects", group: "Projects" },
-      { key: "projects.edit", label: "Edit Projects", group: "Projects" },
-      { key: "projects.delete", label: "Delete Projects", group: "Projects" },
-    ],
-  },
-  {
     key: "org",
     label: "Organization",
     children: [

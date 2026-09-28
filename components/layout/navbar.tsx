@@ -14,7 +14,6 @@ import {
   Loader2,
   ClipboardList,
   MessageSquare,
-  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -53,8 +52,8 @@ const ROLE_SETTINGS: Record<string, string> = {
 };
 const ROLE_TASKS: Record<string, string> = {
   super_admin: "/hrms/superadmin",
-  hr_admin: "/hrms/hr-admin/projects",
-  manager: "/hrms/manager/projects",
+  hr_admin: "/hrms/tasks",
+  manager: "/hrms/tasks",
   employee: "/hrms/employee/my-tasks",
 };
 
@@ -146,7 +145,6 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
   };
 
   const getNotificationIcon = (type: string, referenceType?: string) => {
-    if (referenceType === "project") return FolderKanban;
     switch (type) {
       case "task": return ClipboardList;
       case "ticket": return MessageSquare;
@@ -299,17 +297,9 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
                     onClick={() => {
                       if (!notif.isRead) handleMarkAsRead(notif.id);
                       if (notif.referenceType === "task" && notif.referenceId) {
-                        router.push(`/hrms/projects/tasks?taskId=${notif.referenceId}`);
+                        router.push(`/hrms/tasks?id=${notif.referenceId}`);
                       } else if (notif.referenceType === "ticket" && notif.referenceId) {
                         router.push(`/hrms/tickets?id=${notif.referenceId}`);
-                      } else if (notif.referenceType === "project" && notif.referenceId) {
-                        // Managers/admins land on the shared projects board;
-                        // employees see their assigned projects.
-                        router.push(
-                          notif.type === "general" && user?.role === "employee"
-                            ? "/hrms/projects"
-                            : `/hrms/projects/all?id=${notif.referenceId}`
-                        );
                       }
                     }}
                     className={cn(
