@@ -834,7 +834,7 @@ export interface OnboardingTask {
 }
 
 /** Full statutory onboarding form captured at account request
- *  (mirrors the Innonex HRM reference form: personal/contact, employment,
+ *  (mirrors the SKORA HRMS reference form: personal/contact, employment,
  *  nominee, and bank details). Stored on the invite request and copied onto
  *  the user record when HR approves. */
 export interface OnboardingDetails {

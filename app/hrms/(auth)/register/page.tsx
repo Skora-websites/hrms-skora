@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CheckCircle2, AlertCircle, Send, Loader2, User, Briefcase, Users, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Reference-form departments (Innonex HRM onboarding form).
+// Reference-form departments (SKORA HRMS onboarding form).
 const DEPARTMENTS = [
   "Software Development",
   "Quality Assurance",
@@ -203,7 +203,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">Innonex HRM — Onboarding Form</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">SKORA HRMS — Onboarding Form</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             HR will review your submission and email a temporary password to your address
           </p>

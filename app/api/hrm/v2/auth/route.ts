@@ -15,14 +15,14 @@ import { checkRateLimit, recordFailure, clearFailures, clientIp, type RateLimitO
 const REGISTER_LIMITS: RateLimitOptions = { max: 10, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
 const RESET_LIMITS: RateLimitOptions = { max: 5, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
 
-/** Reference-form departments (Innonex HRM onboarding form). */
+/** Reference-form departments (SKORA HRMS onboarding form). */
 const ONBOARDING_DEPARTMENTS = new Set([
   "Software Development", "Quality Assurance", "IT Infrastructure", "DevOps",
   "Technical Support", "Mobile Technology", "HR Recruitment",
 ]);
 
 /** Validate + normalize the reference-form payload. Required fields mirror the
- *  Innonex form; everything else passes through as optional. Returns the
+ *  SKORA HRMS form; everything else passes through as optional. Returns the
  *  sanitized OnboardingDetails or an error message. */
 function parseOnboardingDetails(input: any, department: string): { details?: OnboardingDetails; error?: string } {
   const str = (v: unknown, max = 200): string =>
@@ -128,7 +128,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
 
       // Full reference-form data (personal/employment/nominee/bank) — required
-      // since the Innonex onboarding form replaced the email+department stub.
+      // since the SKORA HRMS onboarding form replaced the email+department stub.
       const normalizedEmail = email.toLowerCase().trim();
       const parsed = parseOnboardingDetails(body, departmentTrimmed);
       if (parsed.error) return badRequest(parsed.error);
