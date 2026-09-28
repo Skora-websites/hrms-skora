@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+// Sentry's build wrapper comes from the dedicated /config export in
+// @sentry/nextjs v10+. It only activates when SENTRY_DSN is set; the build
+// stays identical (no auth token required) otherwise.
+import { withSentryConfig } from "@sentry/nextjs/config";
+import type { SentryBuildOptions } from "@sentry/nextjs/config";
 
 const securityHeaders = [
   {
@@ -48,5 +53,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
-
+export default withSentryConfig(nextConfig, {
+  // Silence the wizard/telemetry prompts in CI.
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Source maps upload is opt-in — only when an auth token is present.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+});
