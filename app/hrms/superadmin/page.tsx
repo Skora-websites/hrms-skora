@@ -1257,18 +1257,25 @@ export default function SuperadminOverviewPage() {
                   <option value="employee">Employee</option>
                 </select>
               </div>
-              {/* CEO-only: assign the reporting manager */}
+              {/* CEO-only: assign the reporting manager. Dropdown of actual
+                  manager accounts — keeps the stored name consistent with
+                  what the manager sees and what leave-approval scoping uses. */}
               <div>
                 <label className="block text-xs font-semibold mb-1">
                   Reporting Manager <span className="text-[9px] font-bold text-primary uppercase">(CEO only)</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={editReportingManager}
                   onChange={(e) => setEditReportingManager(e.target.value)}
-                  placeholder="Manager name — the employee sees this read-only"
                   className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                />
+                >
+                  <option value="">No reporting manager</option>
+                  {managers.map((m) => (
+                    <option key={m.id} value={m.displayName || m.email}>
+                      {m.displayName || m.email}
+                    </option>
+                  ))}
+                </select>
                 <p className="text-[10px] text-slate-400 mt-1">Assign the employee&apos;s reporting manager. Changes reflect on their profile immediately.</p>
               </div>
               <div>
