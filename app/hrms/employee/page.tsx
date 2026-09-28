@@ -125,7 +125,10 @@ export default function EmployeeDashboardPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // Re-run once the auth provider resolves: the first mount often fires
+    // before user?.id exists, which made balances/payslips fetch with
+    // userId="me" and 403 into empty states.
+  }, [user?.id]);
 
   const handleUpload = async () => {
     if (!uploadFile) return;

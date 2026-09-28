@@ -24,7 +24,13 @@ async function isDirectReport(managerId: string, employeeId: string): Promise<bo
     const db = await getDb();
     if (!db) return false;
     const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
-    return (employee as any)?.reportingManager === managerId;
+    const rm = (employee as any)?.reportingManager;
+    if (!rm) return false;
+    // reportingManager stores either the manager's ObjectId or the manager's
+    // display name (CEO assigns via dropdown). Accept either representation.
+    if (rm === managerId) return true;
+    const manager = await db.collection("users").findOne({ _id: new ObjectId(managerId) });
+    return !!manager && rm === (manager as any).displayName;
   } catch {
     return false;
   }
