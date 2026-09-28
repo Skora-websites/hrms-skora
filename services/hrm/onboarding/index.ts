@@ -114,7 +114,8 @@ export async function updateOnboardingTaskStatus(
 
 // HR review queue: fresh account requests (invite_requested), document
 // submissions (pending), and rejected/escalated applications awaiting the
-// 48h resubmission clock.
+// 48h resubmission clock. Most-recently-submitted first — the CEO dashboard
+// shows the latest form submission at the top.
 export async function getPendingOnboardingTasks(
   tenantId: string
 ): Promise<EmployeeOnboardingTask[]> {
@@ -122,8 +123,8 @@ export async function getPendingOnboardingTasks(
     where: [
       { field: "status", op: "in", value: ["invite_requested", "pending", "rejected", "escalated"] },
     ],
-    orderByField: "dueDate",
-    orderByDirection: "asc",
+    orderByField: "createdAt",
+    orderByDirection: "desc",
   });
 }
 

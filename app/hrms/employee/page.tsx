@@ -277,7 +277,9 @@ export default function EmployeeDashboardPage() {
               <div>
                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">REPORTING MANAGER</span>
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {latestTask?.reportingManager || "Not Assigned"}
+                  {/* The user record is authoritative (CEO-assigned); the
+                      onboarding task row is a legacy fallback. */}
+                  {(user as any)?.reportingManager || latestTask?.reportingManager || "Not Assigned"}
                 </span>
               </div>
             </div>

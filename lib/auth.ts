@@ -27,6 +27,8 @@ export interface Session {
     employeeCode?: string | null;
     /** Coarse onboarding state: pending -> approved/rejected. */
     onboardingStatus?: string | null;
+    /** CEO-assigned reporting manager (display name) — employee hub reads it. */
+    reportingManager?: string | null;
     /** Self-service profile fields (employee profile page). */
     phone?: string | null;
     emergencyContact?: string | null;
@@ -77,6 +79,7 @@ export async function auth(): Promise<Session> {
         status: user.status || null,
         employeeCode: user.employeeCode || null,
         onboardingStatus: user.onboardingStatus || null,
+        reportingManager: user.reportingManager || null,
         phone: user.phone || null,
         emergencyContact: user.emergencyContact || null,
         bankAccount: user.bankAccount || null,

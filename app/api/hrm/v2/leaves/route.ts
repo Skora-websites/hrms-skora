@@ -15,7 +15,7 @@ import {
   getLeaveBalances,
 } from "@/services/hrm/leave";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
-import { leaveApplySchema, leaveDecisionSchema, parseBody } from "@/lib/validations";
+import { leaveApplySchema, leaveDecisionSchema, parseValidated } from "@/lib/validations";
 import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "mongodb";
 
@@ -163,7 +163,9 @@ export async function POST(request: NextRequest) {
     const action = body.action;
 
     if (action === "apply") {
-      const parsed = await parseBody(request, leaveApplySchema);
+      // Validate the ALREADY-READ body object — calling parseBody(request)
+      // here would re-read the consumed stream and 400 every submission.
+      const parsed = parseValidated(body, leaveApplySchema);
       if (!parsed.success) return parsed.response!;
       const data = parsed.data!;
 
@@ -224,7 +226,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
       }
 
-      const parsed = await parseBody(request, leaveDecisionSchema);
+      const parsed = parseValidated(body, leaveDecisionSchema);
       if (!parsed.success) return parsed.response!;
       const decision = parsed.data!;
 

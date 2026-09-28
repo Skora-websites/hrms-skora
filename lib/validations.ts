@@ -167,6 +167,33 @@ export interface ParseBodyResult<T> {
   response?: NextResponse;
 }
 
+/** Validate an ALREADY-PARSED body object against a zod schema. Same
+ *  400-response contract as parseBody, for handlers that have already
+ *  consumed the request stream (e.g. to branch on an action field). */
+export function parseValidated<T>(
+  raw: unknown,
+  schema: z.ZodType<T>
+): ParseBodyResult<T> {
+  const result = schema.safeParse(raw);
+  if (!result.success) {
+    const first = result.error.issues[0];
+    return {
+      success: false,
+      response: NextResponse.json(
+        {
+          error: first?.message || "Validation failed",
+          details: result.error.issues.map((i) => ({
+            field: i.path.join(".") || "_form",
+            message: i.message,
+          })),
+        },
+        { status: 400 }
+      ),
+    };
+  }
+  return { success: true, data: result.data };
+}
+
 /** Parse and validate a JSON request body against a zod schema.
  *  Returns a 400 NextResponse with field-level details on failure. */
 export async function parseBody<T>(
