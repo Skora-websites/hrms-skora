@@ -14,6 +14,7 @@ import { employeeCreateSchema, parseBody } from "@/lib/validations";
 import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
+import { normalizeRole } from "@/lib/rbac";
 
 // Create/delete of employees is an HR function. requireAdmin alone would let
 // any manager create or remove accounts, so these are gated explicitly.
@@ -35,6 +36,30 @@ async function isDirectReport(managerId: string, employeeId: string): Promise<bo
   } catch {
     return false;
   }
+}
+
+/** Fields safe to return in list/detail reads and to accept on HR updates.
+ *  Credential fields (passwordHash, legacy plaintext password) and statutory
+ *  onboarding PII never ride responses, and HR callers cannot write role or
+ *  credential fields through this route (role changes are CEO-only via
+ *  /api/hrm/v2/users action=role; passwords are set via dedicated flows). */
+const SAFE_USER_FIELDS = [
+  "id", "_id", "email", "displayName", "name", "firstName", "lastName",
+  "role", "status", "department", "departmentName", "departmentId",
+  "designation", "designationName", "designationId", "employeeCode",
+  "joiningDate", "phone", "employmentType", "reportingManager", "image",
+  "address", "emergencyContact", "emergencyPhone", "tenantId", "createdAt",
+  "updatedAt",
+] as const;
+
+/** Project a user document down to non-sensitive fields. */
+function projectUser(u: any): Record<string, unknown> {
+  if (!u || typeof u !== "object") return u;
+  const out: Record<string, unknown> = {};
+  for (const f of SAFE_USER_FIELDS) {
+    if (u[f] !== undefined) out[f] = u[f];
+  }
+  return out;
 }
 
 /** Can the caller view the given employee record? Managers see their own
@@ -82,7 +107,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     if (!result.user) {
       return notFound("Employee not found");
     }
-    return NextResponse.json({ data: result });
+    return NextResponse.json({ data: { ...result, user: projectUser(result.user) } });
   }
 
   if (id) {
@@ -90,7 +115,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     if (!employee) {
       return notFound("Employee not found");
     }
-    return NextResponse.json({ data: employee });
+    return NextResponse.json({ data: projectUser(employee) });
   }
 
   // Employees can only view their own data
@@ -99,7 +124,24 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     if (!employee) {
       return notFound("Employee not found");
     }
-    return NextResponse.json({ data: [employee] });
+    return NextResponse.json({ data: [projectUser(employee)] });
+  }
+
+  // Managers are scoped to their direct reports (plus themselves) on every
+  // list path — the org-wide directory is an HR-level view.
+  let scopedEmployees = null;
+  if (auth.role === "manager") {
+    const all = await getEmployees(tenantId);
+    // reportingManager stores the manager's ObjectId OR display name
+    // (CEO-assigned dropdown), so match both representations.
+    const me = await getEmployeeById(auth.userId);
+    const myName = (me as any)?.displayName || "";
+    scopedEmployees = all.filter(
+      (e: any) =>
+        e.id === auth.userId ||
+        e.reportingManager === auth.userId ||
+        (!!myName && e.reportingManager === myName)
+    );
   }
 
   // Server-side paginated query
@@ -113,7 +155,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       status: status || undefined,
     });
     return NextResponse.json({
-      data: result.data,
+      data: result.data.map(projectUser),
       totalItems: result.totalItems,
       page: result.page,
       pageSize: result.pageSize,
@@ -122,8 +164,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   }
 
   // Legacy full-list query
-  const employees = await getEmployees(tenantId);
-  return NextResponse.json({ data: employees });
+  const employees = scopedEmployees ?? (await getEmployees(tenantId));
+  return NextResponse.json({ data: employees.map(projectUser) });
 }, { label: "HRM Employees" });
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -152,6 +194,13 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     }
   }
 
+  // Privilege clamp: HR cannot mint super_admin accounts. CEO-only, same
+  // rule as PATCH and the users route.
+  const requestedRole = normalizeRole(body.role || "employee");
+  if (requestedRole === "super_admin" && auth.role !== "super_admin") {
+    return forbidden("Only Super Admin can create super_admin accounts");
+  }
+
   const rawName = body.displayName || body.name || `${body.firstName || ""} ${body.lastName || ""}`.trim() || body.email;
   const nameParts = rawName.trim().split(" ");
   const firstName = body.firstName || nameParts[0] || "";
@@ -171,7 +220,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     firstName,
     lastName,
     phone: body.phone || "",
-    role: body.role || "employee",
+    role: requestedRole,
     status: body.status || "active",
     department: body.department || body.departmentName || "Engineering",
     departmentId: body.departmentId || "",
@@ -227,12 +276,45 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: employee });
   }
 
-  // Reporting structure is CEO-controlled: strip reportingManager from any
-  // non-CEO update so HR edits cannot silently reassign reporting lines.
-  const updateBody: Record<string, unknown> = { ...body };
+  // HR callers update a fixed allowlist of profile/employment fields.
+  // Credential fields (password, passwordHash, loginStatus) are never
+  // writable here, so a compromised HR account cannot overwrite credentials.
+  // Role is writable only downward: HR may move employees among
+  // employee/manager/hr_admin (matching the edit UI) but super_admin is
+  // CEO-assignable only. Status is writable with the standard value check.
+  const HR_SAFE_FIELDS = [
+    "displayName", "firstName", "lastName", "phone", "image", "address",
+    "emergencyContact", "emergencyPhone", "department", "departmentName",
+    "departmentId", "designation", "designationName", "designationId",
+    "joiningDate", "employmentType", "employeeCode",
+  ];
+  const updateBody: Record<string, unknown> = {};
+  for (const field of HR_SAFE_FIELDS) {
+    if (body[field] !== undefined) updateBody[field] = body[field];
+  }
+  if (body.role !== undefined) {
+    const normalizedRole = normalizeRole(body.role);
+    if (normalizedRole === "super_admin" && auth.role !== "super_admin") {
+      return forbidden("Only Super Admin can assign the super_admin role");
+    }
+    updateBody.role = normalizedRole;
+  }
+  if (body.status !== undefined) {
+    if (!["active", "inactive", "disabled", "pending_verification"].includes(body.status)) {
+      return badRequest("Invalid status value");
+    }
+    updateBody.status = body.status;
+  }
+  // Reporting structure is CEO-controlled: reportingManager moves only
+  // through the super_admin users route, never this one.
   if (auth.role !== "super_admin") {
-    delete updateBody.reportingManager;
-    delete updateBody.managerEmail;
+    delete (body as any).reportingManager;
+    delete (body as any).managerEmail;
+  } else if (body.reportingManager !== undefined) {
+    updateBody.reportingManager = body.reportingManager;
+  }
+  if (Object.keys(updateBody).length === 0) {
+    return badRequest("No valid fields to update");
   }
 
   const employee = await updateEmployee(id, updateBody as any);

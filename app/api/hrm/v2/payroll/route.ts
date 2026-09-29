@@ -16,6 +16,25 @@ import {
   markPayrollTransactionPaid,
 } from "@/services/hrm/payroll";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { ObjectId } from "mongodb";
+
+/** Managers may only read their direct reports' payroll data. Same
+ *  resolution rule as leaves/employees/documents: reportingManager stores
+ *  the manager's ObjectId or display name (CEO-assigned via dropdown). */
+async function isDirectReport(managerId: string, employeeId: string): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+    const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
+    const rm = (employee as any)?.reportingManager;
+    if (!rm) return false;
+    if (rm === managerId) return true;
+    const manager = await db.collection("users").findOne({ _id: new ObjectId(managerId) });
+    return !!manager && rm === (manager as any).displayName;
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,6 +78,11 @@ export async function GET(request: NextRequest) {
 
     if (type === "transactions") {
       if (userId) {
+        // Manager scoping: a manager may only read direct reports' salary
+        // data; org-wide payroll reads are an HR-level capability.
+        if (auth.role === "manager" && userId !== auth.userId && !(await isDirectReport(auth.userId, userId))) {
+          return NextResponse.json({ error: "Forbidden: you can only view your direct reports' payroll" }, { status: 403 });
+        }
         const transactions = await getEmployeePayrollTransactions(tenantId, userId);
         return NextResponse.json({ data: transactions });
       }
