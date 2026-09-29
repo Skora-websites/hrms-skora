@@ -15,7 +15,7 @@ import {
   createCalendarEvent,
   deleteCalendarEvent,
 } from "@/services/hrm/holiday";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAuth, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,7 +83,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    // Holiday creation is an HR/CEO function — managers and employees get
+    // read-only access (requireHrLevel excludes manager on purpose).
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const tenantId = "default";
@@ -117,7 +119,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const { searchParams } = new URL(request.url);
@@ -149,7 +151,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const { searchParams } = new URL(request.url);

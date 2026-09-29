@@ -289,6 +289,26 @@ export default function SuperadminOverviewPage() {
       )
     : employees;
 
+  // Per-section search boxes for the remaining data sections.
+  const [attendanceSearch, setAttendanceSearch] = useState("");
+  const [leaveSearch, setLeaveSearch] = useState("");
+  const filteredTodayAttendance = attendanceSearch
+    ? todayAttendance.filter(
+        (a) =>
+          (a.userName || a.userEmail || "").toLowerCase().includes(attendanceSearch.toLowerCase()) ||
+          (a.employeeCode || "").toLowerCase().includes(attendanceSearch.toLowerCase()) ||
+          (a.status || "").toLowerCase().includes(attendanceSearch.toLowerCase())
+      )
+    : todayAttendance;
+  const filteredPendingLeaves = leaveSearch
+    ? pendingLeaves.filter(
+        (l) =>
+          l.employeeName?.toLowerCase().includes(leaveSearch.toLowerCase()) ||
+          l.type?.toLowerCase().includes(leaveSearch.toLowerCase()) ||
+          l.reason?.toLowerCase().includes(leaveSearch.toLowerCase())
+      )
+    : pendingLeaves;
+
   // ── Handlers ──
 
   const handleEditUser = async () => {
@@ -848,6 +868,16 @@ export default function SuperadminOverviewPage() {
           </div>
         }
       >
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search attendance by name, email, code, or status..."
+            value={attendanceSearch}
+            onChange={(e) => setAttendanceSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+          />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
@@ -861,7 +891,7 @@ export default function SuperadminOverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-              {todayAttendance.length === 0 ? (
+              {filteredTodayAttendance.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
                     <EmptyState
@@ -874,7 +904,7 @@ export default function SuperadminOverviewPage() {
                   </td>
                 </tr>
               ) : (
-                todayAttendance.map((rec, idx) => (
+                filteredTodayAttendance.map((rec, idx) => (
                   <tr
                     key={rec._id || `${rec.userId}-${rec.date}-${idx}`}
                     className="hover:bg-gray-50 dark:hover:bg-white/[0.02]"
@@ -970,7 +1000,17 @@ export default function SuperadminOverviewPage() {
             <EmptyState message="No pending leave requests. All clear!" />
           ) : (
             <div className="space-y-2">
-              {pendingLeaves.slice(0, 8).map((l) => (
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search leave requests by employee, type, or reason..."
+                  value={leaveSearch}
+                  onChange={(e) => setLeaveSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                />
+              </div>
+              {filteredPendingLeaves.slice(0, 8).map((l) => (
                 <div
                   key={l.id}
                   className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 text-xs"

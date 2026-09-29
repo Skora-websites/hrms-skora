@@ -99,6 +99,10 @@ export default function ManagerDashboardPage() {
   const [liveSummary, setLiveSummary] = useState<LiveStatusSummary | null>(null);
   const [liveSearch, setLiveSearch] = useState("");
   const [liveFilter, setLiveFilter] = useState<"all" | "punched_in" | "active" | "on_break" | "in_meeting" | "punched_out" | "absent">("all");
+  // Per-section search/filter boxes (roster + approvals)
+  const [rosterSearch, setRosterSearch] = useState("");
+  const [approvalSearch, setApprovalSearch] = useState("");
+  const [approvalType, setApprovalType] = useState<"all" | "leave" | "regularization" | "overtime">("all");
   const isCeo = user?.role === "super_admin";
   const managerDepartment = isCeo ? null : (user?.department || null);
 
@@ -152,6 +156,34 @@ export default function ManagerDashboardPage() {
   const leaveApprovals = pendingApprovals.filter((a) => a.requestType === "leave");
   const regularizationApprovals = pendingApprovals.filter((a) => a.requestType === "regularization");
   const overtimeApprovals = pendingApprovals.filter((a) => a.requestType === "overtime");
+
+  // Approval Center filtering — a single search box + type chips over all
+  // pending requests, with per-type lists still broken out below.
+  const filteredApprovals = pendingApprovals.filter((a) => {
+    if (approvalType !== "all" && a.requestType !== approvalType) return false;
+    if (!approvalSearch) return true;
+    const q = approvalSearch.toLowerCase();
+    return (
+      a.employeeName?.toLowerCase().includes(q) ||
+      a.type?.toLowerCase().includes(q) ||
+      a.reason?.toLowerCase().includes(q)
+    );
+  });
+  const fLeaveApprovals = filteredApprovals.filter((a) => a.requestType === "leave");
+  const fRegularizationApprovals = filteredApprovals.filter((a) => a.requestType === "regularization");
+  const fOvertimeApprovals = filteredApprovals.filter((a) => a.requestType === "overtime");
+
+  // Roster search over the direct-report table.
+  const filteredTeamMembers = teamMembers.filter((m) => {
+    if (!rosterSearch) return true;
+    const q = rosterSearch.toLowerCase();
+    return (
+      m.name?.toLowerCase().includes(q) ||
+      m.email?.toLowerCase().includes(q) ||
+      (m.employeeCode || "").toLowerCase().includes(q) ||
+      m.department?.toLowerCase().includes(q)
+    );
+  });
 
   const presentToday = teamMembers.filter(
     (m) => m.attendanceStatus === "PRESENT" || m.attendanceStatus === "LATE"
@@ -387,19 +419,48 @@ export default function ManagerDashboardPage() {
         subtitle="Review and manage team leave, regularization, and overtime requests"
         icon={<Shield className="h-5 w-5 text-orange-500" />}
       >
+        {/* Search + type filter for approvals */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search approvals by employee, type, or reason..."
+              value={approvalSearch}
+              onChange={(e) => setApprovalSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+            {(["all", "leave", "regularization", "overtime"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setApprovalType(t)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold capitalize transition-all ${
+                  approvalType === t
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           {/* Leave Requests */}
           <div>
             <h4 className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-2 flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5" /> Leave Requests ({leaveApprovals.length})
+              <CalendarDays className="h-3.5 w-3.5" /> Leave Requests ({fLeaveApprovals.length})
             </h4>
-            {leaveApprovals.length === 0 ? (
+            {fLeaveApprovals.length === 0 ? (
               <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
                 No pending leave requests
               </div>
             ) : (
               <div className="space-y-2">
-                {leaveApprovals.slice(0, 3).map((a) => (
+                {fLeaveApprovals.slice(0, 3).map((a) => (
                   <ApprovalCard
                     key={a.id}
                     request={a}
@@ -414,15 +475,15 @@ export default function ManagerDashboardPage() {
           {/* Regularization Requests */}
           <div>
             <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 flex items-center gap-1">
-              <FileText className="h-3.5 w-3.5" /> Regularization ({regularizationApprovals.length})
+              <FileText className="h-3.5 w-3.5" /> Regularization ({fRegularizationApprovals.length})
             </h4>
-            {regularizationApprovals.length === 0 ? (
+            {fRegularizationApprovals.length === 0 ? (
               <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
                 No pending regularization requests
               </div>
             ) : (
               <div className="space-y-2">
-                {regularizationApprovals.slice(0, 3).map((a) => (
+                {fRegularizationApprovals.slice(0, 3).map((a) => (
                   <ApprovalCard
                     key={a.id}
                     request={a}
@@ -437,15 +498,15 @@ export default function ManagerDashboardPage() {
           {/* Overtime Requests */}
           <div>
             <h4 className="text-xs font-bold text-yellow-600 dark:text-yellow-400 mb-2 flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" /> Overtime ({overtimeApprovals.length})
+              <Clock className="h-3.5 w-3.5" /> Overtime ({fOvertimeApprovals.length})
             </h4>
-            {overtimeApprovals.length === 0 ? (
+            {fOvertimeApprovals.length === 0 ? (
               <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
                 No pending overtime requests
               </div>
             ) : (
               <div className="space-y-2">
-                {overtimeApprovals.slice(0, 3).map((a) => (
+                {fOvertimeApprovals.slice(0, 3).map((a) => (
                   <ApprovalCard
                     key={a.id}
                     request={a}
@@ -478,6 +539,22 @@ export default function ManagerDashboardPage() {
             No team members assigned yet.
           </div>
         ) : (
+          <>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search team roster by name, email, code, or department..."
+                value={rosterSearch}
+                onChange={(e) => setRosterSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              />
+            </div>
+            {filteredTeamMembers.length === 0 ? (
+              <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+                No team members match your search.
+              </div>
+            ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
@@ -491,7 +568,7 @@ export default function ManagerDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/5 text-slate-800 dark:text-slate-200">
-                {teamMembers.map((m) => (
+                {filteredTeamMembers.map((m) => (
                   <tr key={m.id}>
                     <td className="py-3 font-bold text-slate-900 dark:text-white">
                       {m.name}
@@ -529,6 +606,8 @@ export default function ManagerDashboardPage() {
               </tbody>
             </table>
           </div>
+            )}
+          </>
         )}
       </DashboardSection>
 

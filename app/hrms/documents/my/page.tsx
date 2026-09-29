@@ -11,14 +11,12 @@ import {
   Download,
   Loader2,
   RefreshCw,
-  Lock,
   FileX,
-  ExternalLink,
 } from "lucide-react";
 
 interface MyDocument {
   id: string;
-  category: "offer_letter" | "payslip" | "experience_letter" | "verification";
+  category: "payslip" | "experience_letter" | "verification";
   title: string;
   subtitle: string;
   date: string;
@@ -33,7 +31,6 @@ const CATEGORY_META: Record<
   MyDocument["category"],
   { label: string; icon: React.ElementType; color: string; bg: string }
 > = {
-  offer_letter: { label: "Offer Letters", icon: FileText, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
   payslip: { label: "Payslips", icon: DollarSign, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
   experience_letter: { label: "Experience Letters", icon: Award, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
   verification: { label: "Verification Documents", icon: ShieldCheck, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
@@ -95,7 +92,6 @@ export default function MyDocumentsPage() {
     const list = docs || [];
     return {
       all: list.length,
-      offer_letter: list.filter((d) => d.category === "offer_letter").length,
       payslip: list.filter((d) => d.category === "payslip").length,
       experience_letter: list.filter((d) => d.category === "experience_letter").length,
       verification: list.filter((d) => d.category === "verification").length,
@@ -106,7 +102,7 @@ export default function MyDocumentsPage() {
     <AppShell title="My Documents">
       <PageHeader
         title="My Documents"
-        description="Every document HR has issued to you — offer letter, payslips, experience letter, and your verification uploads — in one place."
+        description="Every document HR has issued to you — payslips, experience letter, and your verification uploads — in one place."
       >
         <button
           type="button"
@@ -119,7 +115,7 @@ export default function MyDocumentsPage() {
 
       {/* Category filter chips */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {(["all", "offer_letter", "payslip", "experience_letter", "verification"] as const).map((cat) => {
+        {(["all", "payslip", "experience_letter", "verification"] as const).map((cat) => {
           const meta = cat === "all" ? null : CATEGORY_META[cat];
           const active = filter === cat;
           return (
@@ -156,7 +152,7 @@ export default function MyDocumentsPage() {
           <FileX className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" />
           <p className="font-bold text-slate-700 dark:text-slate-300">No documents yet</p>
           <p className="text-xs text-slate-500 mt-1 max-w-sm">
-            Once HR releases your offer letter, runs payroll, or completes your exit, those PDFs appear here automatically.
+            Once HR runs payroll or completes your exit, those PDFs appear here automatically.
           </p>
         </div>
       ) : (
@@ -203,7 +199,7 @@ export default function MyDocumentsPage() {
                             download
                             className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 shadow-md transition-colors"
                           >
-                            {doc.category === "offer_letter" ? <Lock className="h-3.5 w-3.5" /> : <Download className="h-3.5 w-3.5" />}
+                            <Download className="h-3.5 w-3.5" />
                             {doc.downloadLabel}
                           </a>
                         ) : (
@@ -220,12 +216,6 @@ export default function MyDocumentsPage() {
             );
           })}
 
-          {docs.some((d) => d.category === "offer_letter") && (
-            <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-              <ExternalLink className="h-3 w-3" />
-              Offer-letter PDFs are password-protected; the password is included in the email HR sent you.
-            </p>
-          )}
         </div>
       )}
     </AppShell>

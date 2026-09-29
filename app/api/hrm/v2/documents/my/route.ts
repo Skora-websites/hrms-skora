@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db/mongo-helper";
 
 export interface MyDocument {
   id: string;
-  category: "offer_letter" | "payslip" | "experience_letter" | "verification";
+  category: "payslip" | "experience_letter" | "verification";
   title: string;
   subtitle: string;
   date: string;
@@ -25,10 +25,12 @@ const MONTHS = [
 /**
  * GET /api/hrm/v2/documents/my
  * Everything the signed-in employee can download in one call:
- *  - released offer letters (PDF via the download endpoint)
  *  - payslips (PDF via the payslip-pdf endpoint)
  *  - experience letters (PDF via the exit experience-letter endpoint)
  *  - uploaded verification documents (stored data URLs)
+ *
+ * Offer letters are intentionally NOT listed here — they are email-only
+ * (password-protected PDF sent by HR at release time).
  */
 export async function GET() {
   try {
@@ -39,30 +41,7 @@ export async function GET() {
     const docs: MyDocument[] = [];
     const db = await getDb();
 
-    // ── 1. Offer letters (released only) ──
-    if (db) {
-      const letters = await db
-        .collection("offerLetters")
-        .find({ userId: auth.userId, status: "released" })
-        .sort({ releasedAt: -1, createdAt: -1 })
-        .toArray();
-      for (const l of letters) {
-        docs.push({
-          id: `offer-${l._id}`,
-          category: "offer_letter",
-          title: "Offer Letter",
-          subtitle: l.designation || l.department || "Employment offer",
-          date: (l.releasedAt || l.createdAt || new Date()).toString(),
-          status: "Released",
-          downloadable: true,
-          downloadUrl: `/api/hrm/v2/offer-letters/download?id=${l._id}`,
-          downloadLabel: "Download (password-protected)",
-          note: "Password is shown in the offer email",
-        });
-      }
-    }
-
-    // ── 2. Payslips ──
+    // ── 1. Payslips ──
     try {
       const transactions = await getEmployeePayrollTransactions(tenantId, auth.userId);
       for (const t of transactions as any[]) {
@@ -90,7 +69,7 @@ export async function GET() {
       // Payroll module unavailable — skip payslips without failing the hub.
     }
 
-    // ── 3. Experience letters (completed exits) ──
+    // ── 2. Experience letters (completed exits) ──
     try {
       const exits = await getEmployeeExits(tenantId);
       const mine = exits.filter((e: any) => e.userId === auth.userId);
@@ -114,7 +93,7 @@ export async function GET() {
       // Exit module unavailable — skip.
     }
 
-    // ── 4. Verification documents (registration / profile uploads) ──
+    // ── 3. Verification documents (registration / profile uploads) ──
     if (db) {
       const verifications = await db
         .collection("employee_onboarding_tasks")

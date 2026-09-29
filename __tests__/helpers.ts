@@ -27,6 +27,11 @@ export interface ApiResponse<T = any> {
 
 // ── Cookie Jar (per-user session tracking) ─────────────────
 
+// All auth-adjacent cookies are tracked, mirroring what a real browser holds:
+// middleware routes dashboards by the signed `user_role` cookie, so testing
+// the role-staleness recovery requires that cookie in the jar too.
+const AUTH_COOKIE_NAMES = new Set(["session", "user_role", "user_status", "must_change_password"]);
+
 const cookieJars = new Map<string, string>();
 
 export function getSessionCookie(email: string): string | undefined {
@@ -39,6 +44,28 @@ export function setSessionCookie(email: string, cookie: string) {
 
 export function clearSessionCookies() {
   cookieJars.clear();
+}
+
+function mergeSetCookies(email: string, setCookies: string[]) {
+  const jar = new Map<string, string>();
+  for (const pair of (cookieJars.get(email) || "").split("; ")) {
+    const eq = pair.indexOf("=");
+    if (eq > 0) jar.set(pair.slice(0, eq), pair.slice(eq + 1));
+  }
+  for (const sc of setCookies) {
+    const [first] = sc.split(";");
+    const eq = first.indexOf("=");
+    if (eq <= 0) continue;
+    const name = first.slice(0, eq).trim();
+    const value = first.slice(eq + 1).trim();
+    if (!AUTH_COOKIE_NAMES.has(name)) continue;
+    // Expired/deleted cookies arrive as name=; Max-Age=0 — drop them.
+    if (!value || /max-age=0/i.test(sc)) jar.delete(name);
+    else jar.set(name, value);
+  }
+  if (jar.size > 0) {
+    cookieJars.set(email, [...jar.entries()].map(([k, v]) => `${k}=${v}`).join("; "));
+  }
 }
 
 // ── API Client ─────────────────────────────────────────────
@@ -84,18 +111,13 @@ export async function apiRequest<T = any>(
   try {
     const res = await fetch(url, fetchOptions);
 
-    // Extract and store ALL cookies from response
+    // Extract and store auth cookies from the response
     const setCookieHeaders = res.headers.getSetCookie?.() || [];
     const rawSetCookie = res.headers.get("set-cookie");
     if (rawSetCookie) setCookieHeaders.push(...rawSetCookie.split(/, (?=[^=]+=)/));
 
     if (options.user?.email && setCookieHeaders.length > 0) {
-      for (const sc of setCookieHeaders) {
-        const sessionMatch = sc.match(/session=([^;]+)/);
-        if (sessionMatch) {
-          setSessionCookie(options.user.email, `session=${sessionMatch[1]}`);
-        }
-      }
+      mergeSetCookies(options.user.email, setCookieHeaders);
     }
 
     const json = await res.json().catch(() => null);

@@ -48,7 +48,19 @@ export async function GET(request: NextRequest) {
       if (auth.role === "employee") {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-      const tasks = await getPendingOnboardingTasks(tenantId);
+      let tasks = await getPendingOnboardingTasks(tenantId);
+      // Manager scoping: managers only see onboarding requests for their own
+      // department (same department-match rule as the live attendance board);
+      // super admins and HR see the org-wide queue.
+      if (auth.role === "manager") {
+        const db = await getDb();
+        const mgr = db ? await db.collection("users").findOne({ _id: new ObjectId(auth.userId) }) : null;
+        const dept = String(mgr?.department || mgr?.departmentName || "").toLowerCase().trim();
+        tasks = (Array.isArray(tasks) ? tasks : []).filter((t: any) =>
+          [t.department, t.departmentName, (t.onboardingDetails as any)?.department]
+            .some((v: any) => String(v || "").toLowerCase().trim() === dept)
+        );
+      }
       // Mask Aadhar/PAN/bank numbers in queue payloads; reveal happens one
       // field at a time via POST ?action=reveal (audit-logged).
       const masked = (Array.isArray(tasks) ? tasks : []).map((t: any) => {

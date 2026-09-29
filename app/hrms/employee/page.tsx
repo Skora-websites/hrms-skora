@@ -2,47 +2,24 @@
 
 import { useState, useEffect } from "react";
 import {
-  Clock,
   CalendarDays,
   ClipboardList,
   DollarSign,
   CheckCircle2,
   AlertCircle,
   Upload,
-  FileText,
   Users,
   TrendingUp,
   Play,
-  MapPin,
   Briefcase,
-  Send,
-  Download,
-  CheckCircle2 as CheckIcon,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/auth-provider";
 import { AttendancePunchCard } from "@/components/hr/attendance-punch-card";
 import { OnboardingCountdown } from "@/components/hr/onboarding-countdown";
-import { downloadFileFromUrl } from "@/lib/download";
 
 // ── Types ──────────────────────────────────────────────────
-
-interface OfferLetter {
-  id: string;
-  userId: string;
-  employeeName: string;
-  employeeEmail: string;
-  department: string;
-  designation: string;
-  status: string;
-  salary: number | null;
-  joiningDate: string | null;
-  offerContent: string | null;
-  createdAt: string;
-  releasedAt: string | null;
-  downloadedAt: string | null;
-}
 
 interface OnboardingTask {
   id: string;
@@ -90,12 +67,9 @@ export default function EmployeeDashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [payslips, setPayslips] = useState<Payslip[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
-  const [offerLetters, setOfferLetters] = useState<OfferLetter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [requestingOffer, setRequestingOffer] = useState(false);
+  // Shared status message for employee-initiated actions (document upload).
   const [offerMsg, setOfferMsg] = useState<string | null>(null);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [offerPassword, setOfferPassword] = useState<string | null>(null);
 
   // Document upload state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -104,12 +78,11 @@ export default function EmployeeDashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [onbRes, taskRes, payRes, leaveRes, offerRes] = await Promise.all([
+      const [onbRes, taskRes, payRes, leaveRes] = await Promise.all([
         fetch(`/api/hrm/v2/onboarding?employeeTasks=true&userId=${user?.id || "me"}`),
         fetch(`/api/hrm/v2/tasks?assigneeId=${user?.id || ""}`),
         fetch("/api/hrm/v2/payroll/mypayslips"),
         fetch(`/api/hrm/v2/leaves?type=balances&userId=${user?.id || "me"}`),
-        fetch("/api/hrm/v2/offer-letters"),
       ]);
       if (onbRes.ok) {
         const onbData = (await onbRes.json()).data;
@@ -118,7 +91,6 @@ export default function EmployeeDashboardPage() {
       if (taskRes.ok) setTasks((await taskRes.json()).data || []);
       if (payRes.ok) setPayslips((await payRes.json()).data || []);
       if (leaveRes.ok) setLeaveBalances((await leaveRes.json()).data || []);
-      if (offerRes.ok) setOfferLetters((await offerRes.json()).data || []);
     } catch { /* empty */ }
     setLoading(false);
   };
@@ -149,45 +121,6 @@ export default function EmployeeDashboardPage() {
     }
     setUploading(false);
     setUploadFile(null);
-  };
-
-  const handleRequestOffer = async () => {
-    setRequestingOffer(true);
-    setOfferMsg(null);
-    try {
-      const res = await fetch("/api/hrm/v2/offer-letters", { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        setOfferMsg("Offer letter request submitted! The CEO will review and release it.");
-        const or2 = await fetch("/api/hrm/v2/offer-letters").then(function(r) { return r.ok ? r.json() : { data: [] }; });
-        setOfferLetters(Array.isArray(or2.data) ? or2.data : []);
-      } else {
-        setOfferMsg(data.error || "Failed to submit request");
-      }
-    } catch {
-      setOfferMsg("Network error. Please try again.");
-    }
-    setRequestingOffer(false);
-  };
-
-  const latestOffer = offerLetters.length > 0 ? offerLetters[0] : null;
-
-  const handleDownloadOffer = async () => {
-    if (!latestOffer) return;
-    try {
-      const { ok } = await downloadFileFromUrl(
-        "/api/hrm/v2/offer-letters/download?id=" + latestOffer.id,
-        "offer-letter-" + (latestOffer.employeeName || "employee").replace(/\s+/g, "-") + ".pdf"
-      );
-      if (ok) {
-        // Password no longer rides the download headers — fetch it separately.
-        const pwRes = await fetch("/api/hrm/v2/offer-letters/password?id=" + latestOffer.id);
-        if (pwRes.ok) {
-          const pwData = await pwRes.json();
-          if (pwData.data?.password) { setOfferPassword(pwData.data.password); setShowPasswordModal(true); }
-        }
-      }
-    } catch { /* empty */ }
   };
 
   const latestTask = onboardingTasks.length > 0 ? onboardingTasks[0] : null;
@@ -352,58 +285,8 @@ export default function EmployeeDashboardPage() {
         )}
       </div>
 
-      {/*     OFFER LETTER     */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-base flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-500" /> Offer Letter
-          </h3>
-        </div>
-        {offerMsg && (
-          <div className={"mb-4 p-3 rounded-xl text-xs font-semibold border " + (offerMsg.indexOf("submitted") >= 0 ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400")}>
-            {offerMsg}
-          </div>
-        )}
-        {!latestOffer ? (
-          <div className="text-center py-8">
-            <FileText className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">You have not requested an offer letter yet.</p>
-            <button onClick={handleRequestOffer} disabled={requestingOffer}
-              className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors">
-              <Send className="h-3.5 w-3.5" /> {requestingOffer ? "Submitting..." : "Generate Offer Letter"}
-            </button>
-          </div>
-        ) : (
-          <div className="mt-3 text-right">
-            <button onClick={handleRequestOffer} disabled={requestingOffer}
-              className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline disabled:opacity-50 transition-colors">
-              <Send className="h-3 w-3" /> {requestingOffer ? "Submitting..." : latestOffer.status === "pending_ceo" ? "Remind CEO" : "Request Another"}
-            </button>
-          </div>
-        )}
-        {latestOffer && (
-          <div className={"p-4 rounded-xl border " + (latestOffer.status === "released" ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20")}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {latestOffer.status === "released" ? <CheckIcon className="h-5 w-5 text-emerald-500" /> : <Clock className="h-5 w-5 text-amber-500" />}
-                <div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">Offer Letter</p>
-                  <p className={"text-[10px] font-semibold " + (latestOffer.status === "released" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
-                    {latestOffer.status === "released" ? "Released by CEO — Ready to Download" : "Pending CEO Review"}
-                  </p>
-                  {latestOffer.salary && <p className="text-[10px] text-slate-500 mt-1">Annual Salary: ₹{latestOffer.salary.toLocaleString()}</p>}
-                  {latestOffer.joiningDate && <p className="text-[10px] text-slate-500">Joining: {latestOffer.joiningDate}</p>}
-                </div>
-              </div>
-              {latestOffer.status === "released" && (
-                <button onClick={handleDownloadOffer} className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer">
-                  <Download className="h-3.5 w-3.5" /> Download
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Offer-letter UI removed — offer letters are email-only (read-only
+          status lives at /hrms/employee/offer-letters). */}
 
       {/* ═══ Bottom Grid: Leave Balance + Recent Payslips ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -465,24 +348,6 @@ export default function EmployeeDashboardPage() {
           )}
         </div>
       </div>
-      {/* OFFER LETTER PASSWORD MODAL */}
-      {showPasswordModal && offerPassword && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowPasswordModal(false)}>
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white" onClick={(e) => e.stopPropagation()}>
-            <div className="text-center">
-              <FileText className="h-10 w-10 mx-auto text-blue-500 mb-3" />
-              <h3 className="font-bold text-lg">Offer Letter Downloaded</h3>
-              <p className="text-xs text-slate-500 mt-1">Use the password below to open the document</p>
-            </div>
-            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 text-center">
-              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2">Document Password</p>
-              <p className="text-lg font-mono font-extrabold text-amber-700 dark:text-amber-300 tracking-wider">{offerPassword}</p>
-            </div>
-            <p className="text-[10px] text-slate-400 text-center">This password protects your offer letter. Do not share it.</p>
-            <button onClick={() => setShowPasswordModal(false)} className="w-full bg-primary text-white py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">Got it</button>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }

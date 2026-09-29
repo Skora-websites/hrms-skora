@@ -18,6 +18,7 @@ import {
   Navigation,
   Send,
   Briefcase,
+  Search,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -246,6 +247,44 @@ export default function HrAdminDashboardPage() {
   const managerLeaves = pendingLeaves.filter((l) => l.requestedBy === "manager");
   const employeeLeaves = pendingLeaves.filter((l) => l.requestedBy === "employee");
 
+  // Per-section search boxes — each dashboard data section is filterable.
+  const [queueSearch, setQueueSearch] = useState("");
+  const [recentSearch, setRecentSearch] = useState("");
+  const [leaveSearch, setLeaveSearch] = useState("");
+
+  const filteredQueue = pendingCandidates.filter((c) => {
+    if (!queueSearch) return true;
+    const q = queueSearch.toLowerCase();
+    return (
+      (c.employeeName || c.name || "").toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q) ||
+      (c.department || "").toLowerCase().includes(q) ||
+      (c.role || "").toLowerCase().includes(q) ||
+      (c.employeeCode || "").toLowerCase().includes(q)
+    );
+  });
+  const filteredRecentEmployees = employees.filter((emp) => {
+    if (!recentSearch) return true;
+    const q = recentSearch.toLowerCase();
+    return (
+      emp.name?.toLowerCase().includes(q) ||
+      emp.email?.toLowerCase().includes(q) ||
+      emp.department?.toLowerCase().includes(q) ||
+      (emp.employeeCode || "").toLowerCase().includes(q)
+    );
+  });
+  const filteredPendingLeaves = pendingLeaves.filter((l) => {
+    if (!leaveSearch) return true;
+    const q = leaveSearch.toLowerCase();
+    return (
+      l.employeeName?.toLowerCase().includes(q) ||
+      l.type?.toLowerCase().includes(q) ||
+      l.reason?.toLowerCase().includes(q)
+    );
+  });
+  const filteredManagerLeaves = filteredPendingLeaves.filter((l) => l.requestedBy === "manager");
+  const filteredEmployeeLeaves = filteredPendingLeaves.filter((l) => l.requestedBy === "employee");
+
   return (
     <AppShell title="HR Admin Dashboard">
       {/* Toast Notification */}
@@ -327,6 +366,16 @@ export default function HrAdminDashboardPage() {
             <h4 className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2">
               Document Verification Queue
             </h4>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search queue by name, email, role, or department..."
+                value={queueSearch}
+                onChange={(e) => setQueueSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              />
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
@@ -340,7 +389,7 @@ export default function HrAdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                  {pendingCandidates.map((c) => (
+                  {filteredQueue.map((c) => (
                     <tr key={c.id || c._id}>
                       <td className="py-2 font-bold">
                         {c.employeeName || c.name || c.email}
@@ -392,8 +441,24 @@ export default function HrAdminDashboardPage() {
         {employees.length === 0 ? (
           <EmptyState message="No employees yet. Add your first employee to get started." />
         ) : (
+          <>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search employees by name, email, code, or department..."
+                value={recentSearch}
+                onChange={(e) => setRecentSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              />
+            </div>
+            {filteredRecentEmployees.length === 0 ? (
+              <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
+                No employees match your search.
+              </div>
+            ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {employees.slice(0, 6).map((emp) => (
+            {filteredRecentEmployees.slice(0, 6).map((emp) => (
               <div key={emp.id} className="p-3 rounded-xl border border-gray-100 dark:border-white/5 bg-slate-50 dark:bg-black/30 text-xs">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-slate-900 dark:text-white">{emp.name}</span>
@@ -406,6 +471,8 @@ export default function HrAdminDashboardPage() {
               </div>
             ))}
           </div>
+            )}
+          </>
         )}
       </DashboardSection>
 
@@ -415,19 +482,29 @@ export default function HrAdminDashboardPage() {
         subtitle="Manage attendance data, approve Manager & Employee leave requests"
         icon={<CalendarDays className="h-5 w-5 text-orange-500" />}
       >
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search leave requests by employee, type, or reason..."
+            value={leaveSearch}
+            onChange={(e) => setLeaveSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+          />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Manager leave requests (primary approver) */}
           <div>
             <h4 className="text-xs font-bold text-orange-600 dark:text-orange-400 mb-2 flex items-center gap-1">
               <Shield className="h-3.5 w-3.5" /> Manager Leave Requests (Primary Approver)
             </h4>
-            {managerLeaves.length === 0 ? (
+            {filteredManagerLeaves.length === 0 ? (
               <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
                 No pending manager leave requests
               </div>
             ) : (
               <div className="space-y-2">
-                {managerLeaves.map((l) => (
+                {filteredManagerLeaves.map((l) => (
                   <LeaveRequestCard key={l.id} request={l} onApprove={handleApproveLeave} onReject={handleRejectLeave} />
                 ))}
               </div>
@@ -439,13 +516,13 @@ export default function HrAdminDashboardPage() {
             <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 flex items-center gap-1">
               <Users className="h-3.5 w-3.5" /> Employee Leave Requests (Fallback Approver)
             </h4>
-            {employeeLeaves.length === 0 ? (
+            {filteredEmployeeLeaves.length === 0 ? (
               <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
                 No pending employee leave requests
               </div>
             ) : (
               <div className="space-y-2">
-                {employeeLeaves.map((l) => (
+                {filteredEmployeeLeaves.map((l) => (
                   <LeaveRequestCard key={l.id} request={l} onApprove={handleApproveLeave} onReject={handleRejectLeave} />
                 ))}
               </div>

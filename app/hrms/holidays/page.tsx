@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useHolidays, useHolidayDashboard } from "@/hooks/hrm/use-holidays";
 import { useMutation } from "@/hooks/use-mutation";
+import { useAuth } from "@/components/providers/auth-provider";
 import { formatDate } from "@/lib/utils";
 
 const emptyForm = { name: "", date: "", type: "fixed", isPaid: "true", planId: "" };
@@ -38,6 +39,10 @@ export default function HolidaysPage() {
   const { data: holidays, loading, error, refetch } = useHolidays({ year: String(currentYear) });
   const { data: dashboard } = useHolidayDashboard();
   const mutation = useMutation();
+  // Holiday management is an HR/CEO capability — managers and employees see
+  // a read-only calendar (mirrors the requireHrLevel gate on the API).
+  const { user } = useAuth();
+  const canManage = user?.role === "super_admin" || user?.role === "hr_admin" || user?.role === "admin";
 
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -126,10 +131,12 @@ export default function HolidaysPage() {
     },
   ];
 
-  const actions: Action<any>[] = [
-    { label: "Edit", icon: Pencil, onClick: (h: any) => openEdit(h), variant: "ghost" },
-    { label: "Delete", icon: Trash2, onClick: (h: any) => { setSelectedHoliday(h); setShowDeleteDialog(true); }, variant: "ghost" },
-  ];
+  const actions: Action<any>[] = canManage
+    ? [
+        { label: "Edit", icon: Pencil, onClick: (h: any) => openEdit(h), variant: "ghost" },
+        { label: "Delete", icon: Trash2, onClick: (h: any) => { setSelectedHoliday(h); setShowDeleteDialog(true); }, variant: "ghost" },
+      ]
+    : [];
 
   return (
     <AppShell title="Holidays">
@@ -137,10 +144,14 @@ export default function HolidaysPage() {
         title="Holidays"
         description="Manage company holidays, regional observances, and holiday plans."
       >
-        <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Holiday
-        </Button>
+        {canManage ? (
+          <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Holiday
+          </Button>
+        ) : (
+          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Read-only — holiday management is HR/CEO only</span>
+        )}
       </PageHeader>
 
       {/* Summary Cards */}

@@ -43,6 +43,77 @@ const ROLE_DASHBOARDS: Record<string, string> = {
   employee: "/hrms/employee",
 };
 
+/** Resolve the role dashboard, defaulting to the shared employee hub. */
+function dashboardFor(role: string | undefined): string {
+  return ROLE_DASHBOARDS[role ?? ""] || "/hrms/employee";
+}
+
+// ── Role-staleness gate ───────────────────────────────────
+// The signed `user_role` cookie routes dashboards without a DB round-trip,
+// but it goes stale when the CEO changes the user's role mid-session (the
+// role action in PATCH /api/hrm/v2/users only updates MongoDB). A stale
+// cookie sends the user to their OLD dashboard where every manager/HR API
+// call 403s. When a protected route's required role disagrees with the
+// cookie role, we ask the Node runtime (DB-fresh, 60s per-session cache)
+// what the role actually is and bounce to the correct dashboard.
+const PROTECTED_PREFIX_ROLES: [string, string[]][] = [
+  ["/hrms/superadmin", ["super_admin"]],
+  ["/hrms/hr-admin", ["hr_admin", "admin"]],
+  ["/hrms/manager", ["manager"]],
+];
+
+async function freshRoleRequired(request: NextRequest, sessionCookie: string | undefined): Promise<string | null> {
+  if (!sessionCookie) return null;
+  const cached = roleCache.get(sessionCookie);
+  const now = Date.now();
+  if (cached && now - cached.at < ROLE_CACHE_TTL_MS) return cached.role;
+  let role: string | null = null;
+  try {
+    const res = await fetch(new URL("/api/auth/fence-check", request.nextUrl.origin), {
+      headers: { cookie: `session=${sessionCookie}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      role = typeof data?.role === "string" && data.role ? data.role : null;
+    }
+  } catch {
+    role = null; // fail-open: cookie value remains authoritative
+  }
+  if (roleCache.size > 5000) roleCache.clear();
+  roleCache.set(sessionCookie, { role, at: now });
+  return role;
+}
+
+async function roleStalenessRedirect(
+  request: NextRequest,
+  pathname: string,
+  userRole: string,
+  sessionCookie: string | undefined
+): Promise<NextResponse | null> {
+  // Which prefix (if any) is the user trying to visit, and which roles may?
+  let required: string[] | null = null;
+  for (const [prefix, roles] of PROTECTED_PREFIX_ROLES) {
+    if (pathname === prefix || pathname.startsWith(prefix + "/")) {
+      required = roles;
+      break;
+    }
+  }
+  if (!required) return null;
+  if (userRole === "super_admin" || required.includes(userRole)) return null;
+  // Cookie disagrees with the route's role gate — verify against the DB.
+  const freshRole = await freshRoleRequired(request, sessionCookie);
+  if (freshRole && (freshRole === "super_admin" || required.includes(freshRole))) {
+    // The cookie is stale but the account legitimately holds this role →
+    // let the navigation proceed; API-level checks use the live session.
+    return null;
+  }
+  // Genuinely not allowed (or DB unreachable) → correct dashboard target.
+  return NextResponse.redirect(new URL(dashboardFor(freshRole || userRole), request.url));
+}
+
+const roleCache = new Map<string, { role: string | null; at: number }>();
+const ROLE_CACHE_TTL_MS = 60_000;
+
 // ── Routes that require authentication ────────────────────
 const protectedHrmsRoutes = [
   "/hrms/dashboard",
@@ -77,14 +148,7 @@ const protectedHrmsRoutes = [
   "/hrms/access-denied",
 ];
 
-// ── Role-gated route prefixes ─────────────────────────────
-// Only the specified roles (and super_admin who can access everything) may visit these.
-const ROLE_GATED_ROUTES: Record<string, string[]> = {
-  "/hrms/superadmin": ["super_admin"],
-  "/hrms/hr-admin": ["hr_admin", "admin"],
-  "/hrms/manager": ["manager"],
-  "/hrms/employee": ["employee"],
-};
+// ── Role-gated route prefixes (see roleStalenessRedirect below) ──
 
 // ── Auth routes (redirect logged-in users away) ───────────
 const hrmsAuthRoutes = ["/hrms/login", "/hrms/register", "/hrms/forgot-password"];
@@ -174,33 +238,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── 2c. Authenticated user on auth routes → dashboard ───
+  // ── 2c. Session-refresh bounce page — always allowed through ──
+  // (The stale-role recovery flow needs a same-origin landing page that can
+  // re-issue signed cookies before the user continues to their dashboard.)
+  if (pathname === "/hrms/session-refresh") {
+    return NextResponse.next();
+  }
+
+  // ── 2d. Authenticated user on auth routes → dashboard ───
   if (hasHrmsSession && userRole) {
     const isAuthRoute = hrmsAuthRoutes.some(
       (route) => pathname === route || pathname.startsWith(route + "/")
     );
     if (isAuthRoute) {
-      const dashboard = ROLE_DASHBOARDS[userRole ?? ""] || "/hrms/employee";
-      return NextResponse.redirect(new URL(dashboard, request.url));
+      return NextResponse.redirect(new URL(dashboardFor(userRole), request.url));
     }
   }
 
-  // ── 2c. /hrms root → role-specific dashboard or login ────
-  if (pathname === "/hrms" || pathname === "/hrms/") {
-    if (!hasHrmsSession) {
-      const res = NextResponse.redirect(new URL("/hrms/login", request.url));
-      if (rawSession && !rawRole) {
-        res.cookies.delete("session");
-        res.cookies.delete("user_role");
-      }
-      return res;
-    }
-    const dashboard = ROLE_DASHBOARDS[userRole ?? ""] || "/hrms/employee";
-    return NextResponse.redirect(new URL(dashboard, request.url));
+  // ── 2e. Role-staleness gate — check BEFORE redirecting anywhere ──
+  // If the signed role cookie disagrees with a role-gated dashboard prefix,
+  // verify against the database (fresh role) instead of serving the old
+  // dashboard full of 403s after a mid-session role change.
+  if (hasHrmsSession && userRole && userStatus !== "pending_verification") {
+    const stale = await roleStalenessRedirect(request, pathname, userRole, rawSession);
+    if (stale) return stale;
   }
 
-  // ── 2d. /hrms/dashboard → role-specific dashboard or login ──
-  if (pathname === "/hrms/dashboard") {
+  // ── 2f. /hrms root, /hrms/dashboard → role-specific dashboard or login ──
+  if (pathname === "/hrms" || pathname === "/hrms/" || pathname === "/hrms/dashboard") {
     if (!hasHrmsSession) {
       const loginUrl = new URL("/hrms/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
@@ -211,20 +276,7 @@ export async function middleware(request: NextRequest) {
       }
       return res;
     }
-    const dashboard = ROLE_DASHBOARDS[userRole ?? ""] || "/hrms/employee";
-    return NextResponse.redirect(new URL(dashboard, request.url));
-  }
-
-  // ── 2e. Role-gated sub-routes ───────────────────────────
-  if (hasHrmsSession && userRole) {
-    for (const [prefix, allowedRoles] of Object.entries(ROLE_GATED_ROUTES)) {
-      if (pathname === prefix || pathname.startsWith(prefix + "/")) {
-        // super_admin can access everything
-        if (userRole !== "super_admin" && !allowedRoles.includes(userRole)) {
-          return NextResponse.redirect(new URL("/hrms/access-denied", request.url));
-        }
-      }
-    }
+    return NextResponse.redirect(new URL(dashboardFor(userRole || undefined), request.url));
   }
 
   return NextResponse.next();

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, RefreshCw, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark, History, MailX, MailCheck } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, RefreshCw, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark, History, MailX, MailCheck, Search } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -88,6 +88,7 @@ const SENSITIVE_FIELDS = ["aadharNo", "nomineeAadhar", "panNo", "bankAccountNumb
 export default function HrAdminOnboardingPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [queueSearch, setQueueSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [revealing, setRevealing] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -98,6 +99,19 @@ export default function HrAdminOnboardingPage() {
   const knownIdsRef = useRef<Set<string> | null>(null);
   const revealedRef = useRef<Map<string, Record<string, string>>>(new Map());
   const newFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Filter the live queue by name/email/role/dept/employee code.
+  const filteredCandidates = useMemo(() => {
+    if (!queueSearch) return candidates;
+    const q = queueSearch.toLowerCase();
+    return candidates.filter((c) =>
+      c.name?.toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q) ||
+      c.role?.toLowerCase().includes(q) ||
+      c.department?.toLowerCase().includes(q) ||
+      (c.employeeCode || "").toLowerCase().includes(q)
+    );
+  }, [candidates, queueSearch]);
 
   useEffect(() => {
     loadCandidates();
@@ -400,6 +414,22 @@ export default function HrAdminOnboardingPage() {
             No pending account requests or applications.
           </div>
         ) : (
+          <>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search queue by name, email, role, department, or employee code..."
+                value={queueSearch}
+                onChange={(e) => setQueueSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              />
+            </div>
+            {filteredCandidates.length === 0 ? (
+              <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+                No requests match your search.
+              </div>
+            ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
@@ -414,7 +444,7 @@ export default function HrAdminOnboardingPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                {candidates.map((c) => (
+                {filteredCandidates.map((c) => (
                   <FragmentRow
                     key={c.id}
                     candidate={c}
@@ -432,6 +462,8 @@ export default function HrAdminOnboardingPage() {
               </tbody>
             </table>
           </div>
+            )}
+          </>
         )}
       </div>
     </AppShell>

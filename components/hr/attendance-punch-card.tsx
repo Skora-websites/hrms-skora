@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Clock, Coffee, LogOut, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/auth-provider";
-import { punchInAction, punchOutAction, updateAUXStateAction } from "@/lib/actions/attendance-actions";
+import { punchInAction, punchOutAction, updateAUXStateAction, submitEarlyDepartureAction } from "@/lib/actions/attendance-actions";
 
 interface OfficeRules { officeStart: number; officeEnd: number; lateAfter: number; workDays: number[]; halfDayAfter: number; }
 type AuxState = "active" | "on_break" | "meeting";
@@ -192,15 +192,18 @@ export function AttendancePunchCard() {
     if (!earlyReason.trim()) { setError("Please enter a reason for early departure."); return; }
     setSendingRequest(true); setError(null);
     try {
-      const response = await fetch("/api/hrm/v2/notifications", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send_to_role", role: "hr_admin", title: "Early Departure Approval Required", body: `${user?.name || user?.email} requested early punch-out. Reason: ${earlyReason.trim()}.`, type: "approval", referenceType: "early_departure", referenceId: userId }),
-      });
-      if (!response.ok) throw new Error("Approval request could not be submitted.");
+      // Log the early departure (notification to reporting manager + HR/CEO
+      // and a stamped reason on today's attendance record).
+      const submitted = await submitEarlyDepartureAction(userId, today, earlyReason.trim());
+      if (!submitted.success) throw new Error(submitted.error || "Early departure could not be logged.");
+      // The submission IS the approval to leave: punch out immediately —
+      // management gets the log either way.
+      await executePunchOut();
       setShowEarlyLeave(false); setEarlyReason("");
-      setSuccess("Early departure request sent. Your attendance remains open until punch-out is completed.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Approval request failed."); }
-    finally { setSendingRequest(false); }
+      setSuccess("Early departure logged and punch-out recorded. Your reporting manager and HR/CEO have been notified.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Early departure request failed.");
+    } finally { setSendingRequest(false); }
   };
 
   const changeAux = async (next: AuxState) => {
@@ -264,11 +267,11 @@ export function AttendancePunchCard() {
       </div>}
 
       {showEarlyLeave && <div className="mt-4 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4">
-        <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300">Early departure request</h4>
-        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">Your attendance will remain open. Submit a reason for HR approval, then punch out after approval.</p>
+        <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300">Early departure</h4>
+        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">You are punching out before office end. Submit a reason — your punch-out will be recorded and the log shared with your reporting manager (or HR/CEO directly).</p>
         <textarea value={earlyReason} onChange={e => setEarlyReason(e.target.value)} rows={3} maxLength={500} className="mt-3 w-full rounded-lg border border-amber-200 bg-white p-2 text-xs text-slate-900" placeholder="Reason for early departure" />
         <div className="flex gap-2 mt-3">
-          <Button onClick={submitEarlyLeave} disabled={sendingRequest} className="gap-2">{sendingRequest ? "Sending…" : "Request Approval"}</Button>
+          <Button onClick={submitEarlyLeave} disabled={sendingRequest} className="gap-2">{sendingRequest ? "Submitting…" : "Submit & Punch Out"}</Button>
           <Button onClick={() => setShowEarlyLeave(false)} variant="outline">Cancel</Button>
         </div>
       </div>}

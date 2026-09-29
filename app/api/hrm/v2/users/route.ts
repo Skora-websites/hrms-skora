@@ -13,6 +13,26 @@ import crypto from "crypto";
 
 const VALID_STATUSES = new Set(["active", "inactive", "disabled", "pending_verification"]);
 
+/**
+ * Auto-assign the reporting manager the same way onboarding approval does:
+ * prefer an active manager in the user's department, else the first active
+ * manager. Stored as displayName per the system convention.
+ * Returns the chosen manager's displayName, or null when none exists.
+ */
+async function autoAssignReportingManager(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, userId: string, department?: string): Promise<string | null> {
+  const managers = await db.collection("users").find({
+    role: "manager", status: "active", loginStatus: { $ne: "disabled" },
+  }).limit(50).toArray();
+  const dept = String(department || "").toLowerCase().trim();
+  const chosen =
+    (dept && managers.find((m: any) =>
+      [m.department, m.departmentName].some((v: any) => String(v || "").toLowerCase().trim() === dept),
+    )) || managers[0];
+  if (!chosen || !(chosen as any).displayName) return null;
+  await hrmUsersService.update(userId, { reportingManager: (chosen as any).displayName } as any);
+  return (chosen as any).displayName;
+}
+
 /** Safe response fields for user reads. Credential fields (passwordHash,
  *  legacy plaintext password) and raw statutory PII never ride responses —
  *  same contract as the employees route projection. */
@@ -68,15 +88,14 @@ export async function GET(request: NextRequest) {
 
     const tenantId = "default";
 
-    switch (action) {
-      case "list": {
-        // Only admins can list all users
+    switch (action) {      case "list": {
+        // Only admins can list all users (managers already pass — their team
+        // roster reads this list and filters client-side).
         if (auth.role === "employee") {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         const where: { field: string; op: "=="; value: unknown }[] = [];
-
         if (status) where.push({ field: "status", op: "==", value: status });
         if (role) where.push({ field: "role", op: "==", value: role });
 
@@ -287,10 +306,54 @@ export async function PATCH(request: NextRequest) {
             { status: 403 }
           );
         }
+        const previousRole = normalizeRole((targetUser as any).role);
         const normalizedRole = normalizeRole(role);
         await hrmUsersService.update(resolvedUserId, { role: normalizedRole } as any);
+
+        // ── Reporting-manager semantics on promotion/demotion ──
+        // A manager needs no reporting manager (they ARE management); a
+        // demoted manager must get one back per their department so leaves,
+        // approvals and attendance keep routing correctly.
+        try {
+          const db = await getDb();
+          if (db) {
+            if (previousRole !== "manager" && normalizedRole === "manager") {
+              // Promotion → clear the old reporting manager.
+              await hrmUsersService.update(resolvedUserId, { reportingManager: "" } as any);
+              auditDetails = `Changed role from ${previousRole} to ${normalizedRole}; reporting manager cleared`;
+            } else if (previousRole === "manager" && normalizedRole !== "manager" && normalizedRole !== "super_admin") {
+              // Revert to employee → auto-restore a manager per department.
+              const dept = (targetUser as any).department || (targetUser as any).departmentName;
+              const assigned = await autoAssignReportingManager(db, resolvedUserId, dept);
+              auditDetails = `Changed role from ${previousRole} to ${normalizedRole}` + (assigned ? `; reporting manager auto-assigned to ${assigned}` : "; no active manager available for auto-assignment");
+            }
+          }
+        } catch (rmErr) {
+          console.warn("Reporting-manager reassignment on role change failed:", rmErr);
+        }
+
+        // ── Kill every live session for this user ──
+        // Middleware routes dashboards by the signed user_role cookie, which
+        // only gets re-issued at login. Without invalidation the promoted
+        // user keeps their old dashboard where every privileged API call
+        // 403s. Their next navigation hits /hrms/session-refresh, which
+        // re-issues the signed cookies from the DB-fresh session and sends
+        // them to the correct dashboard.
+        try {
+          const sessionDb = await getDb();
+          if (sessionDb) {
+            await sessionDb.collection("sessions").deleteMany({ userId: resolvedUserId });
+            await sessionDb.collection("notifications").insertOne({
+              userId: resolvedUserId,
+              title: "Your role has been updated",
+              body: `Your account role was changed to ${normalizedRole}. Sign in again to continue.`,
+              type: "account", isRead: false, createdAt: new Date(), tenantId,
+            }).catch(() => undefined);
+          }
+        } catch { /* best-effort */ }
+
         auditAction = "update_role";
-        auditDetails = `Changed role from ${(targetUser as any).role} to ${normalizedRole}`;
+        if (!auditDetails) auditDetails = `Changed role from ${previousRole} to ${normalizedRole}`;
         break;
       }
 

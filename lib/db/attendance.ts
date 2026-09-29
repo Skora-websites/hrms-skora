@@ -72,7 +72,8 @@ function withAuxFields(d: Record<string, unknown> | AttendanceRecord): Attendanc
 
 // Match a user's record for a given IST date regardless of tenantId state
 // (older docs may be missing the field entirely — $in never matches missing).
-function userDateQuery(userId: string, date: string, tenantId?: string) {
+/** Build the Mongo filter for one user's attendance on an office-calendar date. */
+export function userDateQuery(userId: string, date: string, tenantId?: string) {
   return {
     userId,
     date,

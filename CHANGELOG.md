@@ -2,6 +2,35 @@
 
 ## September 2026
 
+### 🔁 Role-change, punch-out aur dashboard fixes (batch — naya)
+
+CEO ke role-change aur daily-flow issues ka poora batch:
+
+- **Role change pe stale dashboard/403 fix** — Middleware signed `user_role` cookie se dashboard
+  route karta tha, jo role change ke baad stale ho jaata tha (manager dashboard + sab 403).
+  Ab role-gated routes pe cookie/DB mismatch hote hi DB-fresh role verify hota hai aur user ko
+  uske naye role ke dashboard pe bounce kiya jaata hai. Role change pe victim ke saare live
+  sessions invalidate hote hain + naya `/hrms/session-refresh` page fresh cookies re-issue
+  karke sahi dashboard pe bhejta hai.
+- **Role-change RM semantics** — Employee → Manager promote karte hi us profile se reporting
+  manager clear; Manager → Employee revert pe department ke hisaab se automatic reporting
+  manager restore (onboarding approval wala hi auto-assign logic).
+- **Early punch-out flow (before 7 PM)** — Punch-out before office end pe reason maanga jaata
+  hai; submit karte hi punch-out ho jaata hai (approval gate nahi) aur log reporting manager
+  + HR/CEO sabko notification mein chala jaata hai. Attendance record pe `earlyDeparture`
+  stamp — reason, time, notified-to.
+- **Holiday creation CEO/HR only** — Holidays create/edit/delete ab `requireHrLevel` (manager
+  excluded) — UI Add/Edit/Delete buttons bhi sirf CEO/HR ko dikhte hain; baaki roles ko
+  read-only calendar.
+- **Offer-letter UI residue removed** — Employee dashboard ka poora Offer Letter card
+  (Generate/Remind/Download + password modal) aur My Documents se offer_letter category
+  (UI + API dono) hata diya. Offer letters ab sirf email-only + read-only status page.
+- **Dashboard sections scoping + search** — HR onboarding queue ab managers ko sirf unki
+  department ki requests dikhata hai. Har dashboard data section (manager roster/approvals,
+  HR queue/recent employees/leaves, CEO attendance/leaves) mein search box + type filters.
+- **Tests** — Naya `__tests__/role-change.test.ts` (RM clear/restore, session invalidation,
+  super_admin-only role action). Suite: 244 tests / 16 files.
+
 ### 🔒 Security hardening (full audit run + fixes)
 
 Poore HRMS ka security audit hua (9 findings) — **sab 9 fixed, deployed aur prod pe verified**:
