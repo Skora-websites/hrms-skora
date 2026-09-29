@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, RefreshCw, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark } from "lucide-react";
+import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, RefreshCw, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark, History, MailX, MailCheck } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -61,6 +61,28 @@ interface Candidate {
   revealTokens?: Record<string, string>;
 }
 
+interface DeliveryEntry {
+  _id?: string;
+  id?: string;
+  kind: string;
+  to: string;
+  status: "sent" | "failed";
+  subject: string;
+  provider: string;
+  hasAttachment?: boolean;
+  error?: string;
+  createdAt: string;
+}
+
+const KIND_LABELS: Record<string, string> = {
+  welcome_email: "Welcome email",
+  offer_letter: "Offer letter",
+  payslip: "Payslip",
+  password_reset: "Password reset",
+  experience_letter: "Experience letter",
+  other: "Other",
+};
+
 const SENSITIVE_FIELDS = ["aadharNo", "nomineeAadhar", "panNo", "bankAccountNumber"] as const;
 
 export default function HrAdminOnboardingPage() {
@@ -71,6 +93,8 @@ export default function HrAdminOnboardingPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [live, setLive] = useState(true);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [deliveries, setDeliveries] = useState<DeliveryEntry[]>([]);
+  const [showDeliveries, setShowDeliveries] = useState(false);
   const knownIdsRef = useRef<Set<string> | null>(null);
   const revealedRef = useRef<Map<string, Record<string, string>>>(new Map());
   const newFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +174,23 @@ export default function HrAdminOnboardingPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live]);
+
+  const loadDeliveries = async () => {
+    try {
+      const res = await fetch("/api/hrm/v2/email/delivery-log?limit=60");
+      if (res.ok) {
+        const data = await res.json();
+        setDeliveries(Array.isArray(data.data) ? data.data : []);
+      }
+    } catch { /* empty */ }
+  };
+
+  const toggleDeliveries = () => {
+    setShowDeliveries((v) => {
+      if (!v) loadDeliveries();
+      return !v;
+    });
+  };
 
   const toggleExpanded = (id: string) => {
     setExpanded((prev) => {
@@ -273,6 +314,61 @@ export default function HrAdminOnboardingPage() {
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Review the full onboarding form, approve to email a temporary password, verify documents, or trigger 48-hour resubmission deadlines
         </p>
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={toggleDeliveries}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary/40"
+          >
+            <History className="h-3.5 w-3.5 text-primary" />
+            Email delivery history
+            {deliveries.some((x) => x.status === "failed") && (
+              <span className="inline-flex items-center rounded-full bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 text-[9px] font-bold text-red-600 dark:text-red-400">
+                <MailX className="h-2.5 w-2.5 mr-0.5" /> failures
+              </span>
+            )}
+          </button>
+        </div>
+        {showDeliveries && (
+          <div className="mt-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <History className="h-3.5 w-3.5 text-primary" /> Recent outbound emails
+              </h3>
+              <Button size="sm" variant="outline" onClick={loadDeliveries} className="h-7 px-2 text-[10px] font-bold">
+                <RefreshCw className="h-3 w-3 mr-0.5" /> Refresh
+              </Button>
+            </div>
+            {deliveries.length === 0 ? (
+              <p className="text-[11px] text-slate-500 py-3 text-center">No emails sent yet. Approving an invite sends a welcome email; it will appear here.</p>
+            ) : (
+              <div className="max-h-64 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+                {deliveries.map((x) => (
+                  <div key={x.id || x._id} className="py-2 flex items-start gap-2 text-[11px]">
+                    {x.status === "sent" ? (
+                      <MailCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <MailX className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className={`font-bold ${x.status === "sent" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                        {KIND_LABELS[x.kind] || x.kind}
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400"> → {x.to}</span>
+                      {x.hasAttachment && <span className="text-slate-400"> (PDF attached)</span>}
+                      {x.status === "failed" && x.error && (
+                        <span className="block text-[10px] text-red-500/90 truncate" title={x.error}>{x.error}</span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 shrink-0">
+                      {new Date(x.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">

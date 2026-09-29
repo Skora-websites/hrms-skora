@@ -5,8 +5,31 @@ import { ObjectId } from "mongodb";
 
 // Generic CRUD factory for simple CRM collections (leads, contacts, ...).
 // GET returns a bare array — useApiData consumers expect the raw body.
+//
+// Writes are allowlisted per collection: the UI forms only ever send these
+// fields, so anything else in a request body is dropped instead of being
+// persisted (mass-assignment guard — mirrors the HRMS API's SAFE_FIELDS rule).
 
 type Doc = Record<string, any>;
+
+const FIELD_ALLOWLISTS: Record<string, string[]> = {
+  contacts: ["name", "email", "phone", "company", "position", "website", "address", "industry", "status", "notes", "lastContact"],
+  leads: ["name", "company", "email", "phone", "source", "status", "value", "probability", "notes"],
+  customers: ["name", "company", "email", "phone", "website", "industry", "status", "lifetimeValue", "notes"],
+  deals: ["name", "company", "email", "phone", "value", "stage", "status", "probability", "expectedCloseDate", "notes"],
+  activities: ["type", "subject", "description", "relatedTo", "relatedId", "date", "status", "notes"],
+  tasks: ["title", "description", "status", "priority", "assignee", "dueDate", "relatedTo", "relatedId", "notes"],
+};
+
+/** Keep only allowlisted fields (defaults to a strict safe set when the collection is unknown). */
+function sanitize(body: Doc, collection: string): Doc {
+  const allow = FIELD_ALLOWLISTS[collection] || ["name", "email", "phone", "status", "notes", "description"];
+  const out: Doc = {};
+  for (const key of allow) {
+    if (body[key] !== undefined) out[key] = body[key];
+  }
+  return out;
+}
 
 function serialize(d: Doc): Doc {
   return { ...d, id: d._id?.toString(), _id: undefined };
@@ -35,8 +58,7 @@ export function createCrudRoute(collectionName: string) {
     const db = await getDb();
     if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
     const body = await request.json();
-    const doc = { ...body, createdAt: new Date(), updatedAt: new Date() };
-    delete doc.id; delete doc._id;
+    const doc = { ...sanitize(body, collectionName), createdAt: new Date(), updatedAt: new Date() };
     const r = await db.collection(collectionName).insertOne(doc);
     return NextResponse.json(serialize({ ...doc, _id: r.insertedId }));
   };
@@ -50,8 +72,7 @@ export function createCrudRoute(collectionName: string) {
     const body = await request.json();
     const id = searchParams.get("id") || body.id;
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-    const updates = { ...body, updatedAt: new Date() };
-    delete updates.id; delete updates._id;
+    const updates = { ...sanitize(body, collectionName), updatedAt: new Date() };
     const r = await db.collection(collectionName).findOneAndUpdate(
       { _id: new ObjectId(id) }, { $set: updates }, { returnDocument: "after" }
     );

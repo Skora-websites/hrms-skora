@@ -100,7 +100,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     case "request-invite": {
       const { email, department } = body;
       const regKey = `register:${clientIp(request.headers)}`;
-      if (checkRateLimit(regKey, REGISTER_LIMITS).locked) {
+      if ((await checkRateLimit(regKey, REGISTER_LIMITS)).locked) {
         return NextResponse.json(
           { error: "Too many account requests. Please try again later." },
           { status: 429, headers: { "Retry-After": "900" } }
@@ -126,7 +126,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
       const existingUser = await hrmUsersService.findOneInTenant("default", "email", normalizedEmail);
       if (existingUser) {
-        recordFailure(regKey, REGISTER_LIMITS);
+        await recordFailure(regKey, REGISTER_LIMITS);
         return badRequest("An account with this email already exists");
       }
 
@@ -138,7 +138,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
         email: normalizedEmail, status: "invite_requested", tenantId: "default",
       });
       if (existingRequest) {
-        clearFailures(regKey);
+        await clearFailures(regKey);
         return NextResponse.json({ data: { message: "Your account request is already awaiting approval." } }, { status: 200 });
       }
 
@@ -164,7 +164,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
           referenceId: result.insertedId.toString(), createdAt: new Date(), tenantId: "default",
         });
       }
-      clearFailures(regKey);
+      await clearFailures(regKey);
       return NextResponse.json({ data: { message: "Request sent to HR. You'll receive a welcome email with a temporary password once approved." } }, { status: 201 });
     }
 
@@ -182,7 +182,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       if (!email) return badRequest("Email is required");
       const normalizedEmail = email.toLowerCase().trim();
       const resetKey = `reset:${normalizedEmail}|${clientIp(request.headers)}`;
-      if (checkRateLimit(resetKey, RESET_LIMITS).locked) {
+      if ((await checkRateLimit(resetKey, RESET_LIMITS)).locked) {
         return NextResponse.json(
           { data: { message: "If the email exists, a reset link has been sent." } },
           { status: 429 }
@@ -191,7 +191,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const user = await hrmUsersService.findOneInTenant("default", "email", normalizedEmail);
       if (!user) {
         // Same generic message; the failure still counts toward the limit.
-        recordFailure(resetKey, RESET_LIMITS);
+        await recordFailure(resetKey, RESET_LIMITS);
         return NextResponse.json({ data: { message: "If the email exists, a reset link has been sent." } });
       }
 
@@ -210,9 +210,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const sent = resetUrl ? await sendPasswordResetEmail({ to: normalizedEmail, resetUrl }) : false;
       if (!sent) {
         await db.collection("password_resets").deleteOne({ userId: user.id });
-        recordFailure(resetKey, RESET_LIMITS);
+        await recordFailure(resetKey, RESET_LIMITS);
       } else {
-        clearFailures(resetKey);
+        await clearFailures(resetKey);
       }
       return NextResponse.json({ data: { message: "If the email exists, a reset link has been sent." } });
     }

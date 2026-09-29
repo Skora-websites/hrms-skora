@@ -1,6 +1,7 @@
 import "server-only";
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { logEmailDelivery } from "@/lib/email-delivery-log";
 
 interface ResetEmailInput {
   to: string;
@@ -90,6 +91,9 @@ export function getMailTransportInfo(): { provider: "smtp" | "resend"; host: str
  * Returns true only when a transport actually accepted the message.
  */
 export async function sendMail({ to, subject, html, attachments }: MailOptions): Promise<boolean> {
+  const hasAttachment = Boolean(attachments?.length);
+  let lastError: unknown;
+
   // ── 1. SMTP (primary) — supports attachments natively ──
   const transporter = await getTransporter();
   if (transporter) {
@@ -106,9 +110,11 @@ export async function sendMail({ to, subject, html, attachments }: MailOptions):
           contentType: a.contentType,
         })),
       });
+      await logEmailDelivery({ to, subject, status: "sent", provider: "smtp", hasAttachment });
       return true;
     } catch (err) {
       console.error("SMTP send failed, falling back to Resend:", err);
+      lastError = err;
       // fall through to Resend
     }
   }
@@ -116,7 +122,13 @@ export async function sendMail({ to, subject, html, attachments }: MailOptions):
   // ── 2. Resend HTTP API (fallback) — attachments are base64-encoded ──
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) return false;
+  if (!apiKey || !from) {
+    await logEmailDelivery({
+      to, subject, status: "failed", provider: "none", hasAttachment,
+      error: lastError ?? new Error("No mail transport configured"),
+    });
+    return false;
+  }
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
@@ -137,9 +149,17 @@ export async function sendMail({ to, subject, html, attachments }: MailOptions):
         })),
       }),
     });
+    await logEmailDelivery({
+      to, subject,
+      status: response.ok ? "sent" : "failed",
+      provider: "resend",
+      hasAttachment,
+      error: response.ok ? undefined : new Error(`Resend HTTP ${response.status}`),
+    });
     return response.ok;
   } catch (err) {
     console.error("Resend send failed:", err);
+    await logEmailDelivery({ to, subject, status: "failed", provider: "resend", hasAttachment, error: err });
     return false;
   }
 }

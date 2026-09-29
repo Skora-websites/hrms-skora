@@ -27,7 +27,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   // Brute-force guard (best-effort IP extraction behind proxies).
   const ip = clientIp(request.headers);
   const rateKey = attemptKey(String(email), ip);
-  const limit = checkRateLimit(rateKey, LOGIN_LIMITS);
+  const limit = await checkRateLimit(rateKey, LOGIN_LIMITS);
   if (limit.locked) {
     return NextResponse.json(
       {
@@ -44,14 +44,14 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   } catch (authError: any) {
     if (authError instanceof ApiError) throw authError; // 503 via withErrorHandler
     const msg = authError?.message || "Invalid credentials";
-    recordFailure(rateKey, LOGIN_LIMITS);
+    await recordFailure(rateKey, LOGIN_LIMITS);
     return NextResponse.json(
       { error: msg },
       { status: 401 }
     );
   }
 
-  clearFailures(rateKey);
+  await clearFailures(rateKey);
 
   // Create session in MongoDB
   const sessionToken = await createSession(user.id);
