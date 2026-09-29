@@ -1270,7 +1270,10 @@ export default function SuperadminOverviewPage() {
                   className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary"
                 >
                   <option value="">No reporting manager</option>
-                  {managers.map((m) => (
+                  {managers
+                    // Self-reporting guard: nobody can be their own manager.
+                    .filter((m) => m.id !== editingUser.id && (m.displayName || m.email) !== editingUser.email)
+                    .map((m) => (
                     <option key={m.id} value={m.displayName || m.email}>
                       {m.displayName || m.email}
                     </option>

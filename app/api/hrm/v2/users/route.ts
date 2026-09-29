@@ -397,6 +397,21 @@ export async function PATCH(request: NextRequest) {
               { status: 403 }
             );
           }
+          // Guard: nobody can be made their own reporting manager — it breaks
+          // leave-approval scoping and creates a self-approval loop.
+          const selfEmail = String((targetUser as any).email || "").trim().toLowerCase();
+          const selfName = String((targetUser as any).displayName || "").trim().toLowerCase();
+          const rmName = reportingManager !== undefined ? String(reportingManager).trim().toLowerCase() : "";
+          const rmEmail = managerEmail !== undefined ? String(managerEmail).trim().toLowerCase() : "";
+          if (
+            (rmName && (rmName === selfEmail || rmName === selfName)) ||
+            (rmEmail && rmEmail === selfEmail)
+          ) {
+            return NextResponse.json(
+              { error: "A user cannot be their own reporting manager" },
+              { status: 400 }
+            );
+          }
           if (reportingManager !== undefined) updateData.reportingManager = reportingManager;
           if (managerEmail !== undefined) updateData.managerEmail = managerEmail;
         }
