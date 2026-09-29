@@ -91,17 +91,14 @@ const INITIAL: FormState = {
   ifscCode: "",
 };
 
-// Client-side mirror of the server's rules: only the core identity/contact
-// fields are mandatory; statutory/nominee/bank fields are optional but still
-// format-checked when a value IS supplied.
+// Client-side mirror of the server's rules: only the email address is
+// mandatory (the account identifier); every other field — name, designation,
+// joining date, mobile, UAN, PAN, Aadhar, addresses, nominee, bank — is
+// optional but format-checked when a value IS supplied.
 function validate(f: FormState): string | null {
-  if (!f.employeeName.trim()) return "Employee Name as per Aadhar is required";
-  if (!f.designation.trim()) return "Designation is required";
-  if (!f.dateOfJoining) return "Date of Joining is required";
   if (!f.email.trim()) return "Email is required";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) return "Please enter a valid email address";
-  if (!f.mobileNo.trim()) return "Mobile No is required";
-  if (!/^[0-9+\-\s]{10,15}$/.test(f.mobileNo.trim())) return "Mobile No must be 10–15 digits";
+  if (f.mobileNo.trim() && !/^[0-9+\-\s]{10,15}$/.test(f.mobileNo.trim())) return "Mobile No must be 10–15 digits";
   if (f.uanNo.trim() && !/^\d{12}$/.test(f.uanNo.trim())) return "UAN No must be exactly 12 digits";
   if (f.panNo.trim() && !/^[A-Za-z]{5}\d{4}[A-Za-z]$/.test(f.panNo.trim().toUpperCase())) return "PAN No must look like ABCDE1234F";
   if (f.aadharNo.trim() && !/^\d{12}$/.test(f.aadharNo.trim())) return "Aadhar No must be exactly 12 digits";
@@ -195,7 +192,8 @@ export default function RegisterPage() {
         <div className="text-center space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">SKORA HRMS — Onboarding Form</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            HR will review your submission and email a temporary password to your address
+            HR will review your submission and email a temporary password to your address —
+            only your email is required; everything else is optional
           </p>
         </div>
 
@@ -222,8 +220,8 @@ export default function RegisterPage() {
             <Section icon={<User className="h-4 w-4 text-primary" />} title="Personal and Contact Details:">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Employee Name as per Aadhar *</label>
-                  <input className={inputCls} value={form.employeeName} onChange={(e) => set("employeeName")(e.target.value)} required />
+                  <label className={labelCls}>Employee Name as per Aadhar</label>
+                  <input className={inputCls} value={form.employeeName} onChange={(e) => set("employeeName")(e.target.value)} />
                 </div>
                 <div>
                   <span className={labelCls}>Gender</span>
@@ -237,12 +235,12 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <div>
-                  <label className={labelCls}>Designation *</label>
-                  <input className={inputCls} value={form.designation} onChange={(e) => set("designation")(e.target.value)} required />
+                  <label className={labelCls}>Designation</label>
+                  <input className={inputCls} value={form.designation} onChange={(e) => set("designation")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Date of Joining (DOJ) *</label>
-                  <input type="date" className={inputCls} value={form.dateOfJoining} onChange={(e) => set("dateOfJoining")(e.target.value)} required />
+                  <label className={labelCls}>Date of Joining (DOJ)</label>
+                  <input type="date" className={inputCls} value={form.dateOfJoining} onChange={(e) => set("dateOfJoining")(e.target.value)} />
                 </div>
                 <div>
                   <label className={labelCls}>Department *</label>
@@ -267,7 +265,7 @@ export default function RegisterPage() {
             <Section icon={<Briefcase className="h-4 w-4 text-primary" />} title="Employment Details:">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>UAN No *</label>
+                  <label className={labelCls}>UAN No</label>
                   <input className={inputCls} inputMode="numeric" maxLength={12} value={form.uanNo} onChange={(e) => set("uanNo")(e.target.value.replace(/\D/g, ""))} />
                 </div>
                 <div>
@@ -275,15 +273,15 @@ export default function RegisterPage() {
                   <input className={inputCls} value={form.joiningLocation} onChange={(e) => set("joiningLocation")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>PAN No *</label>
+                  <label className={labelCls}>PAN No</label>
                   <input className={inputCls} maxLength={10} value={form.panNo} onChange={(e) => set("panNo")(e.target.value.toUpperCase())} />
                 </div>
                 <div>
-                  <label className={labelCls}>Mobile No *</label>
-                  <input className={inputCls} type="tel" value={form.mobileNo} onChange={(e) => set("mobileNo")(e.target.value)} required />
+                  <label className={labelCls}>Mobile No</label>
+                  <input className={inputCls} type="tel" value={form.mobileNo} onChange={(e) => set("mobileNo")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Aadhar No *</label>
+                  <label className={labelCls}>Aadhar No</label>
                   <input className={inputCls} inputMode="numeric" maxLength={12} value={form.aadharNo} onChange={(e) => set("aadharNo")(e.target.value.replace(/\D/g, ""))} />
                 </div>
                 <div>
@@ -291,11 +289,11 @@ export default function RegisterPage() {
                   <input className={inputCls} value={form.annualCtc} onChange={(e) => set("annualCtc")(e.target.value)} />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Present Address *</label>
+                  <label className={labelCls}>Present Address</label>
                   <textarea rows={2} className={inputCls} value={form.presentAddress} onChange={(e) => set("presentAddress")(e.target.value)} />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Permanent Address *</label>
+                  <label className={labelCls}>Permanent Address</label>
                   <textarea rows={2} className={inputCls} value={form.permanentAddress} onChange={(e) => set("permanentAddress")(e.target.value)} />
                 </div>
                 <RadioRow label="Marital Status" value={form.maritalStatus} onChange={(v) => set("maritalStatus")(v)} />
@@ -331,7 +329,7 @@ export default function RegisterPage() {
             <Section icon={<Users className="h-4 w-4 text-primary" />} title="Nominee Details:">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Nominee Name *</label>
+                  <label className={labelCls}>Nominee Name</label>
                   <input className={inputCls} value={form.nomineeName} onChange={(e) => set("nomineeName")(e.target.value)} />
                 </div>
                 <div>
@@ -343,11 +341,11 @@ export default function RegisterPage() {
                   <input className={inputCls} inputMode="numeric" maxLength={12} value={form.nomineeAadhar} onChange={(e) => set("nomineeAadhar")(e.target.value.replace(/\D/g, ""))} />
                 </div>
                 <div>
-                  <label className={labelCls}>Relation with Nominee *</label>
+                  <label className={labelCls}>Relation with Nominee</label>
                   <input className={inputCls} value={form.nomineeRelation} onChange={(e) => set("nomineeRelation")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Father Name *</label>
+                  <label className={labelCls}>Father Name</label>
                   <input className={inputCls} value={form.fatherName} onChange={(e) => set("fatherName")(e.target.value)} />
                 </div>
                 {form.maritalStatus === "Yes" && (
@@ -367,19 +365,19 @@ export default function RegisterPage() {
                   <input className={inputCls} value={form.nameInBank} onChange={(e) => set("nameInBank")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Bank Account Number *</label>
+                  <label className={labelCls}>Bank Account Number</label>
                   <input className={inputCls} value={form.bankAccountNumber} onChange={(e) => set("bankAccountNumber")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Bank Name *</label>
+                  <label className={labelCls}>Bank Name</label>
                   <input className={inputCls} value={form.bankName} onChange={(e) => set("bankName")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Branch Name *</label>
+                  <label className={labelCls}>Branch Name</label>
                   <input className={inputCls} value={form.branchName} onChange={(e) => set("branchName")(e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>IFSC Code *</label>
+                  <label className={labelCls}>IFSC Code</label>
                   <input className={inputCls} maxLength={11} value={form.ifscCode} onChange={(e) => set("ifscCode")(e.target.value.toUpperCase())} />
                 </div>
               </div>

@@ -24,7 +24,7 @@ const ONBOARDING_DEPARTMENTS = new Set([
 /** Validate + normalize the reference-form payload. Required fields mirror the
  *  SKORA HRMS form; everything else passes through as optional. Returns the
  *  sanitized OnboardingDetails or an error message. */
-function parseOnboardingDetails(input: any, department: string): { details?: OnboardingDetails; error?: string } {
+function parseOnboardingDetails(input: any, department: string, email: string): { details?: OnboardingDetails; error?: string } {
   const str = (v: unknown, max = 200): string =>
     typeof v === "string" ? v.trim().slice(0, max) : "";
   const required = (v: string, label: string): string | null =>
@@ -69,20 +69,17 @@ function parseOnboardingDetails(input: any, department: string): { details?: Onb
     ifscCode: str(input.ifscCode, 11).toUpperCase(),
   };
 
-  // Only the core identity/contact fields are mandatory. Statutory and
-  // nominee/bank details (UAN, PAN, Aadhar, addresses, nominee, bank) are
-  // optional at request time — HR collects or completes them during
+  // Only the email address is mandatory — it identifies the account the
+  // credentials and offer letter are mailed to. Every other field (name,
+  // designation, joining date, mobile, UAN, PAN, Aadhar, addresses,
+  // nominee, bank) is optional; HR completes statutory details during
   // onboarding. Format checks still run when a value IS provided.
-  const missing =
-    required(d.employeeName!, "Employee Name as per Aadhar") ??
-    required(d.designation!, "Designation") ??
-    required(d.dateOfJoining!, "Date of Joining") ??
-    required(d.mobileNo!, "Mobile No");
+  const missing = required(email, "Email");
   if (missing) return { error: missing };
 
-  // Format checks on India-specific identifiers (only when supplied).
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.dateOfJoining!)) return { error: "Date of Joining must be a valid date" };
-  if (!/^[0-9+\-\s]{10,15}$/.test(d.mobileNo!)) return { error: "Mobile No must be 10–15 digits" };
+  // Format checks on provided values only.
+  if (d.dateOfJoining && !/^\d{4}-\d{2}-\d{2}$/.test(d.dateOfJoining)) return { error: "Date of Joining must be a valid date" };
+  if (d.mobileNo && !/^[0-9+\-\s]{10,15}$/.test(d.mobileNo)) return { error: "Mobile No must be 10–15 digits" };
   if (d.panNo && !/^[A-Z]{5}\d{4}[A-Z]$/.test(d.panNo)) return { error: "PAN No must look like ABCDE1234F" };
   if (d.aadharNo && !/^\d{12}$/.test(d.aadharNo)) return { error: "Aadhar No must be exactly 12 digits" };
   if (d.uanNo && !/^\d{12}$/.test(d.uanNo)) return { error: "UAN No must be exactly 12 digits" };
@@ -121,7 +118,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       // Full reference-form data (personal/employment/nominee/bank) — required
       // since the SKORA HRMS onboarding form replaced the email+department stub.
       const normalizedEmail = email.toLowerCase().trim();
-      const parsed = parseOnboardingDetails(body, departmentTrimmed);
+      const parsed = parseOnboardingDetails(body, departmentTrimmed, normalizedEmail);
       if (parsed.error) return badRequest(parsed.error);
       const onboardingDetails = parsed.details!;
       if (onboardingDetails.email !== undefined) onboardingDetails.email = normalizedEmail;
