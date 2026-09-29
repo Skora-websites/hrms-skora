@@ -41,6 +41,7 @@ scripts/backup-cleanup.json
 # Markdown Documentation & AGENTS Rules (NEVER EXPOSE)
 *.md
 !README.md
+!CHANGELOG.md
 AGENTS.md
 CLAUDE.md
 DESIGN.md
