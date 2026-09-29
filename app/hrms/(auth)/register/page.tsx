@@ -19,6 +19,51 @@ const DEPARTMENTS = [
 
 const YES_NO = ["Yes", "No"] as const;
 
+// Shared, static — defined at module level on purpose. If these live inside
+// the page component, every keystroke recreates them and React remounts the
+// whole form subtree, throwing away input focus mid-typing.
+const inputCls =
+  "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary";
+const labelCls = "block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1";
+
+function Section({
+  icon, title, children,
+}: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 sm:p-6 space-y-4">
+      <h2 className="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-3 py-1 bg-slate-50 dark:bg-white/5 rounded-r-lg">
+        {icon}
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function RadioRow({
+  label, value, onChange,
+}: { label: string; value: "Yes" | "No"; onChange: (v: "Yes" | "No") => void }) {
+  return (
+    <div>
+      <span className={labelCls}>{label}</span>
+      <div className="flex items-center gap-6 py-1">
+        {YES_NO.map((opt) => (
+          <label key={opt} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+            <input
+              type="radio"
+              name={label}
+              checked={value === opt}
+              onChange={() => onChange(opt)}
+              className="accent-primary"
+            />
+            {opt}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface FormState {
   employeeName: string;
   gender: "Male" | "Female";
@@ -147,44 +192,6 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
-  const inputCls =
-    "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary";
-  const labelCls = "block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1";
-
-  const Section = ({
-    icon, title, children,
-  }: { icon: React.ReactNode; title: string; children: React.ReactNode }) => (
-    <section className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 sm:p-6 space-y-4">
-      <h2 className="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-3 py-1 bg-slate-50 dark:bg-white/5 rounded-r-lg">
-        {icon}
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-
-  const RadioRow = ({
-    label, value, onChange,
-  }: { label: string; value: "Yes" | "No"; onChange: (v: "Yes" | "No") => void }) => (
-    <div>
-      <span className={labelCls}>{label}</span>
-      <div className="flex items-center gap-6 py-1">
-        {YES_NO.map((opt) => (
-          <label key={opt} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
-            <input
-              type="radio"
-              name={label}
-              checked={value === opt}
-              onChange={() => onChange(opt)}
-              className="accent-primary"
-            />
-            {opt}
-          </label>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-10 px-4">
