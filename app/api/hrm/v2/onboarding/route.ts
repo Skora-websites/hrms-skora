@@ -19,7 +19,7 @@ import { generateEmployeeCode } from "@/lib/hrm/employee-code";
 import { hrmUsersService } from "@/lib/hrm/firestore";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail, sendOfferLetterEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,8 +69,31 @@ export async function GET(request: NextRequest) {
       if (auth.role === "employee" && userId !== auth.userId) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
+      // Direct-report scoping for managers: the org-wide raw task view is an
+      // HR-level capability (same ObjectId-or-name rule as leaves/documents).
+      if (auth.role === "manager" && userId !== auth.userId) {
+        const db = await getDb();
+        let allowed = false;
+        if (db && ObjectId.isValid(userId)) {
+          const target = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+          const rm = (target as any)?.reportingManager;
+          if (rm === auth.userId) allowed = true;
+          else if (rm) {
+            const mgr = await db.collection("users").findOne({ _id: new ObjectId(auth.userId) });
+            allowed = !!mgr && rm === (mgr as any).displayName;
+          }
+        }
+        if (!allowed) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
       const tasks = await getEmployeeOnboardingTasks(tenantId, userId);
-      return NextResponse.json({ data: tasks });
+      // Statutory PII is masked on every read path; HR reveals via the
+      // token-bound, audit-logged endpoint — never through raw rows.
+      const masked = (Array.isArray(tasks) ? tasks : []).map((t: any) =>
+        t?.onboardingDetails ? { ...t, onboardingDetails: maskOnboardingDetails(t.onboardingDetails) } : t
+      );
+      return NextResponse.json({ data: masked });
     }
 
     if (id) {
@@ -172,6 +195,69 @@ export async function POST(request: NextRequest) {
             emailSent = await sendWelcomeEmail({
               to: email, employeeName: displayName, tempPassword, employeeCode,
             }).catch(() => false);
+
+            // ── Offer letter goes out with the welcome email, never from a
+            // dashboard flow: the account is created, so generate the
+            // password-protected PDF, mark it released, and email it as an
+            // attachment (password stated in the email body). Only attempted
+            // when SMTP works (welcome email succeeded), so CI/dev runs stay
+            // fast and deterministic.
+            if (emailSent && db) {
+              try {
+                const already = await db.collection("offerLetters").findOne({ employeeEmail: email });
+                if (!already) {
+                  const alphabetPdf = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+                  const randPdf = crypto.randomBytes(8);
+                  const pdfPassword = Array.from(randPdf, (b) => alphabetPdf[b % alphabetPdf.length]).join("");
+                  const formPdf = ((taskDoc as any)?.onboardingDetails || {}) as Record<string, unknown>;
+                  const salaryNum = Number(formPdf.annualCtc);
+                  const insertedLetter = await db.collection("offerLetters").insertOne({
+                    userId: String((newUser as any).id),
+                    employeeName: displayName,
+                    employeeEmail: email,
+                    department: requestedDepartment || (formPdf.department as string) || "",
+                    designation: (formPdf.designation as string) || "",
+                    salary: Number.isFinite(salaryNum) && salaryNum > 0 ? salaryNum : null,
+                    joiningDate: (formPdf.dateOfJoining as string) || null,
+                    status: "released",
+                    password: pdfPassword,
+                    createdAt: new Date(),
+                    releasedAt: new Date(),
+                    updatedAt: new Date(),
+                  });
+                  const letterRow = await db.collection("offerLetters").findOne({ _id: insertedLetter.insertedId });
+                  if (letterRow) {
+                    const settingsDoc2 = await db.collection("settings").findOne({ key: "offer_letter_config" });
+                    const cfg2 = settingsDoc2?.settings || {};
+                    const { generateOfferLetterPdf } = await import("@/lib/offer-letter-pdf");
+                    const pdf = await generateOfferLetterPdf(letterRow as any, cfg2);
+                    const origin2 = process.env.NEXT_PUBLIC_SITE_URL || "https://hrms-skora.vercel.app";
+                    await sendOfferLetterEmail({
+                      to: email,
+                      employeeName: displayName,
+                      salary: (letterRow as any).salary || undefined,
+                      joiningDate: (letterRow as any).joiningDate || undefined,
+                      companyName: cfg2.companyName || "SKORA",
+                      companyTagline: cfg2.companyTagline || "",
+                      signatoryName: cfg2.signatoryName || "Vishal Srivastava",
+                      signatoryTitle: cfg2.signatoryTitle || "",
+                      downloadUrl: origin2 + "/hrms/employee/offer-letters",
+                      pdfAttachment: { filename: pdf.filename, content: pdf.buffer, password: pdf.password },
+                      subjectTemplate: cfg2.emailSubject || undefined,
+                      bodyTemplate: cfg2.emailBody || undefined,
+                    }).catch(() => false);
+                    await db.collection("offerLetters").updateOne(
+                      { _id: insertedLetter.insertedId },
+                      { $set: { emailSent: true, emailSentAt: new Date() } }
+                    ).catch(() => undefined);
+                  }
+                }
+              } catch (offerErr) {
+                // Offer-letter delivery is best-effort at approval time; the
+                // CEO can still review/release from the dashboard.
+                console.warn("Offer letter email on approval failed:", offerErr);
+              }
+            }
 
             if (db) {
               await db.collection("notifications").insertOne({

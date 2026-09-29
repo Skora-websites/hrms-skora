@@ -13,6 +13,26 @@ import crypto from "crypto";
 
 const VALID_STATUSES = new Set(["active", "inactive", "disabled", "pending_verification"]);
 
+/** Safe response fields for user reads. Credential fields (passwordHash,
+ *  legacy plaintext password) and raw statutory PII never ride responses —
+ *  same contract as the employees route projection. */
+const SAFE_USER_FIELDS = [
+  "id", "_id", "email", "displayName", "firstName", "lastName",
+  "role", "status", "loginStatus", "department", "departmentName",
+  "designation", "employeeCode", "joiningDate", "phone", "employmentType",
+  "reportingManager", "image", "address", "emergencyContact",
+  "emergencyPhone", "tenantId", "mustChangePassword", "createdAt", "updatedAt",
+] as const;
+
+function projectUser(u: any): Record<string, unknown> {
+  if (!u || typeof u !== "object") return u;
+  const out: Record<string, unknown> = {};
+  for (const f of SAFE_USER_FIELDS) {
+    if (u[f] !== undefined) out[f] = u[f];
+  }
+  return out;
+}
+
 /**
  * Hierarchy guard: the caller may only act on users strictly below their own
  * role level (managers additionally only on their direct reports). Prevents
@@ -89,7 +109,7 @@ export async function GET(request: NextRequest) {
           u.onboardingDetails ? { ...u, onboardingDetails: maskOnboardingDetails(u.onboardingDetails) } : u
         );
 
-        return NextResponse.json({ data: masked });
+        return NextResponse.json({ data: masked.map(projectUser) });
       }
 
       case "get": {
@@ -112,12 +132,13 @@ export async function GET(request: NextRequest) {
           ? { ...(user as any), onboardingDetails: maskOnboardingDetails((user as any).onboardingDetails) }
           : user;
 
-        return NextResponse.json({ data: maskedUser });
+        return NextResponse.json({ data: projectUser(maskedUser) });
       }
 
       case "audit-logs": {
-        // Only admins can view audit logs
-        if (auth.role === "employee") {
+        // Audit trail is an HR-level view; managers are deliberately
+        // excluded (mirrors requireHrLevel used by the dedicated endpoint).
+        if (!(auth.role === "super_admin" || auth.role === "hr_admin" || auth.role === "admin")) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -528,10 +549,20 @@ export async function PATCH(request: NextRequest) {
       }
 
       case "force-change-password": {
-        // Used on first login when mustChangePassword is true — no current password required
-        // Only allowed for the logged-in user changing their own password
+        // Used on first login when mustChangePassword is true — no current password required.
+        // Two guards keep this from becoming a stolen-session password takeover:
+        //   1. Self-service only.
+        //   2. The account must actually be fenced (mustChangePassword=true).
+        //    Once the flag is cleared, rotation requires the change-password
+        //    action with the current credential.
         if (userId !== auth.userId) {
           return NextResponse.json({ error: "Can only change your own password" }, { status: 403 });
+        }
+        if ((targetUser as any).mustChangePassword !== true) {
+          return NextResponse.json(
+            { error: "Forced change is not active for this account. Use change-password with your current password." },
+            { status: 403 }
+          );
         }
         const { newPassword: fnp } = body;
         if (!fnp) {
@@ -545,9 +576,23 @@ export async function PATCH(request: NextRequest) {
         }
         const forceHash = await bcrypt.hash(fnp, 12);
         await hrmUsersService.update(resolvedUserId, { passwordHash: forceHash, mustChangePassword: false } as any);
+        // Invalidate every OTHER session for this user — a temporary password
+        // shared over email must not leave a second live session behind.
+        try {
+          const { getDb } = await import("@/lib/db/mongo-helper");
+          const sessionDb = await getDb();
+          if (sessionDb) {
+            await sessionDb.collection("sessions").deleteMany({
+              userId: resolvedUserId,
+              token: { $ne: auth.token },
+            });
+          }
+        } catch { /* best-effort */ }
         // Clear the cookie
         const forceResponse = NextResponse.json({ success: true, message: "Password updated successfully" });
         forceResponse.cookies.set("must_change_password", "", { path: "/", maxAge: 0 });
+        // Audit the forced rotation (it is a credential event)
+        await recordAuditLog({ tenantId, action: "update_user", performedById: auth.userId, performedByName: body._performedByName || "Self", targetUserId: resolvedUserId, targetUserEmail, details: "Forced password change completed" });
         return forceResponse;
       }
 

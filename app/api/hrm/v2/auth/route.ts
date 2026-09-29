@@ -69,33 +69,24 @@ function parseOnboardingDetails(input: any, department: string): { details?: Onb
     ifscCode: str(input.ifscCode, 11).toUpperCase(),
   };
 
-  // Required per the reference form (email/department validated by the caller).
+  // Only the core identity/contact fields are mandatory. Statutory and
+  // nominee/bank details (UAN, PAN, Aadhar, addresses, nominee, bank) are
+  // optional at request time — HR collects or completes them during
+  // onboarding. Format checks still run when a value IS provided.
   const missing =
     required(d.employeeName!, "Employee Name as per Aadhar") ??
     required(d.designation!, "Designation") ??
     required(d.dateOfJoining!, "Date of Joining") ??
-    required(d.uanNo!, "UAN No") ??
-    required(d.panNo!, "PAN No") ??
-    required(d.mobileNo!, "Mobile No") ??
-    required(d.aadharNo!, "Aadhar No") ??
-    required(d.presentAddress!, "Present Address") ??
-    required(d.permanentAddress!, "Permanent Address") ??
-    required(d.nomineeName!, "Nominee Name") ??
-    required(d.nomineeRelation!, "Relation with Nominee") ??
-    required(d.fatherName!, "Father Name") ??
-    required(d.bankAccountNumber!, "Bank Account Number") ??
-    required(d.bankName!, "Bank Name") ??
-    required(d.branchName!, "Branch Name") ??
-    required(d.ifscCode!, "IFSC Code");
+    required(d.mobileNo!, "Mobile No");
   if (missing) return { error: missing };
 
-  // Format checks on India-specific identifiers.
+  // Format checks on India-specific identifiers (only when supplied).
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.dateOfJoining!)) return { error: "Date of Joining must be a valid date" };
-  if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(d.panNo!)) return { error: "PAN No must look like ABCDE1234F" };
-  if (!/^\d{12}$/.test(d.aadharNo!)) return { error: "Aadhar No must be exactly 12 digits" };
   if (!/^[0-9+\-\s]{10,15}$/.test(d.mobileNo!)) return { error: "Mobile No must be 10–15 digits" };
-  if (!/^\d{12}$/.test(d.uanNo!)) return { error: "UAN No must be exactly 12 digits" };
-  if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(d.ifscCode!)) return { error: "IFSC Code must look like SBIN0001234" };
+  if (d.panNo && !/^[A-Z]{5}\d{4}[A-Z]$/.test(d.panNo)) return { error: "PAN No must look like ABCDE1234F" };
+  if (d.aadharNo && !/^\d{12}$/.test(d.aadharNo)) return { error: "Aadhar No must be exactly 12 digits" };
+  if (d.uanNo && !/^\d{12}$/.test(d.uanNo)) return { error: "UAN No must be exactly 12 digits" };
+  if (d.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(d.ifscCode)) return { error: "IFSC Code must look like SBIN0001234" };
 
   return { details: d };
 }
@@ -274,6 +265,21 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get("action");
   const userId = searchParams.get("userId");
+  // Credential fields (passwordHash, legacy plaintext password) never ride
+  // user reads from this route — mirrors the employees/users projection.
+  const SAFE_FIELDS = [
+    "id", "_id", "email", "displayName", "firstName", "lastName",
+    "role", "status", "loginStatus", "department", "departmentName",
+    "designation", "employeeCode", "joiningDate", "phone", "employmentType",
+    "reportingManager", "image", "tenantId", "mustChangePassword",
+    "createdAt", "updatedAt",
+  ] as const;
+  const project = (u: any) => {
+    if (!u || typeof u !== "object") return u;
+    const out: Record<string, unknown> = {};
+    for (const f of SAFE_FIELDS) if (u[f] !== undefined) out[f] = u[f];
+    return out;
+  };
   switch (action) {
     case "roles": return NextResponse.json({ data: ROLE_DEFINITIONS });
     case "user": {
@@ -281,11 +287,12 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       const user = await hrmUsersService.findById(userId);
       if (!user || (user as any).tenantId !== auth.tenantId) return notFound("User not found");
       if (auth.role === "employee" && userId !== auth.userId) return forbidden();
-      return NextResponse.json({ data: user });
+      return NextResponse.json({ data: project(user) });
     }
     case "users": {
-      if (auth.role === "employee") return forbidden();
-      return NextResponse.json({ data: await hrmUsersService.findManyInTenant(auth.tenantId) });
+      // Org-wide user reads are HR-level; managers use scoped routes.
+      if (auth.role === "employee" || auth.role === "manager") return forbidden();
+      return NextResponse.json({ data: (await hrmUsersService.findManyInTenant(auth.tenantId)).map(project) });
     }
     default: return badRequest("Invalid action. Use: roles, user, users");
   }
