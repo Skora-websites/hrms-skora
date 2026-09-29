@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, RefreshCw, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,12 @@ export default function HrAdminOnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [revealing, setRevealing] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [live, setLive] = useState(true);
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const knownIdsRef = useRef<Set<string> | null>(null);
+  const revealedRef = useRef<Map<string, Record<string, string>>>(new Map());
+  const newFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadCandidates();
@@ -79,7 +85,14 @@ export default function HrAdminOnboardingPage() {
       const res = await fetch("/api/hrm/v2/onboarding?pending=true");
       if (res.ok) {
         const data = await res.json();
-        const rows = Array.isArray(data.data) ? data.data : [];
+        const raw = Array.isArray(data.data) ? data.data : [];
+        // Polling re-fetches masked PII; re-apply any plaintext HR has
+        // revealed this session so a background refresh doesn't re-mask it.
+        const rows = raw.map((t: any) => {
+          const id = t.id || t._id || "";
+          const overrides = revealedRef.current.get(id);
+          return overrides ? { ...t, onboardingDetails: { ...(t.onboardingDetails || {}), ...overrides } } : t;
+        });
         setCandidates(rows.map((t: any) => ({
           id: t.id || t._id || "",
           name: t.employeeName || t.name || "",
@@ -101,10 +114,42 @@ export default function HrAdminOnboardingPage() {
           onboardingDetails: t.onboardingDetails || undefined,
           revealTokens: t.revealTokens || undefined,
         })));
+        // Highlight rows that appeared since the last fetch and timestamp it.
+        const ids = new Set<string>(rows.map((t: any) => String(t.id || t._id || "")));
+        if (knownIdsRef.current) {
+          const fresh = [...ids].filter((id) => !knownIdsRef.current!.has(id));
+          if (fresh.length > 0) {
+            setNewIds(new Set(fresh));
+            if (newFlashTimer.current) clearTimeout(newFlashTimer.current);
+            newFlashTimer.current = setTimeout(() => setNewIds(new Set()), 8000);
+          }
+        }
+        knownIdsRef.current = ids;
+        setLastUpdated(new Date());
       }
     } catch { /* empty */ }
     setLoading(false);
   };
+
+  // Live queue: poll every 15s while the tab is visible, and refresh
+  // immediately when the tab becomes visible again (no wasted calls while
+  // hidden, fresh data the moment HR looks back).
+  useEffect(() => {
+    if (!live) return;
+    const tick = () => {
+      if (document.visibilityState === "visible") loadCandidates();
+    };
+    const interval = setInterval(tick, 15000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadCandidates();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live]);
 
   const toggleExpanded = (id: string) => {
     setExpanded((prev) => {
@@ -128,6 +173,11 @@ export default function HrAdminOnboardingPage() {
       if (res.ok) {
         const data = await res.json();
         const value = data.data?.value;
+        if (value) {
+          const overrides = revealedRef.current.get(candidate.id) || {};
+          overrides[field] = value;
+          revealedRef.current.set(candidate.id, overrides);
+        }
         setCandidates((prev) =>
           prev.map((c) =>
             c.id === candidate.id && c.onboardingDetails
@@ -226,11 +276,28 @@ export default function HrAdminOnboardingPage() {
       </div>
 
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <UserCheck className="h-5 w-5 text-primary" /> Requests &amp; Applications
-        </h3>
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <h3 className="font-bold text-base flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" /> Requests &amp; Applications
+          </h3>
+          <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+            {lastUpdated && <span>Updated {lastUpdated.toLocaleTimeString()}</span>}
+            <button
+              type="button"
+              onClick={() => setLive((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-bold transition ${live ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-slate-300 dark:border-white/10 text-slate-500"}`}
+              title={live ? "Live sync on — new requests appear automatically every 15s" : "Live sync paused — use Refresh"}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+              {live ? "Live" : "Paused"}
+            </button>
+            <Button size="sm" variant="outline" onClick={loadCandidates} disabled={loading} className="h-7 px-2 text-[10px] font-bold">
+              <RefreshCw className={`h-3 w-3 mr-0.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+          </div>
+        </div>
 
-        {loading ? (
+        {loading && candidates.length === 0 ? (
           <div className="p-8 text-center text-slate-500 text-xs">Loading requests...</div>
         ) : candidates.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
@@ -255,6 +322,7 @@ export default function HrAdminOnboardingPage() {
                   <FragmentRow
                     key={c.id}
                     candidate={c}
+                    isNew={newIds.has(c.id)}
                     expanded={expanded.has(c.id)}
                     onToggle={() => toggleExpanded(c.id)}
                     revealing={revealing}
@@ -276,6 +344,7 @@ export default function HrAdminOnboardingPage() {
 
 function FragmentRow({
   candidate: c,
+  isNew,
   expanded,
   onToggle,
   revealing,
@@ -286,6 +355,7 @@ function FragmentRow({
   resending,
 }: {
   candidate: Candidate;
+  isNew: boolean;
   expanded: boolean;
   onToggle: () => void;
   revealing: string | null;
@@ -307,7 +377,7 @@ function FragmentRow({
 
   return (
     <>
-      <tr className={expanded ? "bg-primary/[0.03]" : ""}>
+      <tr className={`${expanded ? "bg-primary/[0.03]" : ""} ${isNew ? "bg-primary/[0.07] ring-1 ring-inset ring-primary/30" : ""}`}>
         <td className="py-3">
           {hasDetails ? (
             <button type="button" onClick={onToggle} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5" aria-label={expanded ? "Collapse details" : "Expand details"}>
