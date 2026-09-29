@@ -101,6 +101,7 @@ async function main() {
     ["notifications", byUser],
     ["leave_requests", byUser],
     ["password_resets", byUser],
+    ["email_delivery_log", { to: { $in: emails } }],
   ];
 
   const backup = {};
