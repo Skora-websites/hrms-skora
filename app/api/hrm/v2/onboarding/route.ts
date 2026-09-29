@@ -259,6 +259,35 @@ export async function POST(request: NextRequest) {
               }
             }
 
+            // ── Auto-assign a reporting manager: prefer an active manager in
+            // the requested department, otherwise the first active manager.
+            // Stored as displayName per the system convention — leaves,
+            // documents and employee lookups accept an ObjectId OR a name.
+            // Best-effort: approval must never fail because of this.
+            if (db) {
+              try {
+                const managers = await db.collection("users").find({
+                  role: "manager", status: "active", loginStatus: { $ne: "disabled" },
+                }).limit(50).toArray();
+                const dept = String(requestedDepartment || "").toLowerCase().trim();
+                const chosen =
+                  (dept && managers.find((m: any) =>
+                    [m.department, m.departmentName].some((v: any) => String(v || "").toLowerCase().trim() === dept),
+                  )) || managers[0];
+                if (chosen && (chosen as any).displayName) {
+                  await hrmUsersService.update(String((newUser as any).id), { reportingManager: (chosen as any).displayName } as any);
+                  await db.collection("notifications").insertOne({
+                    userId: String((chosen as any).id || (chosen as any)._id),
+                    title: "New team member assigned",
+                    body: `${displayName} (${email}) was approved and assigned to you as their reporting manager.`,
+                    type: "onboarding", isRead: false, createdAt: new Date(), tenantId: "default",
+                  }).catch(() => undefined);
+                }
+              } catch (rmErr) {
+                console.warn("Auto reporting-manager assignment failed:", rmErr);
+              }
+            }
+
             if (db) {
               await db.collection("notifications").insertOne({
                 userId: String((newUser as any).id),
