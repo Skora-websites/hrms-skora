@@ -422,3 +422,50 @@ export async function sendExperienceLetterEmail({
     ],
   });
 }
+
+interface RoleChangeEmailInput {
+  to: string;
+  employeeName: string;
+  oldRoleLabel: string;
+  newRoleLabel: string;
+  companyName?: string;
+}
+
+/**
+ * Notification email sent to a user when the CEO changes their role.
+ * Sessions are invalidated server-side at the same moment, so the email
+ * tells the user what happened and that they must sign in again — no
+ * credentials ride this message.
+ */
+export async function sendRoleChangeEmail({
+  to,
+  employeeName,
+  oldRoleLabel,
+  newRoleLabel,
+  companyName = "SKORA",
+}: RoleChangeEmailInput): Promise<boolean> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const loginUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/hrms/login` : "/hrms/login";
+  const changed = oldRoleLabel !== newRoleLabel;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; border-bottom: 3px double #2563eb; padding-bottom: 16px; margin-bottom: 20px;">
+        <h1 style="color: #2563eb; letter-spacing: 2px; margin: 0;">${companyName}</h1>
+        <p style="color: #666; font-size: 12px; margin-top: 5px;">Account Update</p>
+      </div>
+      <p>Dear <strong>${employeeName}</strong>,</p>
+      <p>Your ${companyName} HRMS account role has been <strong>updated</strong>${changed ? ` from <strong>${oldRoleLabel}</strong> to <strong style="color:#2563eb;">${newRoleLabel}</strong>` : ` (access level: ${newRoleLabel})`}.</p>
+      <div style="background:#f0f6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:18px 0;">
+        <p style="margin:0;font-size:14px;">For security, all active sessions were signed out. Please sign in again to continue with your new access level.</p>
+      </div>
+      <p style="font-size:14px;"><a href="${loginUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:bold;">Sign in to ${companyName} HRMS</a></p>
+      <p style="color:#555;font-size:12px;margin-top:18px;">If you did not expect this change, contact your administrator immediately.</p>
+      <p style="margin-top:24px;">Warm regards,<br><strong>HR Team</strong><br>${companyName}</p>
+    </div>`;
+
+  return sendMail({
+    to,
+    subject: `Your ${companyName} HRMS role has been updated`,
+    html,
+  });
+}

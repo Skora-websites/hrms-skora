@@ -352,6 +352,23 @@ export async function PATCH(request: NextRequest) {
           }
         } catch { /* best-effort */ }
 
+        // ── Email the victim (best-effort) ──
+        // Reuses the shared transport (SMTP → Resend) and lands in the
+        // email_delivery_log like every other mail. Never blocks the role
+        // change itself.
+        const { getRoleLabel } = await import("@/lib/rbac");
+        await import("@/lib/email").then(({ sendRoleChangeEmail }) =>
+          sendRoleChangeEmail({
+            to: targetUserEmail,
+            employeeName: String((targetUser as any).displayName || targetUserEmail),
+            oldRoleLabel: getRoleLabel(previousRole),
+            newRoleLabel: getRoleLabel(normalizedRole),
+          }).catch((emailErr) => {
+            console.warn("Role-change notification email failed:", emailErr);
+            return false;
+          })
+        );
+
         auditAction = "update_role";
         if (!auditDetails) auditDetails = `Changed role from ${previousRole} to ${normalizedRole}`;
         break;
