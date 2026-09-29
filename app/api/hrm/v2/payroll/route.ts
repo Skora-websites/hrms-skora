@@ -36,6 +36,18 @@ async function isDirectReport(managerId: string, employeeId: string): Promise<bo
   }
 }
 
+/** Keep only the most recent three calendar months of payroll rows for
+ *  non-CEO callers. Rows sort by createdAt; a row older than the first day
+ *  of (currentMonth - 2) is outside the window. CEO (super_admin) is exempt. */
+function withinLastThreeMonths(rows: any[]): any[] {
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  return rows.filter((t) => {
+    const d = t?.createdAt ? new Date(t.createdAt) : null;
+    return d ? d >= cutoff : true; // rows without a timestamp stay visible
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireAuth();
@@ -77,17 +89,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === "transactions") {
+      // Non-CEO viewers see only the last three months of payroll history.
+      const threeMonthWindow = auth.role !== "super_admin";
       if (userId) {
         // Manager scoping: a manager may only read direct reports' salary
         // data; org-wide payroll reads are an HR-level capability.
         if (auth.role === "manager" && userId !== auth.userId && !(await isDirectReport(auth.userId, userId))) {
           return NextResponse.json({ error: "Forbidden: you can only view your direct reports' payroll" }, { status: 403 });
         }
-        const transactions = await getEmployeePayrollTransactions(tenantId, userId);
+        let transactions = await getEmployeePayrollTransactions(tenantId, userId);
+        if (threeMonthWindow) transactions = withinLastThreeMonths(transactions);
         return NextResponse.json({ data: transactions });
       }
       if (id) {
-        const transactions = await getPayrollTransactions(id);
+        let transactions = await getPayrollTransactions(id);
+        if (threeMonthWindow) transactions = withinLastThreeMonths(transactions);
         return NextResponse.json({ data: transactions });
       }
     }

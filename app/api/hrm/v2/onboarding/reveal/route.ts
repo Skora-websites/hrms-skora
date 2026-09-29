@@ -49,6 +49,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   if (typeof value !== "string" || !value) return notFound(`No ${field} stored on this request`);
 
   const expected = revealToken(String(task._id), field, value);
+  // Fail-closed: with no deployment secret configured, tokens are unusable.
+  if (!expected) {
+    return NextResponse.json({ error: "PII reveal is not configured on this deployment" }, { status: 503 });
+  }
   if (token !== expected) return forbidden("Invalid or expired reveal token");
 
   // Actor identity for the audit trail (ApiAuthResult carries only ids).

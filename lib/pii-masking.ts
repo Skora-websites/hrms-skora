@@ -19,22 +19,35 @@ export const isSensitiveField = (field: string): field is SensitiveField =>
   (SENSITIVE_FIELDS as readonly string[]).includes(field);
 
 /** HMAC key for reveal tokens — derived from a deployment secret so tokens
- *  cannot be forged client-side. Falls back to a dev-only constant when no
- *  secret is configured (local dev without RESEND/secret env). */
+ *  cannot be forged client-side. Fail-closed: in production a missing secret
+ *  yields an unusable key (reveal returns 503 upstream), never a public
+ *  constant. Dev keeps a stable local fallback so flows work offline. */
 function revealSecret(): string {
-  return (
+  const configured =
     process.env.PII_REVEAL_SECRET ||
     process.env.NEXTAUTH_SECRET ||
     process.env.RESEND_API_KEY ||
-    "dev-only-insecure-reveal-secret"
-  );
+    "";
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "[security] PII_REVEAL_SECRET (or NEXTAUTH_SECRET) is NOT set in this production environment. " +
+        "PII reveal tokens are unusable (fail-closed). Set the variable and redeploy."
+    );
+    // Empty secret makes hmac() return a value that cannot match any token
+    // minted with a real key — reveal effectively disabled, no forgery path.
+    return "";
+  }
+  return "dev-only-insecure-reveal-secret";
 }
 
 function hmac(value: string): string {
+  const secret = revealSecret();
+  if (!secret) return ""; // fail-closed: no secret, no usable token
   // Imported lazily to keep this module edge-safe in type-only contexts.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require("crypto") as typeof import("crypto");
-  return crypto.createHmac("sha256", revealSecret()).update(value).digest("hex").slice(0, 32);
+  return crypto.createHmac("sha256", secret).update(value).digest("hex").slice(0, 32);
 }
 
 /** Mask a sensitive value for display: show only the last 4 characters. */

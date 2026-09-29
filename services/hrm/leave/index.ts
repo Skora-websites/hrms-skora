@@ -266,14 +266,25 @@ export async function approveLeave(
   id: string,
   approvedById: string
 ): Promise<LeaveRequest | null> {
-  const request = await leaveRequestsService.findById(id);
-  if (!request) return null;
-
-  const approved = await leaveRequestsService.update(id, {
-    status: "approved",
-    approvedById,
-    approvedAt: new Date(),
-  } as any);
+  // Atomic guard: the decision write only lands while the row is still
+  // pending. Two concurrent approvals race on this filter and exactly one
+  // wins, so balances can never be double-mutated.
+  const { getDb } = await import("@/lib/db/mongo-helper");
+  const db = await getDb();
+  if (!db) return null;
+  const { ObjectId } = await import("mongodb");
+  const decisionFilter = ObjectId.isValid(id)
+    ? { _id: new ObjectId(id), status: "pending" }
+    : { id, status: "pending" };
+  const decided = await db
+    .collection("leave_requests")
+    .findOneAndUpdate(
+      decisionFilter,
+      { $set: { status: "approved", approvedById, approvedAt: new Date(), updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+  if (!decided) return null;
+  const request = decided as any;
 
   // Move from pending to used in leave balance
   const currentYear = new Date(request.fromDate).getFullYear();
@@ -297,7 +308,7 @@ export async function approveLeave(
     } as any);
   }
 
-  return approved;
+  return leaveRequestsService.findById(id);
 }
 
 export async function rejectLeave(
@@ -305,8 +316,24 @@ export async function rejectLeave(
   approvedById: string,
   reason: string
 ): Promise<LeaveRequest | null> {
-  const request = await leaveRequestsService.findById(id);
-  if (!request) return null;
+  // Same atomic pending guard as approveLeave — concurrent rejections and
+  // approve/reject races collapse to a single decision.
+  const { getDb } = await import("@/lib/db/mongo-helper");
+  const db = await getDb();
+  if (!db) return null;
+  const { ObjectId } = await import("mongodb");
+  const decisionFilter = ObjectId.isValid(id)
+    ? { _id: new ObjectId(id), status: "pending" }
+    : { id, status: "pending" };
+  const decided = await db
+    .collection("leave_requests")
+    .findOneAndUpdate(
+      decisionFilter,
+      { $set: { status: "rejected", approvedById, approvedAt: new Date(), rejectionReason: reason, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+  if (!decided) return null;
+  const request = decided as any;
 
   // Restore balance
   const balance = await getLeaveBalance(
@@ -318,17 +345,12 @@ export async function rejectLeave(
 
   if (balance) {
     await leaveBalancesService.update(balance.id, {
-      pending: balance.pending - request.totalDays,
+      pending: Math.max(0, balance.pending - request.totalDays),
       remaining: balance.remaining + request.totalDays,
     } as any);
   }
 
-  return leaveRequestsService.update(id, {
-    status: "rejected",
-    approvedById,
-    approvedAt: new Date(),
-    rejectionReason: reason,
-  } as any);
+  return leaveRequestsService.findById(id);
 }
 
 export async function cancelLeave(id: string): Promise<LeaveRequest | null> {

@@ -4,11 +4,29 @@
 // mongodb, no "server-only") because it is imported by the Edge middleware.
 // lib/auth.ts re-exports these for API routes so the secret and algorithm
 // stay in one place.
+//
+// Secret resolution is fail-closed for the forgeable-values chain: a public
+// fallback constant would let anyone mint admin cookies, so only secret-grade
+// environment values qualify. In non-production (NODE_ENV !== "production")
+// a stable dev-only constant keeps local flows working. In production without
+// a secret, signing/verification degrades to "always invalid" — logins and
+// role-gated navigation fail closed instead of open (surfaced via console.error
+// so the missing deployment config is immediately visible).
+const DEV_FALLBACK_SECRET = "skora-dev-only-cookie-secret";
+const isProd = process.env.NODE_ENV === "production";
+const COOKIE_SIGNING_SECRET = isProd
+  ? process.env.SESSION_COOKIE_SECRET || process.env.NEXTAUTH_SECRET || ""
+  : process.env.SESSION_COOKIE_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    DEV_FALLBACK_SECRET;
 
-const COOKIE_SIGNING_SECRET =
-  process.env.SESSION_COOKIE_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  "skora-dev-secret-change-me-in-production";
+if (isProd && !COOKIE_SIGNING_SECRET) {
+  // Loud, once-per-instance signal: cookies cannot be verified without it.
+  console.error(
+    "[security] SESSION_COOKIE_SECRET (or NEXTAUTH_SECRET) is NOT set in this production environment. " +
+      "Session cookies will be REJECTED (fail-closed). Set the variable and redeploy."
+  );
+}
 
 const cookieEncoder = new TextEncoder();
 

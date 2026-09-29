@@ -65,8 +65,10 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "Payroll", href: "/hrms/hr-admin/payroll", icon: "DollarSign", group: "hrm" },
     { title: "Leave Policies", href: "/hrms/hr-admin/leave-policies", icon: "CalendarDays", group: "hrm" },
     { title: "Audit Logs", href: "/hrms/superadmin/audit-logs", icon: "FileText", group: "system" },
-    { title: "Offer Letters", href: "/hrms/superadmin/offer-letters", icon: "FileText", group: "lifecycle" },
-    { title: "Offer Letter Settings", href: "/hrms/superadmin/offer-letter-settings", icon: "Settings", group: "lifecycle" },
+    // Offer-letter management intentionally removed from the CEO dashboard:
+    // letters are generated and emailed automatically at onboarding approval.
+    // /hrms/superadmin/offer-letters + offer-letter-settings pages remain
+    // reachable by URL for exceptional manual review only.
     { title: "Settings", href: "/hrms/superadmin/settings", icon: "Settings", group: "system" },
   ],
   hr_admin: [

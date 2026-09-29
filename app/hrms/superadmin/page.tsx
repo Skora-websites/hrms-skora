@@ -124,22 +124,6 @@ interface LeaveRequest {
   requestedBy: "employee" | "manager";
 }
 
-interface OfferLetter {
-  id: string;
-  userId: string;
-  employeeName: string;
-  employeeEmail: string;
-  department: string;
-  designation: string;
-  status: string;
-  salary: number | null;
-  joiningDate: string | null;
-  offerContent: string | null;
-  password?: string;
-  createdAt: string;
-  releasedAt: string | null;
-}
-
 interface OnboardingCandidate {
   id: string;
   userId: string;
@@ -193,12 +177,10 @@ export default function SuperadminOverviewPage() {
   const [liveEmployees, setLiveEmployees] = useState<LiveStatusEmployee[]>([]);
   const [liveSummary, setLiveSummary] = useState<LiveStatusSummary | null>(null);
   const [liveSearch, setLiveSearch] = useState("");
-  const [offerLetters, setOfferLetters] = useState<OfferLetter[]>([]);
+  // Offer-letter management removed from the CEO dashboard — letters are
+  // generated and emailed automatically at onboarding approval.
   const [pendingOnboarding, setPendingOnboarding] = useState<OnboardingCandidate[]>([]);
-  const [editingOffer, setEditingOffer] = useState<OfferLetter | null>(null);
-  const [offerSalary, setOfferSalary] = useState("");
-  const [offerJoinDate, setOfferJoinDate] = useState("");
-  const [offerContentText, setOfferContentText] = useState("");
+
   const [liveFilter, setLiveFilter] = useState<"all" | "punched_in" | "in_office" | "remote" | "on_break" | "in_meeting" | "active" | "punched_out" | "absent">("all");
 
   useEffect(() => {
@@ -221,28 +203,8 @@ export default function SuperadminOverviewPage() {
     };
   }, []);
 
-  const handleReleaseOffer = async (offer: OfferLetter) => {
-    try {
-      await fetch('/api/hrm/v2/offer-letters?id=' + offer.id, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'released',
-          salary: offerSalary ? Number(offerSalary) : null,
-          joiningDate: offerJoinDate || null,
-          offerContent: offerContentText || null,
-        }),
-      });
-      setEditingOffer(null);
-      loadData(true);
-    } catch (err) {
-      console.error('Failed to release offer letter:', err);
-    }
-  };
-
   const loadData = async (isSilent = false) => {
-    if (!isSilent) setLoading(true);
-    try {        const [empRes, attRes, escRes, leaveRes, hrRes, mgrRes, onbRes, offerRes, liveRes] =
+    if (!isSilent) setLoading(true);      try {        const [empRes, attRes, escRes, leaveRes, hrRes, mgrRes, onbRes, liveRes] =
         await Promise.allSettled([
           fetch("/api/hrm/v2/users?action=list").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/attendance").then((r) => (r.ok ? r.json() : null)),
@@ -251,7 +213,6 @@ export default function SuperadminOverviewPage() {
           fetch("/api/hrm/v2/users?action=list&role=hr_admin").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/users?action=list&role=manager").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/onboarding?pending=true").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/offer-letters").then((r) => (r.ok ? r.json() : null)),
           fetch("/api/hrm/v2/attendance/live-status").then((r) => (r.ok ? r.json() : null)),
         ]);
 
@@ -289,9 +250,6 @@ export default function SuperadminOverviewPage() {
       if (onbRes.status === "fulfilled" && onbRes.value) {
         setPendingOnboarding(Array.isArray(onbRes.value.data) ? onbRes.value.data : []);
       }
-      if (offerRes.status === "fulfilled" && offerRes.value) {
-        setOfferLetters(Array.isArray(offerRes.value.data) ? offerRes.value.data : []);
-      }
     } catch {
       // use empty state
     }
@@ -299,7 +257,6 @@ export default function SuperadminOverviewPage() {
   };
 
   // ── Offer Letter & Onboarding Counts ──
-  const pendingOfferCount = offerLetters.filter((o) => o.status === 'pending_ceo').length;
   const pendingOnbCount = pendingOnboarding.length;
 
   // ── Computed KPIs ──
@@ -1149,39 +1106,6 @@ export default function SuperadminOverviewPage() {
         )}
       </SectionCard>
 
-      {/* ═══ PENDING OFFER LETTERS ═══ */}
-      <SectionCard
-        title="Offer Letter Requests"
-        subtitle="Employees requesting offer letters — review and release"
-        icon={<FileText className="h-5 w-5 text-blue-500" />}
-        count={pendingOfferCount}
-      >
-        {offerLetters.length === 0 ? (
-          <EmptyState message="No offer letter requests yet." />
-        ) : (
-          <div className="space-y-2">
-            {offerLetters.map((offer) => (
-              <div key={offer.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 text-xs">
-                <div>
-                  <span className="font-bold text-slate-900 dark:text-white block">{offer.employeeName}</span>
-                  <span className="text-slate-500 text-[10px]">{offer.employeeEmail} · {offer.department} · {offer.designation}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {offer.status === "released" ? (
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">RELEASED</span>
-                  ) : (
-                    <button
-                      onClick={() => { setEditingOffer(offer); setOfferSalary(offer.salary?.toString() || ""); setOfferJoinDate(offer.joiningDate || ""); setOfferContentText(offer.offerContent || ""); }}
-                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-primary text-white hover:bg-primary/90 transition-colors"
-                    >Review & Release</button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
-
       {/* ═══ ONBOARDING ESCALATION QUEUE ═══ */}
       <SectionCard
         title="Onboarding Escalation Queue"
@@ -1348,36 +1272,6 @@ export default function SuperadminOverviewPage() {
         </div>
       )}
 
-      {/* Offer Letter Review Modal */}
-      {editingOffer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setEditingOffer(null)}>
-          <div className="bg-white dark:bg-[#0B0F19] rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-white/10">
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">Review Offer Letter</h3>
-              <button onClick={() => setEditingOffer(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white text-xl">&times;</button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="bg-slate-50 dark:bg-black/30 rounded-xl p-4 border border-gray-100 dark:border-white/5">
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{editingOffer.employeeName}</p>
-                <p className="text-[10px] text-slate-500">{editingOffer.employeeEmail} · {editingOffer.department} · {editingOffer.designation}</p>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Annual Salary (₹)</label>
-                <input type="number" value={offerSalary} onChange={(e) => setOfferSalary(e.target.value)} placeholder="e.g. 500000" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Joining Date</label>
-                <input type="date" value={offerJoinDate} onChange={(e) => setOfferJoinDate(e.target.value)} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Offer Letter Content</label>
-                <textarea rows={8} value={offerContentText} onChange={(e) => setOfferContentText(e.target.value)} placeholder="Write the offer letter content here..." className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none resize-none" />
-              </div>
-              <button onClick={() => handleReleaseOffer(editingOffer)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">Release Offer Letter</button>
-            </div>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }

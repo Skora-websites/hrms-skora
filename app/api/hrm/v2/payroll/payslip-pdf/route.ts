@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
     const tenantId = "default";
     let tx: any = null;
 
+    // Non-CEO callers are limited to the last three months of payroll
+    // history, including individual payslip downloads.
+    const threeMonthWindow = auth.role !== "super_admin";
+    const cutoff = new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1);
+
     if (auth.role === "employee") {
       const own = await getEmployeePayrollTransactions(tenantId, auth.userId);
       tx = own.find((t: any) => t.id === id);
@@ -30,6 +35,9 @@ export async function GET(request: NextRequest) {
       if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
       tx = await db.collection("payroll_transactions").findOne({ _id: new (require("mongodb").ObjectId)(id) });
       if (!tx) return NextResponse.json({ error: "Payslip not found" }, { status: 404 });
+    }
+    if (threeMonthWindow && tx.createdAt && new Date(tx.createdAt) < cutoff) {
+      return NextResponse.json({ error: "Payslips older than three months are available from HR" }, { status: 403 });
     }
 
     const db = await getDb();
