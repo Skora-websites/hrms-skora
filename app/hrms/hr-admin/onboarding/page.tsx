@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark } from "lucide-react";
+import { UserCheck, FileText, CheckCircle2, Clock, ShieldCheck, XCircle, AlertTriangle, MailPlus, RefreshCw, ChevronDown, ChevronRight, Eye, Loader2, User, Briefcase, Users, Landmark } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -169,6 +169,40 @@ export default function HrAdminOnboardingPage() {
     }
   };
 
+  const [resending, setResending] = useState<string | null>(null);
+
+  const handleResendWelcome = async (c: Candidate): Promise<string> => {
+    setResending(c.id);
+    try {
+      // Issues a FRESH temporary password, re-fences the account (password
+      // change forced at next login), kills stale sessions, and re-sends the
+      // welcome email. When SMTP fails, the server surfaces the password for
+      // manual handover.
+      const res = await fetch("/api/hrm/v2/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: c.email, action: "resend-welcome" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (data.data?.emailSent === true) {
+          setCandidates((prev) => prev.map((x) => x.id === c.id ? { ...x, inviteEmailed: true } : x));
+          return `Fresh welcome email sent to ${c.email}.`;
+        }
+        if (data.data?.tempPassword) {
+          return `Email failed. Temporary password (hand over manually): ${data.data.tempPassword}`;
+        }
+        return data.data?.message || "Done.";
+      }
+      return data.error || `Failed (HTTP ${res.status}).`;
+    } catch (err: any) {
+      console.error("Failed to resend welcome email:", err);
+      return err?.message || "Network error — please retry.";
+    } finally {
+      setResending(null);
+    }
+  };
+
   const handleReject = async (id: string) => {
     try {
       await fetch("/api/hrm/v2/onboarding", {
@@ -227,6 +261,8 @@ export default function HrAdminOnboardingPage() {
                     onReveal={revealField}
                     onApprove={handleApprove}
                     onReject={handleReject}
+                    onResend={handleResendWelcome}
+                    resending={resending === c.id}
                   />
                 ))}
               </tbody>
@@ -246,6 +282,8 @@ function FragmentRow({
   onReveal,
   onApprove,
   onReject,
+  onResend,
+  resending,
 }: {
   candidate: Candidate;
   expanded: boolean;
@@ -254,7 +292,16 @@ function FragmentRow({
   onReveal: (c: Candidate, field: string) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onResend: (c: Candidate) => Promise<string>;
+  resending: boolean;
 }) {
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
+
+  const doResend = async () => {
+    const msg = await onResend(c);
+    setResendMsg(msg);
+    setTimeout(() => setResendMsg(null), 12000);
+  };
   const d = c.onboardingDetails;
   const hasDetails = d && Object.values(d).some((v) => typeof v === "string" && v);
 
@@ -300,7 +347,22 @@ function FragmentRow({
             </div>
           )}
           {c.status === "rejected_48h" && <span className="text-[10px] text-red-500 font-bold">48h Resubmission Active</span>}
-          {c.status === "approved" && <span className="text-[10px] text-slate-400">Finalized</span>}
+          {c.status === "approved" && (
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                size="sm"
+                variant={c.inviteEmailed ? "outline" : "default"}
+                onClick={doResend}
+                disabled={resending}
+                className={`text-[10px] font-bold h-7 px-2 ${c.inviteEmailed ? "" : "bg-amber-500 hover:bg-amber-600 text-white"}`}
+                title={c.inviteEmailed ? "Send a fresh temporary password email again" : "Welcome email failed — resend with a fresh temporary password"}
+              >
+                {resending ? <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-0.5" />}
+                Resend welcome email
+              </Button>
+              {resendMsg && <span className="text-[10px] text-slate-500 dark:text-slate-400 text-right max-w-[220px] break-words" role="status">{resendMsg}</span>}
+            </div>
+          )}
         </td>
       </tr>
       {expanded && hasDetails && (

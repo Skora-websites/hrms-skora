@@ -596,6 +596,88 @@ export async function PATCH(request: NextRequest) {
         return forceResponse;
       }
 
+      case "resend-welcome": {
+        // Recovery path for a failed onboarding welcome email: mint a FRESH
+        // temporary password, re-fence the account, kill stale sessions, and
+        // re-send the welcome email. HR/CEO-level only — this replaces the
+        // credential on someone else's account.
+        if (!["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+          return NextResponse.json(
+            { error: "Forbidden: only HR admins and the CEO can resend welcome credentials" },
+            { status: 403 }
+          );
+        }
+        if (!(await canActOnTarget(auth.role, auth.userId, targetUser))) {
+          return NextResponse.json(
+            { error: "Forbidden: you cannot manage this account" },
+            { status: 403 }
+          );
+        }
+        // Refuse silently locking out a working account: once the employee
+        // has activated (mustChangePassword cleared), the old flow no longer
+        // applies — send them through password reset instead.
+        if ((targetUser as any).mustChangePassword !== true) {
+          return NextResponse.json(
+            { error: "Account is already activated. Use the reset-password action to issue a new credential." },
+            { status: 409 }
+          );
+        }
+        const resendDb = await getDb();
+        if (!resendDb) return NextResponse.json({ error: "Database not available" }, { status: 503 });
+
+        // Fresh readable temporary password — same generator as approval.
+        const resendAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        const resendRand = crypto.randomBytes(8);
+        const resendTempPassword = "Skora-" + Array.from(resendRand, (b) => resendAlphabet[b % resendAlphabet.length]).join("");
+        // E2E hook parity with the approval path: when set, the email
+        // advertises this fixed password and the stored hash must match it.
+        const resendEffective = process.env.E2E_TEST_PASSWORD || resendTempPassword;
+        const resendHash = await bcrypt.hash(resendEffective, 12);
+        await hrmUsersService.update(resolvedUserId, { passwordHash: resendHash, mustChangePassword: true } as any);
+        // The previous temporary password (and any half-started session) dies here.
+        try {
+          await resendDb.collection("sessions").deleteMany({ userId: resolvedUserId });
+        } catch { /* best-effort */ }
+
+        const { sendWelcomeEmail } = await import("@/lib/email");
+        const resendSent = await sendWelcomeEmail({
+          to: targetUserEmail,
+          employeeName: (targetUser as any).displayName,
+          tempPassword: resendTempPassword,
+          employeeCode: (targetUser as any).employeeCode,
+        }).catch(() => false);
+
+        // Both outcomes are credential events and get audit-logged.
+        await recordAuditLog({
+          tenantId,
+          action: "reset_password",
+          performedById: auth.userId,
+          performedByName: body._performedByName || "HR Admin",
+          targetUserId: resolvedUserId,
+          targetUserEmail,
+          details: resendSent
+            ? "Welcome email re-sent with a fresh temporary password"
+            : "Welcome email re-send FAILED — fresh temporary password generated but not delivered",
+        });
+
+        if (resendSent) {
+          return NextResponse.json({
+            data: { success: true, emailSent: true, message: `Fresh welcome email sent to ${targetUserEmail}` },
+          });
+        }
+        // Same contract as the approval path: when the email cannot be
+        // delivered, surface the EFFECTIVE password to the approver for
+        // manual handover (it is forced to change at first login).
+        return NextResponse.json({
+          data: {
+            success: true,
+            emailSent: false,
+            tempPassword: resendEffective,
+            message: "Email could not be sent — hand over this temporary password to the employee manually.",
+          },
+        });
+      }
+
       default: {
         // Legacy PATCH support (direct field updates)
         if (userId !== auth.userId && !(await canActOnTarget(auth.role, auth.userId, targetUser))) {
