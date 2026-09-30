@@ -16,9 +16,11 @@
 - **CEO edit modal: reporting manager sirf employees ke liye** — CEO jab kisi **employee** ka
   edit box khole to reporting-manager dropdown dikhta hai (active managers ki list); **manager**
   ke edit box mein wo option hidden hai (managers ke paas apna reporting manager nahi hota).
-  Save order bhi fix: role change pehle apply hota hai, phir explicit RM choice — data kabhi
-  conflict nahi karta. Server-side guard bhi: koi bhi API se manager ko reporting manager
-  assign karne ki koshish kare to 400 ("Managers cannot be assigned a reporting manager").
+  Employee Directory table rows mein bhi ab Edit action hai (wahi modal khulta hai) — pehle
+  sirf roster rows se edit ho sakta tha. Save order bhi fix: role change pehle apply hota hai,
+  phir explicit RM choice — data kabhi conflict nahi karta. Server-side guard bhi: koi bhi API
+  se manager ko reporting manager assign karne ki koshish kare to 400 ("Managers cannot be
+  assigned a reporting manager").
 - **Security scan fixes (full HRMS rescan)** —
   - **Settings namespace isolation** — Koi bhi non-employee user kisi bhi role ke system
     settings overwrite kar sakta tha (manager → `role=super_admin` office-rules takeover).

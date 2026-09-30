@@ -311,6 +311,23 @@ export default function SuperadminOverviewPage() {
 
   // ── Handlers ──
 
+  // Employee Directory rows share the same edit modal as the HR/Manager
+  // roster — map the directory row into a UserRecord first.
+  const openEditFromEmployee = (emp: Employee) => {
+    const rec: UserRecord = {
+      id: emp.id || emp._id || "",
+      displayName: emp.displayName || emp.name,
+      email: emp.email,
+      role: emp.role || "employee",
+      status: emp.status || "active",
+      reportingManager: emp.reportingManager,
+    };
+    setEditingUser(rec);
+    setEditRole(rec.role);
+    setEditStatus(rec.status);
+    setEditReportingManager(rec.role === "manager" ? "" : rec.reportingManager || "");
+  };
+
   const handleEditUser = async () => {
     if (!editingUser) return;
     setSaving(true);
@@ -776,7 +793,8 @@ export default function SuperadminOverviewPage() {
                   <th className="pb-3 pr-4">Designation</th>
                   <th className="pb-3 pr-4">Code</th>
                   <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3">Manager</th>
+                  <th className="pb-3 pr-4">Manager</th>
+                  <th className="pb-3">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/5">
@@ -805,8 +823,16 @@ export default function SuperadminOverviewPage() {
                     <td className="py-3 pr-4">
                       <StatusChip status={emp.status || "active"} />
                     </td>
-                    <td className="py-3 text-slate-500 dark:text-slate-400">
+                    <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">
                       {emp.reportingManager || "—"}
+                    </td>
+                    <td className="py-3">
+                      <button
+                        onClick={() => openEditFromEmployee(emp)}
+                        className="text-[10px] font-bold text-primary hover:underline"
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
