@@ -2,6 +2,36 @@
 
 ## September 2026
 
+### 🗑️ Offer-letter removal + CEO RM assignment + security scan fixes (naya batch)
+
+- **Offer-letter feature poore project se REMOVED** — Offer letters ab kahin nahi hain:
+  - Onboarding approval pe ab **sirf welcome email** (email + temporary password + employee
+    code) jaati hai — offer-letter PDF generation, password-protected attachment aur uska
+    email block (`sendOfferLetterEmail`) poora hata diya. `lib/offer-letter-pdf.ts`,
+    `lib/email.ts` ka offer-letter sender, API routes (`offer-letters`, `download`,
+    `password`, `offer-letter-settings`), CEO/employee pages (`/hrms/superadmin/offer-letters`,
+    `offer-letter-settings`, `/hrms/employee/offer-letters`) aur employee nav entry — sab deleted.
+  - Removed routes ab 404 dete hain (regression tests added: har offer-letter endpoint 404).
+  - Employee profile upload options mein "Offer Letter / Contract" → "Employment Contract / Agreement".
+- **CEO edit modal: reporting manager sirf employees ke liye** — CEO jab kisi **employee** ka
+  edit box khole to reporting-manager dropdown dikhta hai (active managers ki list); **manager**
+  ke edit box mein wo option hidden hai (managers ke paas apna reporting manager nahi hota).
+  Save order bhi fix: role change pehle apply hota hai, phir explicit RM choice — data kabhi
+  conflict nahi karta. Server-side guard bhi: koi bhi API se manager ko reporting manager
+  assign karne ki koshish kare to 400 ("Managers cannot be assigned a reporting manager").
+- **Security scan fixes (full HRMS rescan)** —
+  - **Settings namespace isolation** — Koi bhi non-employee user kisi bhi role ke system
+    settings overwrite kar sakta tha (manager → `role=super_admin` office-rules takeover).
+    Ab caller sirf apne role-namespace mein likh sakta hai (admin→hr_admin legacy exception,
+    HR-level users system-policy document maintain kar sakte hain); GET bhi employees/managers
+    ko unke namespace tak seemit.
+  - **Audit logs ab HR-level only** — API pehle managers ko bhi org-wide audit history de
+    deta tha (nav mein CEO-only tha, par API open thi). Ab 403 for managers.
+  - **Upload document listing HR-level only** — `/api/upload/list` "admins only" comment ke
+    bawajood managers ko sab onboarding documents enumerate karne deta tha. Ab 403.
+- **Tests** — 246 tests / 16 files green (naye: manager-RM 400 guard, employee-RM assignment,
+  offer-letter 404 regressions; audit-regressions ka pehla test removal-check se replace).
+
 ### 🔁 Role-change, punch-out aur dashboard fixes (batch — naya)
 
 CEO ke role-change aur daily-flow issues ka poora batch:

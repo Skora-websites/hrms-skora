@@ -7,8 +7,9 @@ export async function GET(req: NextRequest) {
     const auth = await requireAuth();
     if (isErrorResponse(auth)) return auth;
 
-    // Only admins can list all onboarding documents
-    if (auth.role === "employee") {
+    // HR-level only: this lists ALL onboarding documents org-wide, which is
+    // an HR/CEO capability — managers must not enumerate them.
+    if (!["super_admin", "hr_admin", "admin"].includes(auth.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

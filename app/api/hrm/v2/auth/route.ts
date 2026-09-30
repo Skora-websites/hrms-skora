@@ -70,7 +70,7 @@ function parseOnboardingDetails(input: any, department: string, email: string): 
   };
 
   // Only the email address is mandatory — it identifies the account the
-  // credentials and offer letter are mailed to. Every other field (name,
+  // credentials are mailed to. Every other field (name,
   // designation, joining date, mobile, UAN, PAN, Aadhar, addresses,
   // nominee, bank) is optional; HR completes statutory details during
   // onboarding. Format checks still run when a value IS provided.

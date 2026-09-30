@@ -76,7 +76,6 @@ interface DeliveryEntry {
 
 const KIND_LABELS: Record<string, string> = {
   welcome_email: "Welcome email",
-  offer_letter: "Offer letter",
   payslip: "Payslip",
   password_reset: "Password reset",
   experience_letter: "Experience letter",

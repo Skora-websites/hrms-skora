@@ -19,7 +19,7 @@ import { generateEmployeeCode } from "@/lib/hrm/employee-code";
 import { hrmUsersService } from "@/lib/hrm/firestore";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendWelcomeEmail, sendOfferLetterEmail } from "@/lib/email";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   try {
@@ -207,69 +207,6 @@ export async function POST(request: NextRequest) {
             emailSent = await sendWelcomeEmail({
               to: email, employeeName: displayName, tempPassword, employeeCode,
             }).catch(() => false);
-
-            // ── Offer letter goes out with the welcome email, never from a
-            // dashboard flow: the account is created, so generate the
-            // password-protected PDF, mark it released, and email it as an
-            // attachment (password stated in the email body). Only attempted
-            // when SMTP works (welcome email succeeded), so CI/dev runs stay
-            // fast and deterministic.
-            if (emailSent && db) {
-              try {
-                const already = await db.collection("offerLetters").findOne({ employeeEmail: email });
-                if (!already) {
-                  const alphabetPdf = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-                  const randPdf = crypto.randomBytes(8);
-                  const pdfPassword = Array.from(randPdf, (b) => alphabetPdf[b % alphabetPdf.length]).join("");
-                  const formPdf = ((taskDoc as any)?.onboardingDetails || {}) as Record<string, unknown>;
-                  const salaryNum = Number(formPdf.annualCtc);
-                  const insertedLetter = await db.collection("offerLetters").insertOne({
-                    userId: String((newUser as any).id),
-                    employeeName: displayName,
-                    employeeEmail: email,
-                    department: requestedDepartment || (formPdf.department as string) || "",
-                    designation: (formPdf.designation as string) || "",
-                    salary: Number.isFinite(salaryNum) && salaryNum > 0 ? salaryNum : null,
-                    joiningDate: (formPdf.dateOfJoining as string) || null,
-                    status: "released",
-                    password: pdfPassword,
-                    createdAt: new Date(),
-                    releasedAt: new Date(),
-                    updatedAt: new Date(),
-                  });
-                  const letterRow = await db.collection("offerLetters").findOne({ _id: insertedLetter.insertedId });
-                  if (letterRow) {
-                    const settingsDoc2 = await db.collection("settings").findOne({ key: "offer_letter_config" });
-                    const cfg2 = settingsDoc2?.settings || {};
-                    const { generateOfferLetterPdf } = await import("@/lib/offer-letter-pdf");
-                    const pdf = await generateOfferLetterPdf(letterRow as any, cfg2);
-                    const origin2 = process.env.NEXT_PUBLIC_SITE_URL || "https://hrms-skora.vercel.app";
-                    await sendOfferLetterEmail({
-                      to: email,
-                      employeeName: displayName,
-                      salary: (letterRow as any).salary || undefined,
-                      joiningDate: (letterRow as any).joiningDate || undefined,
-                      companyName: cfg2.companyName || "SKORA",
-                      companyTagline: cfg2.companyTagline || "",
-                      signatoryName: cfg2.signatoryName || "Vishal Srivastava",
-                      signatoryTitle: cfg2.signatoryTitle || "",
-                      downloadUrl: origin2 + "/hrms/employee/offer-letters",
-                      pdfAttachment: { filename: pdf.filename, content: pdf.buffer, password: pdf.password },
-                      subjectTemplate: cfg2.emailSubject || undefined,
-                      bodyTemplate: cfg2.emailBody || undefined,
-                    }).catch(() => false);
-                    await db.collection("offerLetters").updateOne(
-                      { _id: insertedLetter.insertedId },
-                      { $set: { emailSent: true, emailSentAt: new Date() } }
-                    ).catch(() => undefined);
-                  }
-                }
-              } catch (offerErr) {
-                // Offer-letter delivery is best-effort at approval time; the
-                // CEO can still review/release from the dashboard.
-                console.warn("Offer letter email on approval failed:", offerErr);
-              }
-            }
 
             // ── Auto-assign a reporting manager: prefer an active manager in
             // the requested department, otherwise the first active manager.

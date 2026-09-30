@@ -4,8 +4,8 @@
  * Covers:
  *  - Attendance GET returns AUX state (auxState/auxHistory/workLocation) —
  *    previously stripped, which froze the punch card UI.
- *  - Offer-letter requests are unlimited — previously blocked while a
- *    pending request existed.
+ *  - Offer-letter endpoints are fully removed (404) — the feature no longer
+ *    exists; onboarding approval sends only the welcome email.
  *
  * Requires the dev server (TEST_BASE_URL, default http://localhost:3000).
  */
@@ -51,19 +51,9 @@ describe("Attendance AUX fields (fix 6)", () => {
   });
 });
 
-describe("Offer letter requests (fix 5)", () => {
-  it("second request while one is pending is NOT rejected with the old block", async () => {
-    if (!employeeUserId) return;
-    const first = await api.post("/api/hrm/v2/offer-letters", {}, { user: EMPLOYEE });
-    const second = await api.post("/api/hrm/v2/offer-letters", {}, { user: EMPLOYEE });
-
-    // Either both succeed (new + reminder) or the DB is unavailable — but the
-    // old "already have a pending request" 400 must never reappear.
-    if (first.ok || second.ok) {
-      expect(second.status).not.toBe(400);
-    }
-    if (second.error) {
-      expect(second.error).not.toContain("already have a pending");
-    }
+describe("Offer-letter removal", () => {
+  it("offer-letter endpoints no longer exist (404, not 400/403)", async () => {
+    const res = await api.post("/api/hrm/v2/offer-letters", {}, { user: EMPLOYEE });
+    expect([404, 405]).toContain(res.status);
   });
 });

@@ -50,7 +50,7 @@ export async function GET() {
  * POST /api/hrm/v2/email/test
  * CEO/HR-only: sends a test email using the configured SMTP (or Resend)
  * transport so the connection can be verified without waiting for a
- * real offer-letter event.
+ * real auto-email event (welcome credentials, payslips, resets).
  *
  * Body (all optional): { to?: string }
  */
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         <p style="color:#555;font-size:13px;">Transport: <code>${transport.provider}</code> via <code>${transport.host || "resend-api"}</code><br/>
         From: <code>${transport.from}</code><br/>
         Sent at: ${sentAt.toISOString()}</p>
-        <p style="color:#555;font-size:13px;">If you received this in your inbox, offer letters and password-reset emails will deliver correctly.</p>
+        <p style="color:#555;font-size:13px;">If you received this in your inbox, welcome, payslip and password-reset emails will deliver correctly.</p>
       </div>`,
     });
 

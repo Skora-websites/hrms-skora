@@ -177,8 +177,8 @@ export default function SuperadminOverviewPage() {
   const [liveEmployees, setLiveEmployees] = useState<LiveStatusEmployee[]>([]);
   const [liveSummary, setLiveSummary] = useState<LiveStatusSummary | null>(null);
   const [liveSearch, setLiveSearch] = useState("");
-  // Offer-letter management removed from the CEO dashboard — letters are
-  // generated and emailed automatically at onboarding approval.
+  // Offer-letter feature removed entirely — no generation, no email, no
+  // management UI anywhere in the product.
   const [pendingOnboarding, setPendingOnboarding] = useState<OnboardingCandidate[]>([]);
 
   const [liveFilter, setLiveFilter] = useState<"all" | "punched_in" | "in_office" | "remote" | "on_break" | "in_meeting" | "active" | "punched_out" | "absent">("all");
@@ -256,7 +256,7 @@ export default function SuperadminOverviewPage() {
     if (!isSilent) setLoading(false);
   };
 
-  // ── Offer Letter & Onboarding Counts ──
+  // ── Onboarding Counts ──
   const pendingOnbCount = pendingOnboarding.length;
 
   // ── Computed KPIs ──
@@ -315,18 +315,10 @@ export default function SuperadminOverviewPage() {
     if (!editingUser) return;
     setSaving(true);
     try {
-      // CEO-controlled reporting structure: only sent when changed.
-      if (editReportingManager !== (editingUser.reportingManager || "")) {
-        await fetch("/api/hrm/v2/users", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: editingUser.id,
-            action: "profile",
-            reportingManager: editReportingManager,
-          }),
-        });
-      }
+      // Role change first so the server-side promotion/demotion semantics
+      // (manager → reporting manager cleared; demotion → auto-assigned) run
+      // BEFORE any explicit reporting-manager choice below — the CEO's final
+      // pick always wins and the stored value never fights the role logic.
       if (editRole && editRole !== editingUser.role) {
         await fetch("/api/hrm/v2/users", {
           method: "PATCH",
@@ -335,6 +327,20 @@ export default function SuperadminOverviewPage() {
             userId: editingUser.id,
             action: "role",
             role: editRole,
+          }),
+        });
+      }
+      // CEO-controlled reporting structure: only sent when changed, and only
+      // for non-managers — managers ARE management, so they carry no reporting
+      // manager of their own (the dropdown is hidden for them too).
+      if (editRole !== "manager" && editReportingManager !== (editingUser.reportingManager || "")) {
+        await fetch("/api/hrm/v2/users", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: editingUser.id,
+            action: "profile",
+            reportingManager: editReportingManager,
           }),
         });
       }
@@ -1077,7 +1083,9 @@ export default function SuperadminOverviewPage() {
                         setEditingUser(u);
                         setEditRole(u.role);
                         setEditStatus(u.status);
-                        setEditReportingManager(u.reportingManager || "");
+                        // Managers never carry a reporting manager — keep the
+                        // field empty so no stale value is accidentally saved.
+                        setEditReportingManager(u.role === "manager" ? "" : u.reportingManager || "");
                       }}
                       onDelete={() => setConfirmDelete(u)}
                     />
@@ -1105,7 +1113,9 @@ export default function SuperadminOverviewPage() {
                         setEditingUser(u);
                         setEditRole(u.role);
                         setEditStatus(u.status);
-                        setEditReportingManager(u.reportingManager || "");
+                        // Managers never carry a reporting manager — keep the
+                        // field empty so no stale value is accidentally saved.
+                        setEditReportingManager(u.role === "manager" ? "" : u.reportingManager || "");
                       }}
                       onDelete={() => setConfirmDelete(u)}
                     />
@@ -1221,9 +1231,13 @@ export default function SuperadminOverviewPage() {
                   <option value="employee">Employee</option>
                 </select>
               </div>
-              {/* CEO-only: assign the reporting manager. Dropdown of actual
-                  manager accounts — keeps the stored name consistent with
-                  what the manager sees and what leave-approval scoping uses. */}
+              {/* CEO-only: assign the reporting manager — employees only.
+                  Managers are hidden this option entirely: they ARE management
+                  and carry no reporting manager (the role action clears it on
+                  promotion). Dropdown of actual manager accounts keeps the
+                  stored name consistent with what the manager sees and what
+                  leave-approval scoping uses. */}
+              {editRole !== "manager" && (
               <div>
                 <label className="block text-xs font-semibold mb-1">
                   Reporting Manager <span className="text-[9px] font-bold text-primary uppercase">(CEO only)</span>
@@ -1245,6 +1259,7 @@ export default function SuperadminOverviewPage() {
                 </select>
                 <p className="text-[10px] text-slate-400 mt-1">Assign the employee&apos;s reporting manager. Changes reflect on their profile immediately.</p>
               </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold mb-1">
                   Status

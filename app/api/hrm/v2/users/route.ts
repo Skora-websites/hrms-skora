@@ -513,6 +513,16 @@ export async function PATCH(request: NextRequest) {
               { status: 400 }
             );
           }
+          // Consistency guard: managers have no reporting manager of their own
+          // (the CEO edit modal hides the field for them). Reject any direct
+          // API attempt to attach one, so dashboards and approval scoping can
+          // never disagree with the role model.
+          if (String(normalizeRole((targetUser as any).role)) === "manager" && reportingManager !== undefined) {
+            return NextResponse.json(
+              { error: "Managers cannot be assigned a reporting manager" },
+              { status: 400 }
+            );
+          }
           if (reportingManager !== undefined) updateData.reportingManager = reportingManager;
           if (managerEmail !== undefined) updateData.managerEmail = managerEmail;
         }

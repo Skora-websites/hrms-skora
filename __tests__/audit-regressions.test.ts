@@ -5,7 +5,8 @@
  * the seeded accounts from scripts/seed-test-accounts.js.
  *
  * Covered fixes:
- *  1. Offer-letter PDF password is no longer leaked in a download header.
+ *  1. Offer-letter feature is fully removed — every offer-letter route 404s
+ *     instead of leaking or half-serving the old flow.
  *  2. Manager IDOR on GET /api/hrm/v2/employees?id=<other-employee>.
  *  3. Manager cannot delete employees (DELETE /api/hrm/v2/employees).
  *  4. Manager IDOR on GET /api/hrm/v2/documents?id=<other-user-doc>.
@@ -97,21 +98,18 @@ beforeAll(async () => {
 }, 90_000);
 
 describe("Audit regression suite", () => {
-  it("1. offer-letter download does NOT leak the PDF password in headers", async () => {
+  it("1. offer-letter feature is fully removed (all routes 404)", async () => {
+    // GET list, POST request and download must all be gone — a 404, not a
+    // half-alive flow. (Removed Sept 2026: offer letters are no longer part
+    // of the product; only the welcome email with credentials is sent.)
+    const list = await api.get("/api/hrm/v2/offer-letters", { user: empA });
+    expect([404, 405]).toContain(list.status);
     const post = await api.post("/api/hrm/v2/offer-letters", {}, { user: empA });
-    if (!post.ok) return; // offer-letter flow unavailable in this environment
-    const id = post.data?.id as string | undefined;
-    if (!id) return;
-
-    const patch = await api.patch(`/api/hrm/v2/offer-letters?id=${id}`, { status: "released" }, { user: superAdmin });
-    if (!patch.ok) return;
-
-    const res = await fetch(`${BASE}/api/hrm/v2/offer-letters/download?id=${id}`, {
+    expect([404, 405]).toContain(post.status);
+    const dl = await fetch(`${BASE}/api/hrm/v2/offer-letters/download?id=x`, {
       headers: { Cookie: empA.sessionCookie ?? "" },
     });
-    expect(res.status).toBe(200);
-    expect(res.headers.get("x-offer-letter-password")).toBeNull();
-    expect(res.headers.get("content-type")).toContain("application/pdf");
+    expect([404, 405]).toContain(dl.status);
   });
 
   it("2. manager cannot GET a stranger's employee record by id (IDOR fixed)", async () => {

@@ -2,15 +2,14 @@ import "server-only";
 import { getDb } from "@/lib/db/mongo-helper";
 
 /**
- * HR-visible delivery history for outbound emails (welcome, offer letter,
- * payslip, reset, experience letter). Written best-effort from lib/email.ts
+ * HR-visible delivery history for outbound emails (welcome, payslip, reset,
+ * experience letter). Written best-effort from lib/email.ts
  * so a logging failure can never break an actual email send. The collection
  * holds only metadata — never passwords, PDF bytes, or email bodies.
  */
 export interface EmailDeliveryEntry {
   kind:
     | "welcome_email"
-    | "offer_letter"
     | "payslip"
     | "password_reset"
     | "experience_letter"
@@ -28,7 +27,6 @@ export interface EmailDeliveryEntry {
 function classifyKind(subject: string): EmailDeliveryEntry["kind"] {
   const s = subject.toLowerCase();
   if (s.includes("welcome") || s.includes("temporary password") || s.includes("account request")) return "welcome_email";
-  if (s.includes("offer letter")) return "offer_letter";
   if (s.includes("payslip") || s.includes("salary slip")) return "payslip";
   if (s.includes("reset your") || s.includes("password reset")) return "password_reset";
   if (s.includes("experience letter") || s.includes("relieving")) return "experience_letter";

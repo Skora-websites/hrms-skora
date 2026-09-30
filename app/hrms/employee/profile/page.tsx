@@ -38,7 +38,7 @@ const DOC_TYPES = [
   "Passport / Visa",
   "PAN Card",
   "Educational Degree Certificate",
-  "Offer Letter / Contract",
+  "Employment Contract / Agreement",
 ];
 
 export default function EmployeeProfilePage() {

@@ -100,7 +100,7 @@ export function MailStatusCard() {
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Email / SMTP Status</h2>
             <p className="text-[10px] text-slate-500 dark:text-slate-400">
-              Offer letters, payslips and password resets all use this transport
+              Welcome emails, payslips and password resets all use this transport
             </p>
           </div>
         </div>
@@ -150,8 +150,7 @@ export function MailStatusCard() {
                   : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
               }`}
             >
-              {status.autoEmailOnRelease ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-              Auto-email on release: {status.autoEmailOnRelease ? "ON" : "OFF"}
+              {status.autoEmailOnRelease ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}                Auto-email on release events: {status.autoEmailOnRelease ? "ON" : "OFF"}
             </span>
             {status.lastTestEmail && (
               <span

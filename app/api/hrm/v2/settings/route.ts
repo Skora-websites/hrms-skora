@@ -13,15 +13,28 @@ export async function POST(request: NextRequest) {
     if (!role || !settings) {
       return NextResponse.json({ error: "Missing role or settings" }, { status: 400 });
     }
+    const targetRole = String(role);
 
-    // Employees can only update their own settings
-    if (auth.role === "employee" && userId !== auth.userId) {
-      return NextResponse.json({ error: "Forbidden: you can only update your own settings" }, { status: 403 });
-    }
+    // Namespace isolation — a caller may only write settings for its own role
+    // namespace, with two narrow, legacy-UI exceptions:
+    //   - admin users operate the shared HR-admin settings page (role=hr_admin);
+    //   - HR-level users maintain the system-wide policy document
+    //     (role=super_admin + userId="system" — office rules, notifications).
+    // Without this, any manager could overwrite the super_admin namespace and
+    // silently re-configure office rules for the whole company.
+    const ownNamespace = targetRole === auth.role || (auth.role === "admin" && targetRole === "hr_admin");
+    const systemPolicy =
+      targetRole === "super_admin" &&
+      userId === "system" &&
+      ["super_admin", "hr_admin", "admin"].includes(auth.role);
 
-    // Only admins can update system-wide settings (non-user-specific)
-    if (!userId && auth.role === "employee") {
-      return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+    // Employees can only update their own employee-namespace settings
+    if (auth.role === "employee") {
+      if (userId !== auth.userId || targetRole !== "employee") {
+        return NextResponse.json({ error: "Forbidden: you can only update your own settings" }, { status: 403 });
+      }
+    } else if (!ownNamespace && !systemPolicy) {
+      return NextResponse.json({ error: "Forbidden: you can only update settings for your own role" }, { status: 403 });
     }
 
     const db = await getDb();
@@ -103,9 +116,15 @@ export async function GET(request: NextRequest) {
     if (!role) {
       return NextResponse.json({ error: "Missing role parameter" }, { status: 400 });
     }
+    const targetRole = String(role);
 
-    // Employees can only read their own settings
-    if (auth.role === "employee" && userId !== auth.userId) {
+    // Namespace isolation on reads: employees only their own employee
+    // namespace, managers only the manager namespace. HR-level staff
+    // (CEO/HR/admin) administer system-wide configuration and may read any.
+    if (auth.role === "employee" && (targetRole !== "employee" || userId !== auth.userId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (auth.role === "manager" && targetRole !== "manager") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

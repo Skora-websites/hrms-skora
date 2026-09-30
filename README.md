@@ -63,7 +63,6 @@ Next.js App Router  ──  middleware.ts (Edge: session fencing per role)
 | **Attendance** | `/api/hrm/v2/attendance` | Punch in/out, live status dashboard, regularization requests, office-rules engine (`lib/utils/attendance-rules.ts`) |
 | **Leave** | `/api/hrm/v2/leaves` | Apply (balance check, overlap guard, future-date validation), approve/reject with balance deduction, auto leave types + balances seeded |
 | **Payroll** | `/api/hrm/v2/payroll` | Payslip generation (PDF via `pdfkit`), my-payslips for employees |
-| **Offer Letters** | `/api/hrm/v2/offer-letters` | Employee requests → CEO reviews → releases encrypted PDF (password modal) |
 | **Tasks & Tickets** | `/api/hrm/v2/tasks`, `/tickets` | Kanban boards, manager assignment |
 | **Performance** | `/api/hrm/v2/performance` | Goals, reviews |
 | **Documents** | `/api/hrm/v2/documents` | Upload + verification workflow |
@@ -76,7 +75,7 @@ Next.js App Router  ──  middleware.ts (Edge: session fencing per role)
 
 ## 4. Data Collections (MongoDB `hrms` DB)
 
-`users`, `sessions`, `employee_onboarding_tasks`, `leave_types`, `leave_balances`, `leave_balance_history`, `leave_requests`, `attendance`, `attendance_stats`, `regularization_requests`, `notifications`, `audit_logs`, `offerletters`, `payroll_transactions`, `employee_salaries`, `tasks`, `tickets`, `documents`, `performance_goals`, `password_resets`.
+`users`, `sessions`, `employee_onboarding_tasks`, `leave_types`, `leave_balances`, `leave_balance_history`, `leave_requests`, `attendance`, `attendance_stats`, `regularization_requests`, `notifications`, `audit_logs`, `payroll_transactions`, `employee_salaries`, `tasks`, `tickets`, `documents`, `performance_goals`, `password_resets`.
 
 ---
 

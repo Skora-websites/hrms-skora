@@ -2,10 +2,9 @@
  * Shared browser download helper.
  *
  * Fetches an authenticated endpoint that returns file bytes and triggers a
- * real file download via a temporary object URL. Used by both the employee
- * hub offer-letter card and the My Offer Letters page so the behavior is
- * identical everywhere (the old window.open + document.write path corrupted
- * PDF bytes).
+ * real file download via a temporary object URL (payslips, documents, etc.)
+ * so the behavior is identical everywhere (the old window.open +
+ * document.write path corrupted PDF bytes).
  */
 export async function downloadFileFromUrl(
   url: string,

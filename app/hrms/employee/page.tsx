@@ -285,8 +285,8 @@ export default function EmployeeDashboardPage() {
         )}
       </div>
 
-      {/* Offer-letter UI removed — offer letters are email-only (read-only
-          status lives at /hrms/employee/offer-letters). */}
+      {/* Offer-letter UI removed — new joiners receive only the welcome
+          email with credentials at onboarding approval. */}
 
       {/* ═══ Bottom Grid: Leave Balance + Recent Payslips ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

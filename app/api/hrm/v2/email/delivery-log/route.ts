@@ -3,8 +3,8 @@ import { requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { getEmailDeliveryLog } from "@/lib/email-delivery-log";
 
 /**
- * HR/CEO-visible outbound email delivery history (welcome, offer letter,
- * payslip, reset). GET-only, admin-gated, metadata rows only.
+ * HR/CEO-visible outbound email delivery history (welcome, payslip, reset).
+ * GET-only, admin-gated, metadata rows only.
  */
 export async function GET(request: NextRequest) {
   try {

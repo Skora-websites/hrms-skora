@@ -29,8 +29,8 @@ const MONTHS = [
  *  - experience letters (PDF via the exit experience-letter endpoint)
  *  - uploaded verification documents (stored data URLs)
  *
- * Offer letters are intentionally NOT listed here — they are email-only
- * (password-protected PDF sent by HR at release time).
+ * Offer letters are no longer part of the product — the offer-letter flow was
+ * removed entirely (Sept 2026); new joiners receive only the welcome email.
  */
 export async function GET() {
   try {
