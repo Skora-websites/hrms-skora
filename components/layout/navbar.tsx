@@ -50,12 +50,6 @@ const ROLE_SETTINGS: Record<string, string> = {
   manager: "/hrms/manager/settings",
   employee: "/hrms/employee/settings",
 };
-const ROLE_TASKS: Record<string, string> = {
-  super_admin: "/hrms/superadmin",
-  hr_admin: "/hrms/tasks",
-  manager: "/hrms/tasks",
-  employee: "/hrms/employee/my-tasks",
-};
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -388,10 +382,6 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
           <DropdownMenuItem onClick={() => router.push(ROLE_SETTINGS[user?.role || "employee"] || "/hrms/employee/settings")}>
             <Settings className="mr-2 h-4 w-4" />
             Settings
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(ROLE_TASKS[user?.role || "employee"] || "/hrms/employee/my-tasks")}>
-            <ClipboardList className="mr-2 h-4 w-4" />
-            My Tasks
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

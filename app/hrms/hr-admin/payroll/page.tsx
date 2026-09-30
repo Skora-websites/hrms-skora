@@ -338,7 +338,7 @@ export default function HrAdminPayrollPage() {
         </div>
         <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
           <Users className="h-5 w-5 text-yellow-500 mb-2" />
-          <p className="text-2xl font-extrabold">{latestRun?.totalEmployees || 14}</p>
+          <p className="text-2xl font-extrabold">{latestRun?.totalEmployees ?? 0}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Active Employees on Payroll</p>
         </div>
       </div>

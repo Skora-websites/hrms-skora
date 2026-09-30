@@ -2,6 +2,16 @@
 
 ## September 2026
 
+### 🐛 Payroll "14 employees" bug + dropdown se My Tasks finally removed
+
+- **Payroll page ka fake "14" fix** — Active Employees on Payroll card pe hardcoded fallback
+  `|| 14` laga tha, isliye jab DB mein koi payroll run hi nahi tha tab bhi "14" dikh raha tha.
+  Ab real value: koi run nahi → **0** dikhata hai. Baaki KPI cards (₹0, 0 runs, READY) already
+  correct the.
+- **Navbar dropdown se "My Tasks" entry remove** — pichhli baar sirf sidebar se hataya gaya tha,
+  user dropdown (My Account) mein abhi bhi bacha hua tha. Ab CEO/HR/sabke dropdown mein sirf
+  **My Profile → Settings → Sign Out** hai. Unused `ROLE_TASKS` routing map bhi hata diya.
+
 ### 📝 Register form designations + Employee hub se My Tasks removed
 
 - **Register form mein Designation dropdown** — pehle free-text input tha (koi bhi type kar
