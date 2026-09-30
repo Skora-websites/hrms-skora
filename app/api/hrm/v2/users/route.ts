@@ -612,7 +612,7 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
         }
         const newHash = await bcrypt.hash(np, 12);
-        await hrmUsersService.update(resolvedUserId, { passwordHash: newHash, mustChangePassword: false } as any);
+        await hrmUsersService.update(resolvedUserId, { passwordHash: newHash, mustChangePassword: false, passwordChangedAt: new Date() } as any);
         // Invalidate every OTHER session for this user — a password change must
         // not leave a stolen session (or an old device) still authenticated.
         try {
@@ -660,7 +660,7 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: fnpPolicyError }, { status: 400 });
         }
         const forceHash = await bcrypt.hash(fnp, 12);
-        await hrmUsersService.update(resolvedUserId, { passwordHash: forceHash, mustChangePassword: false } as any);
+        await hrmUsersService.update(resolvedUserId, { passwordHash: forceHash, mustChangePassword: false, passwordChangedAt: new Date() } as any);
         // Invalidate every OTHER session for this user — a temporary password
         // shared over email must not leave a second live session behind.
         try {

@@ -42,12 +42,28 @@ export async function GET(request: NextRequest) {
 
     const user = await db.collection("users").findOne(
       { _id: new (await import("mongodb")).ObjectId(session.userId) },
-      { projection: { mustChangePassword: 1, role: 1 } }
+      { projection: { mustChangePassword: 1, role: 1, passwordChangedAt: 1, passwordUpdatedAt: 1 } }
     );
+
+    // Password-expiry fence: when the CEO configures a non-zero expiry,
+    // passwords older than that many days force the change-password page too.
+    // Admins/CEO are exempt (they manage the policy, and an expired CEO
+    // password could otherwise lock the whole org out).
+    let expired = false;
+    const changedAtRaw = (user as any)?.passwordChangedAt ?? (user as any)?.passwordUpdatedAt;
+    const changedAt = changedAtRaw ? new Date(changedAtRaw) : null;
+    if (changedAt && !isNaN(changedAt.getTime())) {
+      const doc = await db.collection("settings").findOne({ key: "super_admin" });
+      const expiryDays = Number(doc?.settings?.passwordExpiryDays ?? 0);
+      if (Number.isFinite(expiryDays) && expiryDays > 0) {
+        const ageDays = (Date.now() - changedAt.getTime()) / 86_400_000;
+        expired = ageDays >= expiryDays && (user as any)?.role !== "super_admin";
+      }
+    }
 
     return NextResponse.json(
       {
-        required: (user as any)?.mustChangePassword === true,
+        required: (user as any)?.mustChangePassword === true || expired,
         role: (user as any)?.role ?? null,
       },
       { headers: { "Cache-Control": "no-store" } }

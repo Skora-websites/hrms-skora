@@ -230,7 +230,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       const resetRecord = await db.collection("password_resets").findOne({ userId: resetUser.id, tenantId: "default", token, expiresAt: { $gt: new Date() } });
       if (!resetRecord) return badRequest("Invalid or expired reset token");
       const newHash = await bcrypt.hash(newPassword, 12);
-      await hrmUsersService.update(resetUser.id, { passwordHash: newHash, mustChangePassword: false } as any);
+      await hrmUsersService.update(resetUser.id, { passwordHash: newHash, mustChangePassword: false, passwordChangedAt: new Date() } as any);
       await db.collection("password_resets").deleteOne({ userId: resetUser.id, tenantId: "default" });
       return NextResponse.json({ data: { message: "Password has been reset successfully" } });
     }

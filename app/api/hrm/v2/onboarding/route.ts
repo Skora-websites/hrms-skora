@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
               firstName: displayName.split(" ")[0] || displayName, lastName: displayName.split(" ").slice(1).join(" "),
               role: "employee", status: "active", loginStatus: "enabled", passwordHash,
               tenantId: "default", onboardingStatus: "approved", employeeCode,
-              mustChangePassword: true,
+              mustChangePassword: true, passwordChangedAt: new Date(),
               ...(requestedDepartment ? { department: requestedDepartment, departmentName: requestedDepartment } : {}),
               ...(form.designation ? { designationName: form.designation } : {}),
               ...(isoToDate(form.dateOfJoining) ? { joiningDate: isoToDate(form.dateOfJoining) } : {}),

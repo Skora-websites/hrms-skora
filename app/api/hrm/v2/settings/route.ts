@@ -69,34 +69,62 @@ export async function POST(request: NextRequest) {
     );
 
     
-    // Retroactive update: if workDays changed, update today's attendance for affected employees
-    if (settings.officeRules?.workDays) {
+    // Retroactive update: re-evaluate TODAY's already-created attendance rows
+    // so rule changes apply immediately, not just to future punch-ins.
+    //  - workDays: non-work day → week_off; restored work day → status
+    //    re-derived from the punch-in time (no longer stuck at week_off).
+    //  - lateAfter: PRESENT/LATE boundary re-derived from the punch-in time.
+    // Managers/HR rows are covered too (role filter removed — everyone's
+    // attendance follows the same office rules).
+    if (settings.officeRules?.workDays || settings.officeRules?.lateAfter !== undefined) {
       try {
+        const { calculateAttendanceStatus } = await import("@/lib/db/attendance");
         const today = new Date();
         const dateStr = today.getFullYear() + "-" +
           String(today.getMonth() + 1).padStart(2, "0") + "-" +
           String(today.getDate()).padStart(2, "0");
         const dayOfWeek = today.getDay();
-        const isWorkDay = settings.officeRules.workDays.includes(dayOfWeek);
+        const workDays: number[] = Array.isArray(settings.officeRules.workDays)
+          ? settings.officeRules.workDays
+          : [];
+        const isWorkDay = workDays.length === 0 || workDays.includes(dayOfWeek);
+        const lateAfter = typeof settings.officeRules.lateAfter === "number"
+          ? settings.officeRules.lateAfter
+          : 10.5;
 
-        // Get all employees
-        const users = await db.collection("users").find({ role: "employee" }).toArray();
-        for (const emp of users) {
-          const existing = await db.collection("attendance").findOne({
-            userId: emp._id?.toString() || emp.email,
-            date: dateStr,
-          });
-          if (existing && !isWorkDay) {
-            // Today was a work day, now it's not — mark as week_off
-            await db.collection("attendance").updateOne(
-              { _id: existing._id },
-              { $set: { status: "week_off", workdayType: "weekly_off", updatedAt: new Date() } }
-            );
-          } else if (!existing && isWorkDay) {
-            // Today was off, now it's a work day — create absent record so they can punch in
-            // (No record = they'll create one when they punch in, so no action needed)
+        const todaysRows = await db.collection("attendance").find({ date: dateStr }).toArray();
+        let updated = 0;
+        for (const rec of todaysRows) {
+          if (!rec || !rec._id) continue;
+          const punchIn: string | undefined = rec.punchInTime;
+          if (!isWorkDay) {
+            // Today became a non-work day → mark week_off (keep punch data).
+            if (rec.status !== "week_off" && rec.workdayType !== "weekly_off") {
+              await db.collection("attendance").updateOne(
+                { _id: rec._id },
+                { $set: { status: "week_off", workdayType: "weekly_off", updatedAt: new Date() } }
+              );
+              updated++;
+            }
+          } else if (punchIn) {
+            // Work day with a punch-in → re-derive status from the punch time.
+            const newStatus = calculateAttendanceStatus(new Date(punchIn), lateAfter);
+            if (rec.status && rec.status !== newStatus && rec.status !== "week_off") {
+              await db.collection("attendance").updateOne(
+                { _id: rec._id },
+                { $set: { status: newStatus, workdayType: "regular", updatedAt: new Date() } }
+              );
+              updated++;
+            } else if (rec.status === "week_off") {
+              await db.collection("attendance").updateOne(
+                { _id: rec._id },
+                { $set: { status: newStatus, workdayType: "regular", updatedAt: new Date() } }
+              );
+              updated++;
+            }
           }
         }
+        if (updated > 0) console.log(`[settings] retroactively re-evaluated ${updated} attendance row(s) for ${dateStr}`);
       } catch (err) {
         console.warn("Retroactive attendance update failed:", err);
       }

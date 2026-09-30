@@ -216,10 +216,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     if (policyError) return badRequest(policyError);
   }
   const passwordHash = await bcrypt.hash(password, 12);
+  const passwordChangedAt = new Date();
 
   const employee = await createEmployee(tenantId, {
     email: normalizedEmail,
     passwordHash,
+    passwordChangedAt,
     password,
     displayName,
     name: displayName,

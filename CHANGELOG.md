@@ -2,6 +2,28 @@
 
 ## September 2026
 
+### ✅ Settings page 100% functional + retroactive rules + Live Ops E2E
+
+- **Settings page se saare dead fields hata diye** — "Enforce 2FA" toggle (koi 2FA system hai
+  hi nahi), "API Key Management" section (payment keys kahin use nahi hote) aur "MongoDB
+  Directory Sync" section (simulated progress bar tha — "Sync Now" kuch nahi karta tha).
+  Ab har field ya to sach mein enforce hoti hai ya page pe hai hi nahi.
+- **Password Expiry ab functional** — har password set/change par `passwordChangedAt` stamp
+  lagta hai (change-password, force-change, reset, HR create, onboarding approval). Fence-check
+  endpoint expiry calculate karta hai: N din purana password → middleware force-change page pe
+  bhej deta hai (CEO account exempt). Default 0 = never.
+- **Retroactive office rules** — CEO office rules save kare to AAJ ke already-created attendance
+  rows turant re-evaluate hote hain: `lateAfter` change → PRESENT/LATE boundary punch-in time se
+  re-derive; work-day add/remove → week_off ↔ LATE/PRESENT restore. Pehle changes sirf future
+  punch-ins pe lagte the. Managers/HR rows bhi ab cover (pehle sirf employees).
+- **Live Ops E2E verified (real browser + real DB)** — Dummy employee se poora flow chala:
+  punch-in (13:59 IST → LATE sahi) → On Break (summary onBreak=1, badge duration tick) →
+  Meeting (inMeeting=1, auxSince reset) → early-departure punch-out (DB mein `earlyDeparture`
+  stamp + CEO ko notification, workHours=1.03 correct). CEO Live Ops pe naya "X / Y shown"
+  counter (All=1 shown, Punched Out=1/1, Absent=0/1, garbage search=0/1) aur AUX-duration
+  badges verify hue. Test data cleanup ho gaya.
+
+### ⚙️ Settings jo ab sach mein kaam karte hain + Live dashboard improvements
 ### ⚙️ Settings jo ab sach mein kaam karte hain + Live dashboard improvements
 
 CEO Settings page ka poora audit + fixes — ab jo dikhta hai wo sach mein reflect hota hai:
