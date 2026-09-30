@@ -7,6 +7,8 @@ import { CheckCircle2, AlertCircle, Send, Loader2, User, Briefcase, Users, Landm
 import { Button } from "@/components/ui/button";
 
 // Reference-form departments (SKORA HRMS onboarding form).
+// MUST stay in sync with ONBOARDING_DEPARTMENTS in app/api/hrm/v2/auth/route.ts —
+// the server rejects any department outside this list.
 const DEPARTMENTS = [
   "Software Development",
   "Quality Assurance",
@@ -16,6 +18,23 @@ const DEPARTMENTS = [
   "Mobile Technology",
   "HR Recruitment",
 ];
+
+// Standard designations grouped by department so the CEO's approval-time
+// auto-assignment and directory always show a clean, consistent title.
+const DESIGNATIONS: Record<string, string[]> = {
+  "Software Development": ["Software Engineer Trainee", "Software Engineer", "Senior Software Engineer", "Team Lead", "Technical Lead"],
+  "Quality Assurance": ["QA Trainee", "QA Engineer", "Senior QA Engineer", "QA Lead"],
+  "IT Infrastructure": ["IT Support Executive", "System Administrator", "Network Engineer", "IT Manager"],
+  "DevOps": ["DevOps Engineer", "Senior DevOps Engineer", "Cloud Architect"],
+  "Technical Support": ["Support Executive", "Senior Support Executive", "Support Lead"],
+  "Mobile Technology": ["Mobile App Trainee", "Mobile App Developer", "Senior Mobile App Developer"],
+  "HR Recruitment": ["HR Executive", "HR Recruiter", "Senior HR Executive", "HR Manager"],
+};
+
+/** Designation options for a department (falls back to a generic list). */
+function designationsFor(department: string): string[] {
+  return DESIGNATIONS[department] || ["Executive", "Senior Executive", "Lead", "Manager"];
+}
 
 const YES_NO = ["Yes", "No"] as const;
 
@@ -243,7 +262,12 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className={labelCls}>Designation</label>
-                  <input className={inputCls} value={form.designation} onChange={(e) => set("designation")(e.target.value)} />
+                  <select className={inputCls} value={form.designation} onChange={(e) => set("designation")(e.target.value)}>
+                    <option value="">Select designation…</option>
+                    {designationsFor(form.department).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className={labelCls}>Date of Joining (DOJ)</label>
@@ -251,7 +275,16 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className={labelCls}>Department *</label>
-                  <select className={inputCls} value={form.department} onChange={(e) => set("department")(e.target.value)}>
+                  <select className={inputCls} value={form.department} onChange={(e) => {
+                    const dept = e.target.value;
+                    setForm((p) => ({
+                      ...p,
+                      department: dept,
+                      // Reset designation when the department changes — the
+                      // previously chosen title may not exist in the new list.
+                      designation: designationsFor(dept).includes(p.designation) ? p.designation : "",
+                    }));
+                  }}>
                     {DEPARTMENTS.map((d) => (
                       <option key={d} value={d}>{d}</option>
                     ))}

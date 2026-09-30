@@ -10,8 +10,6 @@ import {
   Upload,
   Users,
   TrendingUp,
-  Play,
-  Briefcase,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -37,13 +35,6 @@ interface OnboardingTask {
   reportingManager?: string;
 }
 
-interface Task {
-  _id: string;
-  title: string;
-  status: string;
-  priority?: string;
-}
-
 interface Payslip {
   _id: string;
   month: string;
@@ -64,7 +55,6 @@ interface LeaveBalance {
 export default function EmployeeDashboardPage() {
   const { user } = useAuth();
   const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [payslips, setPayslips] = useState<Payslip[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,9 +68,8 @@ export default function EmployeeDashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [onbRes, taskRes, payRes, leaveRes] = await Promise.all([
+      const [onbRes, payRes, leaveRes] = await Promise.all([
         fetch(`/api/hrm/v2/onboarding?employeeTasks=true&userId=${user?.id || "me"}`),
-        fetch(`/api/hrm/v2/tasks?assigneeId=${user?.id || ""}`),
         fetch("/api/hrm/v2/payroll/mypayslips"),
         fetch(`/api/hrm/v2/leaves?type=balances&userId=${user?.id || "me"}`),
       ]);
@@ -88,7 +77,6 @@ export default function EmployeeDashboardPage() {
         const onbData = (await onbRes.json()).data;
         setOnboardingTasks(Array.isArray(onbData) ? onbData : []);
       }
-      if (taskRes.ok) setTasks((await taskRes.json()).data || []);
       if (payRes.ok) setPayslips((await payRes.json()).data || []);
       if (leaveRes.ok) setLeaveBalances((await leaveRes.json()).data || []);
     } catch { /* empty */ }
@@ -244,46 +232,13 @@ export default function EmployeeDashboardPage() {
 
       {/* ═══ Quick Stats ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <QuickStat icon={<ClipboardList className="h-5 w-5 text-primary" />} label="My Tasks" value={tasks.length} />
         <QuickStat icon={<CalendarDays className="h-5 w-5 text-orange-500" />} label="Leave Balance" value={leaveBalances.reduce((s, b) => s + b.remaining, 0)} suffix="days" />
         <QuickStat icon={<DollarSign className="h-5 w-5 text-emerald-500" />} label="Payslips" value={payslips.length} />
         <QuickStat icon={<TrendingUp className="h-5 w-5 text-blue-500" />} label="Performance" value="—" />
       </div>
 
-      {/* ═══ My Tasks ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-base flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-primary" /> My Tasks Board
-          </h3>
-          <a href="/hrms/employee/my-tasks" className="text-xs text-primary hover:underline font-semibold">
-            Open Kanban →
-          </a>
-        </div>
-        {tasks.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
-            No tasks assigned yet. Check back later.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {tasks.slice(0, 5).map((t) => (
-              <div key={t._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 text-xs">
-                <div className="flex items-center gap-3">
-                  <TaskStatusDot status={t.status} />
-                  <div>
-                    <span className="font-semibold text-slate-900 dark:text-white">{t.title}</span>
-                  </div>
-                </div>
-                <a href="/hrms/employee/timesheet">
-                  <Button size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 text-[10px] gap-1 font-bold">
-                    <Play className="h-3 w-3" /> Log Time
-                  </Button>
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* My Tasks board removed from the hub — tasks remain available on
+          /hrms/employee/my-tasks and the manager dashboards. */}
 
       {/* Offer-letter UI removed — new joiners receive only the welcome
           email with credentials at onboarding approval. */}
@@ -362,13 +317,4 @@ function QuickStat({ icon, label, value, suffix }: { icon: React.ReactNode; labe
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
     </div>
   );
-}
-
-function TaskStatusDot({ status }: { status: string }) {
-  const color = status === "DONE" || status === "COMPLETED"
-    ? "bg-emerald-500"
-    : status === "IN_PROGRESS"
-    ? "bg-yellow-500"
-    : "bg-slate-300 dark:bg-slate-600";
-  return <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color}`} />;
 }

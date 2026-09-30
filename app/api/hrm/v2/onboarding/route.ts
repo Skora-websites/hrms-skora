@@ -197,7 +197,9 @@ export async function POST(request: NextRequest) {
               tenantId: "default", onboardingStatus: "approved", employeeCode,
               mustChangePassword: true, passwordChangedAt: new Date(),
               ...(requestedDepartment ? { department: requestedDepartment, departmentName: requestedDepartment } : {}),
-              ...(form.designation ? { designationName: form.designation } : {}),
+              // Set both spellings — some views read `designation`, others
+              // `designationName`; keeping them identical avoids empties.
+              ...(form.designation ? { designation: form.designation, designationName: form.designation } : {}),
               ...(isoToDate(form.dateOfJoining) ? { joiningDate: isoToDate(form.dateOfJoining) } : {}),
               ...(form.mobileNo ? { phone: form.mobileNo } : {}),
               ...(form.presentAddress ? { address: form.presentAddress } : {}),

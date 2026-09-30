@@ -2,6 +2,24 @@
 
 ## September 2026
 
+### 📝 Register form designations + Employee hub se My Tasks removed
+
+- **Register form mein Designation dropdown** — pehle free-text input tha (koi bhi type kar
+  leta). Ab department-wise standard designations ka dropdown hai: department choose karo →
+  uske relevant titles dikhte hain (e.g. QA → QA Trainee/QA Engineer/Senior QA Engineer/QA
+  Lead). Department change karne par designation reset hoti hai (purani title naye department
+  mein valid nahi). Server approval pe `designation` + `designationName` dono set karta hai.
+- **Department→designation approval flow verified end-to-end** — Register (QA + QA Engineer)
+  → CEO queue mein department + designation dikhe → approve → user record mein department
+  "Quality Assurance" aur designation "QA Engineer" correct copy hua. Ek chhota bug bhi fix:
+  users API `designationName` return nahi karta tha (SAFE fields mein nahi tha) — ab dono
+  spellings jaate hain.
+- **Employee Hub se My Tasks board + "My Tasks" stat remove** — Naye joiners ke paas tasks
+  hote hi nahi, khali board confusing tha (CEO ko apne hub pe bhi yahi dikhta tha). Hub ab
+  focused hai: punch card, leave balances, payslips, documents. Tasks ab bhi
+  /hrms/employee/my-tasks aur manager dashboards pe available hain.
+
+### ⏰ Punch-in anytime clarification + go-live fresh slate
 ### ⏰ Punch-in anytime clarification + go-live fresh slate
 
 - **Punch-in anytime — verified end-to-end** — Report se pehle punch karna allowed hai (9:45

@@ -40,7 +40,7 @@ async function autoAssignReportingManager(db: NonNullable<Awaited<ReturnType<typ
 const SAFE_USER_FIELDS = [
   "id", "_id", "email", "displayName", "firstName", "lastName",
   "role", "status", "loginStatus", "department", "departmentName",
-  "designation", "employeeCode", "joiningDate", "phone", "employmentType",
+  "designation", "designationName", "employeeCode", "joiningDate", "phone", "employmentType",
   "reportingManager", "image", "address", "emergencyContact",
   "emergencyPhone", "tenantId", "mustChangePassword", "createdAt", "updatedAt",
 ] as const;
