@@ -2,6 +2,22 @@
 
 ## September 2026
 
+### ⏰ Punch-in anytime clarification + go-live fresh slate
+
+- **Punch-in anytime — verified end-to-end** — Report se pehle punch karna allowed hai (9:45
+  AM aane par 10:00 ka wait nahi). Office start/end sirf PRESENT/LATE/HALF_DAY label derive
+  karte hain aur display ke liye hain, punch kabhi block nahi hota. E2E proof: officeStart
+  temporarily 11 PM set karke employee ne current time pe punch-in kiya (success, status
+  derived) aur phir punch-out bhi — sab DB mein sahi record hua. Misleading copy bhi fix:
+  Settings ka "Employees can punch in after this time" ab "punch is never blocked" bolti hai,
+  punch-card subtitle mein "Punch-in allowed anytime" add kiya.
+- **Go-live fresh slate** — Production DB se saara test/dummy residue clear: E2E test
+  employees, unke attendance rows, onboarding tasks, notifications, sessions, audit logs.
+  Backup `scripts/backup-fresh-slate.json` mein. Ab DB mein sirf CEO account + system config
+  (office rules, leave types, salary components, pay groups, employee-code counter) hai —
+  kal se real employees register ho sakte hain.
+
+### ✅ Settings page 100% functional + retroactive rules + Live Ops E2E
 ### ✅ Settings page 100% functional + retroactive rules + Live Ops E2E
 
 - **Settings page se saare dead fields hata diye** — "Enforce 2FA" toggle (koi 2FA system hai

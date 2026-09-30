@@ -223,7 +223,7 @@ export function AttendancePunchCard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
         <div>
           <h3 className="font-bold text-base flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Daily Attendance &amp; Shift Punch</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Office: <strong>{formatHour(rules.officeStart)} – {formatHour(rules.officeEnd)}</strong> · Late after <strong>{formatHour(rules.lateAfter)}</strong></p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Office: <strong>{formatHour(rules.officeStart)} – {formatHour(rules.officeEnd)}</strong> · Late after <strong>{formatHour(rules.lateAfter)}</strong> · Punch-in allowed anytime</p>
         </div>
         {punchedIn && !punchedOut && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full">LIVE</span>}
       </div>

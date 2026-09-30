@@ -191,7 +191,7 @@ export default function SuperAdminSettingsPage() {
           <div className="space-y-4">
             <SettingsRow
               label="Office Start Time"
-              description="Employees can punch in after this time"
+              description="Displayed shift start. Employees can punch in ANY time before this — the punch is never blocked; only the PRESENT/LATE label is derived from these hours."
             >
               <select
                 value={officeStart}
