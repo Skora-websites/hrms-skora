@@ -309,6 +309,31 @@ export default function SuperadminOverviewPage() {
       )
     : pendingLeaves;
 
+  // Live Operations list: single source of truth for the filter+search result
+  // so the "X / Y shown" counter always matches the cards below.
+  const filteredLiveEmployees = liveEmployees
+    .filter((emp) => {
+      if (liveFilter === "punched_in") return emp.status === "punched_in";
+      if (liveFilter === "in_office") return emp.status === "punched_in" && emp.workLocation === "office";
+      if (liveFilter === "remote") return emp.status === "punched_in" && emp.workLocation === "remote";
+      if (liveFilter === "on_break") return emp.status === "punched_in" && emp.auxState === "on_break";
+      if (liveFilter === "in_meeting") return emp.status === "punched_in" && emp.auxState === "meeting";
+      if (liveFilter === "active") return emp.status === "punched_in" && emp.auxState === "active";
+      if (liveFilter === "punched_out") return emp.status === "punched_out";
+      if (liveFilter === "absent") return emp.status === "absent";
+      return true;
+    })
+    .filter((emp) => {
+      if (!liveSearch) return true;
+      const q = liveSearch.toLowerCase();
+      return (
+        emp.name.toLowerCase().includes(q) ||
+        emp.email.toLowerCase().includes(q) ||
+        emp.employeeCode.toLowerCase().includes(q) ||
+        emp.department.toLowerCase().includes(q)
+      );
+    });
+
   // ── Handlers ──
 
   // Employee Directory rows share the same edit modal as the HR/Manager
@@ -595,31 +620,22 @@ export default function SuperadminOverviewPage() {
           </div>
         )}
 
+        {/* Filter result counter */}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+            {liveFilter === "all" && !liveSearch ? (
+              <span>{liveEmployees.length} shown</span>
+            ) : (
+              <span>
+                {filteredLiveEmployees.length} / {liveEmployees.length} shown
+              </span>
+            )}
+          </p>
+        </div>
+
         {/* Live Employee Cards */}
         <div className="space-y-2">
-          {liveEmployees
-            .filter((emp) => {
-              if (liveFilter === "punched_in") return emp.status === "punched_in";
-              if (liveFilter === "in_office") return emp.status === "punched_in" && emp.workLocation === "office";
-              if (liveFilter === "remote") return emp.status === "punched_in" && emp.workLocation === "remote";
-              if (liveFilter === "on_break") return emp.status === "punched_in" && emp.auxState === "on_break";
-              if (liveFilter === "in_meeting") return emp.status === "punched_in" && emp.auxState === "meeting";
-              if (liveFilter === "active") return emp.status === "punched_in" && emp.auxState === "active";
-              if (liveFilter === "punched_out") return emp.status === "punched_out";
-              if (liveFilter === "absent") return emp.status === "absent";
-              return true;
-            })
-            .filter((emp) => {
-              if (!liveSearch) return true;
-              const q = liveSearch.toLowerCase();
-              return (
-                emp.name.toLowerCase().includes(q) ||
-                emp.email.toLowerCase().includes(q) ||
-                emp.employeeCode.toLowerCase().includes(q) ||
-                emp.department.toLowerCase().includes(q)
-              );
-            })
-            .map((emp) => {
+          {filteredLiveEmployees.map((emp) => {
               const auxColor =
                 emp.auxState === "on_break"
                   ? "amber"
@@ -683,7 +699,8 @@ export default function SuperadminOverviewPage() {
                           {emp.workLocation === "remote" ? "🏠 Remote" : "🏢 Office"}
                         </span>
 
-                        {/* AUX Badge */}
+                        {/* AUX Badge — with "since N min" highlight for the
+                            current state (auxSince = open period start time) */}
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                           auxColor === "amber"
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30"
@@ -692,6 +709,13 @@ export default function SuperadminOverviewPage() {
                             : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"
                         }`}>
                           {auxLabel}
+                          {(() => {
+                            if (!emp.auxSince) return null;
+                            const mins = Math.max(0, Math.round((Date.now() - new Date(emp.auxSince).getTime()) / 60000));
+                            if (mins < 1) return null;
+                            const dur = mins >= 60 ? ` ${Math.floor(mins / 60)}h ${mins % 60}m` : ` ${mins}m`;
+                            return <span className="opacity-80 font-mono">·{dur}</span>;
+                          })()}
                         </span>
 
                         {/* Effective Hours */}

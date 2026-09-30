@@ -10,6 +10,7 @@ import { sendPasswordResetEmail } from "@/lib/email";
 import type { OnboardingDetails } from "@/types";
 import crypto from "crypto";
 import { checkRateLimit, recordFailure, clearFailures, clientIp, type RateLimitOptions } from "@/lib/rate-limit";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 
 // Abuse guards: registration spam and password-reset email bombing.
 const REGISTER_LIMITS: RateLimitOptions = { max: 10, windowMs: 15 * 60 * 1000, lockoutMs: 15 * 60 * 1000 };
@@ -220,7 +221,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     case "confirm-reset-password": {
       const { token, email: resetEmail, newPassword } = body;
       if (!token || !resetEmail || !newPassword) return badRequest("Token, email, and new password are required");
-      if (newPassword.length < 8) return badRequest("Password must be at least 8 characters");
+      const resetPolicyError = await validatePasswordPolicy(newPassword);
+      if (resetPolicyError) return badRequest(resetPolicyError);
       const resetUser = await hrmUsersService.findOneInTenant("default", "email", resetEmail.toLowerCase().trim());
       if (!resetUser) return badRequest("Invalid reset request");
       const db = await getDb();
@@ -238,7 +240,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       if (isErrorResponse(auth)) return auth;
       const { email, password, displayName, role: rawRole } = body;
       if (!email || !password) return badRequest("Email and password are required");
-      if (password.length < 8) return badRequest("Password must be at least 8 characters");
+      const createPolicyError = await validatePasswordPolicy(password);
+      if (createPolicyError) return badRequest(createPolicyError);
       const requestedRole = rawRole ? normalizeRole(rawRole) : "employee";
       if (auth.role !== "super_admin" && requestedRole !== "employee") return forbidden("Only Super Admin can create privileged accounts");
       const normalizedEmail = email.toLowerCase().trim();

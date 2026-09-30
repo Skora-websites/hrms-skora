@@ -34,15 +34,70 @@ export function istHour(date = new Date()): number {
   return h + m / 60;
 }
 
-// Status thresholds in IST: on/before 10:30 PRESENT, by 14:30 LATE, else HALF_DAY.
-export function calculateAttendanceStatus(punchInDate: Date): AttendanceStatus {
+// Status thresholds in IST: on/before office lateAfter PRESENT, by 14:30 LATE, else HALF_DAY.
+// lateAfter comes from the CEO's office-rules settings when available (cached 60s);
+// otherwise the historical 10:30 default applies.
+export function calculateAttendanceStatus(punchInDate: Date, lateAfterHours = 10.5): AttendanceStatus {
   const h = istHour(punchInDate);
-  if (h <= 10.5) return "PRESENT";
+  if (h <= lateAfterHours) return "PRESENT";
   if (h <= 14.5) return "LATE";
   return "HALF_DAY";
 }
-export function calculateEffectiveWorkMinutes(auxHistory: AUXEntry[]): number { let totalMs = 0; const now = Date.now(); for (const e of auxHistory) if (e.state === "active" || e.state === "meeting") totalMs += new Date(e.endTime || new Date(now).toISOString()).getTime() - new Date(e.startTime).getTime(); return Math.max(0, Math.round(totalMs / 60000)); }
+
+export interface OfficeRulesLite {
+  lateAfter?: number;
+  requiredHours?: number;
+  breakAllowance?: number;
+  meetingCountsAsWork?: boolean;
+}
+
+let officeRulesCache: { rules: OfficeRulesLite; at: number } | null = null;
+
+/**
+ * Read the CEO-configured office rules (settings → super_admin, legacy
+ * super_admin_system) for attendance computation. Cached 60s; falls back to
+ * an empty object (→ built-in defaults) when unset or the DB is unreachable.
+ */
+export async function getOfficeRules(): Promise<OfficeRulesLite> {
+  const now = Date.now();
+  if (officeRulesCache && now - officeRulesCache.at < 60_000) return officeRulesCache.rules;
+  let rules: OfficeRulesLite = {};
+  try {
+    const db = await getDb();
+    if (db) {
+      // Current key wins; the stale legacy doc is only a fallback.
+      let doc = await db.collection("settings").findOne({ key: "super_admin" });
+      if (!doc?.settings?.officeRules) {
+        const legacy = await db.collection("settings").findOne({ key: "super_admin_system" });
+        if (legacy?.settings?.officeRules) doc = legacy;
+      }
+      const or = doc?.settings?.officeRules;
+      if (or && typeof or === "object") {
+        rules = {
+          lateAfter: typeof or.lateAfter === "number" ? or.lateAfter : undefined,
+          requiredHours: typeof or.requiredHours === "number" ? or.requiredHours : undefined,
+          breakAllowance: typeof or.breakAllowance === "number" ? or.breakAllowance : undefined,
+          meetingCountsAsWork: typeof or.meetingCountsAsWork === "boolean" ? or.meetingCountsAsWork : undefined,
+        };
+      }
+    }
+  } catch {
+    // fall back to defaults
+  }
+  officeRulesCache = { rules, at: now };
+  return rules;
+}
+export function calculateEffectiveWorkMinutes(auxHistory: AUXEntry[], meetingCountsAsWork = true): number { let totalMs = 0; const now = Date.now(); for (const e of auxHistory) if (e.state === "active" || (meetingCountsAsWork && e.state === "meeting")) totalMs += new Date(e.endTime || new Date(now).toISOString()).getTime() - new Date(e.startTime).getTime(); return Math.max(0, Math.round(totalMs / 60000)); }
 export function calculateBreakMinutes(auxHistory: AUXEntry[]): number { let totalMs = 0; const now = Date.now(); for (const e of auxHistory) if (e.state === "on_break") totalMs += new Date(e.endTime || new Date(now).toISOString()).getTime() - new Date(e.startTime).getTime(); return Math.max(0, Math.round(totalMs / 60000)); }
+
+/**
+ * Net effective minutes after the break-allowance rule: breaks beyond the
+ * configured daily allowance deduct from effective work time.
+ */
+export function applyBreakAllowance(effectiveWorkMinutes: number, totalBreakMinutes: number, breakAllowanceMinutes = 30): number {
+  const excess = Math.max(0, totalBreakMinutes - breakAllowanceMinutes);
+  return Math.max(0, effectiveWorkMinutes - excess);
+}
 
 /** Normalize any auxHistory shape coming back from Mongo (dates may be strings or Date objects). */
 function normalizeAuxHistory(raw: unknown): AUXEntry[] {
@@ -104,7 +159,8 @@ export async function recordPunchIn(data: { userId: string; userName: string; us
   const now = new Date();
   const nowISO = now.toISOString();
   const todayStr = attendanceDateKey(now);
-  const rawStatus = data.status || calculateAttendanceStatus(now);
+  const rules = await getOfficeRules();
+  const rawStatus = data.status || calculateAttendanceStatus(now, rules.lateAfter ?? 10.5);
   // "WFH" was never part of AttendanceStatus; GPS-free punches are time-only.
   const status = (rawStatus === "WFH" || rawStatus === "HALF_DAY" ? rawStatus === "WFH" ? "PRESENT" : rawStatus : rawStatus) as AttendanceStatus;
 
@@ -119,7 +175,7 @@ export async function recordPunchIn(data: { userId: string; userName: string; us
         punchInTime: nowISO,
         workHours: 0,
         auxState: "active" as AUXState,
-        status: calculateAttendanceStatus(now),
+        status: calculateAttendanceStatus(now, rules.lateAfter ?? 10.5),
         ...(existing.tenantId ? {} : { tenantId: data.tenantId || "default" }),
       },
       $unset: { punchOutTime: "" },
@@ -166,8 +222,10 @@ export async function recordAUXChange(userId: string, dateStr: string, newState:
   const history: AUXEntry[] = normalizeAuxHistory(record.auxHistory);
   const updatedHistory = history.map((e: AUXEntry, i: number) => i === history.length - 1 && !e.endTime ? { ...e, endTime: nowISO } : e);
   updatedHistory.push({ state: newState, startTime: nowISO });
-  const effectiveWorkMinutes = calculateEffectiveWorkMinutes(updatedHistory);
+  const rules2 = await getOfficeRules();
+  const rawEffective = calculateEffectiveWorkMinutes(updatedHistory, rules2.meetingCountsAsWork ?? true);
   const totalBreakMinutes = calculateBreakMinutes(updatedHistory);
+  const effectiveWorkMinutes = applyBreakAllowance(rawEffective, totalBreakMinutes, rules2.breakAllowance ?? 30);
   const updated = await db.collection("attendance").findOneAndUpdate(
     { _id: record._id },
     { $set: { auxState: newState, auxHistory: updatedHistory, totalBreakMinutes, effectiveWorkMinutes } },
@@ -185,8 +243,10 @@ export async function recordPunchOut(userId: string, dateStr: string, tenantId =
   if (!record) return false;
   let history: AUXEntry[] = normalizeAuxHistory(record.auxHistory);
   history = history.map((e: AUXEntry, i: number) => i === history.length - 1 && !e.endTime ? { ...e, endTime: nowISO } : e);
-  const effectiveWorkMinutes = calculateEffectiveWorkMinutes(history);
+  const rules3 = await getOfficeRules();
+  const rawEffective3 = calculateEffectiveWorkMinutes(history, rules3.meetingCountsAsWork ?? true);
   const totalBreakMinutes = calculateBreakMinutes(history);
+  const effectiveWorkMinutes = applyBreakAllowance(rawEffective3, totalBreakMinutes, rules3.breakAllowance ?? 30);
   const workHours = Number((effectiveWorkMinutes / 60).toFixed(2));
   const res = await db.collection("attendance").updateOne({ _id: record._id }, { $set: { punchOutTime: nowISO, workHours, auxState: "active", auxHistory: history, totalBreakMinutes, effectiveWorkMinutes } });
   return res.modifiedCount > 0;

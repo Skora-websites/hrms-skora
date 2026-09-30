@@ -15,6 +15,7 @@ import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 import { normalizeRole } from "@/lib/rbac";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 
 // Create/delete of employees is an HR function. requireAdmin alone would let
 // any manager create or remove accounts, so these are gated explicitly.
@@ -208,7 +209,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const displayName = rawName;
   // Default credentials are intentionally weak — force a password change on
   // first login instead of leaving a permanent shared password in place.
+  // HR-provided passwords must satisfy the CEO's minimum-length policy.
   const password = body.password || "Employee@123";
+  if (body.password) {
+    const policyError = await validatePasswordPolicy(body.password);
+    if (policyError) return badRequest(policyError);
+  }
   const passwordHash = await bcrypt.hash(password, 12);
 
   const employee = await createEmployee(tenantId, {

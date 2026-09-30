@@ -40,12 +40,29 @@ export default function SuperAdminSettingsPage() {
   const [lateAfter, setLateAfter] = useState(10.5);
   const [requiredHours, setRequiredHours] = useState(8.5);
   const [breakAllowance, setBreakAllowance] = useState(30);
+  const [meetingCountsAsWork, setMeetingCountsAsWork] = useState(true);
   const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri
 
   const toggleWorkDay = (day: number) => {
     setWorkDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
     );
+  };
+
+  // 24h decimal hour (e.g. 10.5) → clean 12h label ("10:30 AM"). Fixes the
+  // old "10.5:00 AM"-style labels produced by naive string interpolation.
+  const fmtHour = (h: number) => {
+    const hour24 = Math.floor(h);
+    const minutes = Math.round((h - hour24) * 60);
+    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+    const ampm = hour24 >= 12 ? "PM" : "AM";
+    return `${hour12}:${String(minutes).padStart(2, "0")} ${ampm}`;
+  };
+  // Decimal hour → "1h 30m"-style duration label.
+  const fmtDuration = (h: number) => {
+    const hours = Math.floor(h);
+    const minutes = Math.round((h - hours) * 60);
+    return `${hours}h ${String(minutes).padStart(2, "0")}m`;
   };
 
   // Load existing settings on mount
@@ -61,8 +78,9 @@ export default function SuperAdminSettingsPage() {
               if (s.officeRules.officeStart !== undefined) setOfficeStart(s.officeRules.officeStart);
               if (s.officeRules.officeEnd !== undefined) setOfficeEnd(s.officeRules.officeEnd);
               if (s.officeRules.lateAfter !== undefined) setLateAfter(s.officeRules.lateAfter);
-              if (s.officeRules.requiredHours !== undefined) setRequiredHours(s.officeRules.requiredHours);
-              if (s.officeRules.breakAllowance !== undefined) setBreakAllowance(s.officeRules.breakAllowance);
+            if (s.officeRules.requiredHours !== undefined) setRequiredHours(s.officeRules.requiredHours);
+            if (s.officeRules.breakAllowance !== undefined) setBreakAllowance(s.officeRules.breakAllowance);
+            if (s.officeRules.meetingCountsAsWork !== undefined) setMeetingCountsAsWork(s.officeRules.meetingCountsAsWork);
               if (s.officeRules.workDays) setWorkDays(s.officeRules.workDays);
             }
             if (s.sessionTimeout !== undefined) setSessionTimeout(s.sessionTimeout);
@@ -97,7 +115,7 @@ export default function SuperAdminSettingsPage() {
           role: "super_admin",
           userId: "system",
           settings: {
-            officeRules: { officeStart, officeEnd, lateAfter, workDays, requiredHours, breakAllowance, meetingCountsAsWork: true },
+            officeRules: { officeStart, officeEnd, lateAfter, workDays, requiredHours, breakAllowance, meetingCountsAsWork },
             sessionTimeout,
             enforce2FA,
             passwordMinLength,
@@ -226,8 +244,8 @@ export default function SuperAdminSettingsPage() {
                 onChange={(e) => setOfficeStart(Number(e.target.value))}
                 className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
-                {Array.from({ length: 12 }, (_, i) => i + 6).map((h) => (
-                  <option key={h} value={h}>{h > 12 ? h - 12 : h}:00 {h >= 12 ? "PM" : "AM"}</option>
+                {Array.from({ length: 13 }, (_, i) => 6 + i * 0.5).map((h) => (
+                  <option key={h} value={h}>{fmtHour(h)}</option>
                 ))}
               </select>
             </SettingsRow>
@@ -241,8 +259,8 @@ export default function SuperAdminSettingsPage() {
                 onChange={(e) => setOfficeEnd(Number(e.target.value))}
                 className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
-                {Array.from({ length: 8 }, (_, i) => i + 14).map((h) => (
-                  <option key={h} value={h}>{h > 12 ? h - 12 : h}:00 {h >= 12 ? "PM" : "AM"}</option>
+                {Array.from({ length: 11 }, (_, i) => 14 + i * 0.5).map((h) => (
+                  <option key={h} value={h}>{fmtHour(h)}</option>
                 ))}
               </select>
             </SettingsRow>
@@ -256,8 +274,8 @@ export default function SuperAdminSettingsPage() {
                 onChange={(e) => setLateAfter(Number(e.target.value))}
                 className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
-                {Array.from({ length: 8 }, (_, i) => 10 + i * 0.5).map((h) => (
-                  <option key={h} value={h}>{h > 12 ? h - 12 : h}:00 {h >= 12 ? "PM" : "AM"}</option>
+                {Array.from({ length: 13 }, (_, i) => 10 + i * 0.5).map((h) => (
+                  <option key={h} value={h}>{fmtHour(h)}</option>
                 ))}
               </select>
             </SettingsRow>
@@ -272,7 +290,7 @@ export default function SuperAdminSettingsPage() {
                 className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {[7, 7.5, 8, 8.5, 9].map((h) => (
-                  <option key={h} value={h}>{h}h {h % 1 === 0.5 ? "30m" : "00m"}</option>
+                  <option key={h} value={h}>{fmtDuration(h)}</option>
                 ))}
               </select>
             </SettingsRow>
@@ -294,9 +312,9 @@ export default function SuperAdminSettingsPage() {
 
             <SettingsRow
               label="Meeting Counts as Work"
-              description="When enabled, time in Meeting AUX state counts toward required login hours"
+              description="When enabled, time in Meeting AUX state counts toward effective work hours (saved with work rules)"
             >
-              <Toggle checked={true} onChange={() => {}} />
+              <Toggle checked={meetingCountsAsWork} onChange={setMeetingCountsAsWork} />
             </SettingsRow>
 
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">

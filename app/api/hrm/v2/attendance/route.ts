@@ -96,7 +96,14 @@ export async function POST(request: NextRequest) {
     try {
       const db = await getDb();
       if (db) {
-        const settingsDoc = await db.collection("settings").findOne({ key: "super_admin_system" });
+        // The settings page writes the system policy under key "super_admin".
+        // A stale legacy doc may ALSO exist under "super_admin_system" — the
+        // current key always wins; legacy is only a fallback.
+        let settingsDoc = await db.collection("settings").findOne({ key: "super_admin" });
+        if (!settingsDoc?.settings?.officeRules) {
+          const legacy = await db.collection("settings").findOne({ key: "super_admin_system" });
+          if (legacy?.settings?.officeRules) settingsDoc = legacy;
+        }
         const workDays = settingsDoc?.settings?.officeRules?.workDays;
         if (workDays && !workDays.includes(new Date(body.date).getDay())) workdayType = "weekly_off";
       }

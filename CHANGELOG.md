@@ -2,6 +2,36 @@
 
 ## September 2026
 
+### ⚙️ Settings jo ab sach mein kaam karte hain + Live dashboard improvements
+
+CEO Settings page ka poora audit + fixes — ab jo dikhta hai wo sach mein reflect hota hai:
+
+- **BUG FIX: Office rules save hote the par apply NahI hote the** — Settings page policy
+  `super_admin` key pe likhta tha, par attendance/tenants-current readers `super_admin_system`
+  (stale legacy doc) padh rahe the. Ab readers priority-based hain: current key pehle, legacy
+  sirf fallback. Office start/end/late-after/work-days/required-hours/break-allowance — sab
+  ab punch-in status (LATE threshold), effective-hours aur break-deduction mein live apply hote hain.
+- **Minimum Password Length ab enforce hota hai** — pehle sirf UI mein dikhta tha, har jagah
+  hardcoded 8 tha. Ab naya `lib/password-policy.ts` har password flow (change-password,
+  force-change, reset, user create, HR employee create, signup) mein settings se dynamic
+  min-length padhta hai (hard floor 8, 60s cache). UI "6 characters" messages bhi 8 kar diye.
+- **Session Timeout ab live sessions pe lagta hai** — Settings ka Session Timeout (minutes)
+  ab login ke waqt session + role cookies ke max-age ko drive karta hai (DB-backed, 60s
+  cache, 5-day default). Pehle ye field bhi cosmetic tha.
+- **Meeting Counts as Work toggle ab functional** — pehle hardcoded `checked={true}` tha.
+  Ab settings se padha jaata hai: OFF hone par meeting AUX time effective work hours mein
+  count NahI hota (punch-out + AUX transitions dono mein).
+- **Break Allowance enforcement** — allowance se excess break minutes ab effective work
+  time se deduct hote hain (`applyBreakAllowance`), pehle sirf display value thi.
+- **Live Operations Dashboard: "X / Y shown" counter** — Filter apply karne par section
+  header mein dikhta hai ki filter se kitne employees bache (e.g. "3 / 8 shown").
+- **Live cards: AUX state duration highlight** — Active/On Break/In Meeting badge ke saath
+  ab current state kitne min/hours se chal raha hai wo bhi dikhta hai (e.g. "On Break ·25m").
+- **Dropdown label format fix** — Office timings ke selects "10.5:00 AM"-jaise broken labels
+  dikhate the (fraction hours ka naive format). Ab proper "10:30 AM" labels; office start
+  mein 30-min steps bhi added; Required Hours "7h 00m"-style clean labels.
+
+### 🗑️ Offer-letter removal + CEO RM assignment + security scan fixes (naya batch)
 ### 🗑️ Offer-letter removal + CEO RM assignment + security scan fixes (naya batch)
 
 - **Offer-letter feature poore project se REMOVED** — Offer letters ab kahin nahi hain:

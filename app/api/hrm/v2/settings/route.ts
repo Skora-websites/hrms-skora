@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
+import { setSessionTimeoutCache } from "@/lib/session-policy";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing role or settings" }, { status: 400 });
     }
     const targetRole = String(role);
+
+    // Mirror the CEO's session timeout into the login flow's policy cache so
+    // new sessions pick it up without a DB round-trip.
+    if (targetRole === "super_admin" && (settings as any)?.sessionTimeout !== undefined) {
+      setSessionTimeoutCache(Number((settings as any).sessionTimeout));
+    }
 
     // Namespace isolation — a caller may only write settings for its own role
     // namespace, with two narrow, legacy-UI exceptions:

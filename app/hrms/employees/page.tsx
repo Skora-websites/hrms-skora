@@ -118,7 +118,7 @@ function validateForm(form: FormState, isEdit: boolean): Record<string, string> 
   if (!isEdit && !form.password.trim()) {
     errors.password = "Password is required";
   } else if (!isEdit && form.password.length < 6) {
-    errors.password = "Password must be at least 6 characters";
+    errors.password = "Password must be at least 8 characters";
   }
   return errors;
 }
@@ -138,7 +138,7 @@ function validateField(field: keyof FormState, value: string, form: FormState, i
     case "password":
       if (isEdit) return "";
       if (!value.trim()) return "Password is required";
-      if (value.length < 6) return "Password must be at least 6 characters";
+      if (value.length < 8) return "Password must be at least 8 characters";
       return "";
     default:
       return "";

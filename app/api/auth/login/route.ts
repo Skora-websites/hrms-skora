@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSession, signInWithMongo, signCookieValue, SESSION_COOKIE_OPTIONS, SESSION_EXPIRES_IN_MS } from "@/lib/auth";
 import { withErrorHandler, badRequest, ApiError } from "@/lib/api-handler";
 import { HRMS_ACCOUNT_ROLES } from "@/lib/constants";
+import { getSessionTimeoutMs } from "@/lib/session-policy";
 import { checkRateLimit, recordFailure, clearFailures, clientIp, type RateLimitOptions } from "@/lib/rate-limit";
 
 // ── Brute-force protection (in-memory; resets on deploy) ─────────────
@@ -81,11 +82,13 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   }
 
   const response = NextResponse.json({ success: true });
-  // Cookies are HMAC-signed (see lib/auth.ts) so middleware can trust the
-  // role/status values without a DB round-trip per request.
+  // Session lifetime honors the CEO's Session Timeout setting when configured
+  // (minutes → ms; falls back to the 5-day default). Cookies are HMAC-signed
+  // (see lib/auth.ts) so middleware can trust the role/status values.
+  const sessionMaxAgeSec = Math.max(300, Math.floor((await getSessionTimeoutMs()) / 1000));
   response.cookies.set("session", await signCookieValue(sessionToken), {
     ...SESSION_COOKIE_OPTIONS,
-    maxAge: SESSION_EXPIRES_IN_MS / 1000,
+    maxAge: sessionMaxAgeSec,
   });
 
   response.cookies.set("user_role", await signCookieValue(effectiveRole), {
@@ -93,7 +96,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_EXPIRES_IN_MS / 1000,
+    maxAge: sessionMaxAgeSec,
   });
 
   // Mirror the account status into a short-lived cookie so the middleware can
@@ -115,7 +118,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: SESSION_EXPIRES_IN_MS / 1000,
+      maxAge: sessionMaxAgeSec,
     });
   }
 

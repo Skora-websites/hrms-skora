@@ -7,6 +7,7 @@ import { recordAuditLog, getAuditLogs } from "@/services/hrm/audit";
 import type { AuditAction } from "@/services/hrm/audit";
 import { ROLE_HIERARCHY } from "@/lib/rbac";
 import { parseBody, profileUpdateSchema } from "@/lib/validations";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 import { getDb } from "@/lib/db/mongo-helper";
 import { maskOnboardingDetails } from "@/lib/pii-masking";
 import crypto from "crypto";
@@ -207,11 +208,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 }
-      );
+    const policyError = await validatePasswordPolicy(password);
+    if (policyError) {
+      return NextResponse.json({ error: policyError }, { status: 400 });
     }
 
     const role = normalizeRole(rawRole);
@@ -596,11 +595,9 @@ export async function PATCH(request: NextRequest) {
         if (userId !== auth.userId) {
           return NextResponse.json({ error: "Can only change your own password here" }, { status: 403 });
         }
-        if (np.length < 8) {
-          return NextResponse.json({ error: "New password must be at least 8 characters" }, { status: 400 });
-        }
-        if (!/[a-zA-Z]/.test(np) || !/[0-9]/.test(np)) {
-          return NextResponse.json({ error: "Password must contain at least one letter and one number" }, { status: 400 });
+        const npPolicyError = await validatePasswordPolicy(np);
+        if (npPolicyError) {
+          return NextResponse.json({ error: npPolicyError }, { status: 400 });
         }
         const targetUserForPw = await hrmUsersService.findById(userId);
         if (!targetUserForPw) {
@@ -658,11 +655,9 @@ export async function PATCH(request: NextRequest) {
         if (!fnp) {
           return NextResponse.json({ error: "New password is required" }, { status: 400 });
         }
-        if (fnp.length < 8) {
-          return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-        }
-        if (!/[a-zA-Z]/.test(fnp) || !/[0-9]/.test(fnp)) {
-          return NextResponse.json({ error: "Password must contain at least one letter and one number" }, { status: 400 });
+        const fnpPolicyError = await validatePasswordPolicy(fnp);
+        if (fnpPolicyError) {
+          return NextResponse.json({ error: fnpPolicyError }, { status: 400 });
         }
         const forceHash = await bcrypt.hash(fnp, 12);
         await hrmUsersService.update(resolvedUserId, { passwordHash: forceHash, mustChangePassword: false } as any);

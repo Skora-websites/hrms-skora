@@ -14,6 +14,7 @@ import {
   SESSION_EXPIRES_IN_MS,
 } from "@/lib/auth";
 import { normalizeRole } from "@/lib/rbac";
+import { validatePasswordPolicy } from "@/lib/password-policy";
 
 function formatZodErrors<T>(error: ZodError<T>): Record<string, string[]> {
   const fieldErrors: Record<string, string[]> = {};
@@ -53,6 +54,10 @@ const ROLE_DASHBOARDS: Record<string, string> = {
 export async function signup(prevState: AuthState | undefined, formData: FormData): Promise<AuthState | undefined> {
   const validated = SignupSchema.safeParse({ name: formData.get("name"), email: formData.get("email"), password: formData.get("password") });
   if (!validated.success) return { errors: formatZodErrors(validated.error), message: "Please fix the errors above." };
+  // CEO-configured minimum length (settings → Minimum Password Length) may
+  // exceed the zod floor of 8 — enforce it as a second pass.
+  const policyError = await validatePasswordPolicy(validated.data.password);
+  if (policyError) return { errors: { password: [policyError] }, message: "Please fix the errors above." };
   const { name, email, password } = validated.data;
   try {
     // Check if user already exists
