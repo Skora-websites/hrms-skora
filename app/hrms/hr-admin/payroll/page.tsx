@@ -350,13 +350,13 @@ export default function HrAdminPayrollPage() {
         </h3>
         {loading ? (
           <div className="flex items-center justify-center py-16 text-xs text-slate-500 gap-2">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading payroll runs from MongoDB...
+            <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading payroll runs...
           </div>
         ) : payrollRuns.length === 0 ? (
           <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
             <DollarSign className="h-8 w-8 mx-auto mb-2 text-slate-400" />
             <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No payroll runs yet</p>
-            <p className="text-slate-500 mb-4">Click &quot;Run Payroll&quot; above to process payroll for all employees in MongoDB.</p>
+            <p className="text-slate-500 mb-4">Click &quot;Run Payroll&quot; above to process payroll for all active employees.</p>
             <Button onClick={() => setShowRunModal(true)} className="bg-primary text-white font-bold text-xs">
               <Receipt className="h-4 w-4 mr-1.5" /> Run First Payroll
             </Button>
@@ -454,7 +454,7 @@ export default function HrAdminPayrollPage() {
               <Receipt className="h-5 w-5 text-primary" /> Run Monthly Payroll
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              This will automatically compute gross salary, statutory deductions (PF, Tax), and net pay for all 14 active employees and generate payslips in MongoDB.
+              This will compute gross salary, statutory deductions (PF, Tax), and net pay for active employees and generate payslips.
             </p>
 
             <div className="space-y-3 text-xs">

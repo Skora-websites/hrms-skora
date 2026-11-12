@@ -51,13 +51,13 @@ interface Employee {
 
 interface AttendanceRecord {
   _id: string;
-  userId: string;           // MongoDB User ID
+  userId: string;
   userName: string;
   userEmail: string;
   employeeCode?: string;
   date: string;
-  punchInTime?: string;     // ISO string from MongoDB
-  punchOutTime?: string;    // ISO string from MongoDB
+  punchInTime?: string;
+  punchOutTime?: string;
   location?: string;
   distanceMeters?: number;  // parsed from location string
   status?: string;

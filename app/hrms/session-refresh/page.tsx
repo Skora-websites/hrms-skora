@@ -22,7 +22,7 @@ function RefreshAndRoute() {
     let cancelled = false;
     (async () => {
       try {
-        // This endpoint reads the user fresh from MongoDB and returns the
+        // This endpoint reads the user fresh from the database and returns the
         // canonical role — used below to route to the correct dashboard.
         const res = await fetch("/api/auth/session", { cache: "no-store" });
         const data = await res.json().catch(() => null);

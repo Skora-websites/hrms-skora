@@ -77,7 +77,7 @@ export default function HrAdminLeavePoliciesPage() {
         const data = await res.json();
         const types = Array.isArray(data.data) ? data.data : [];
         if (types.length === 0) {
-          // Auto-seed default leave types into MongoDB
+          // Auto-seed default leave types
           await seedDefaultTypes();
         } else {
           setLeaveTypes(types.map((t: any) => ({
@@ -325,7 +325,7 @@ export default function HrAdminLeavePoliciesPage() {
       {loading ? (
         <div className="py-20 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-3">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span>Loading leave policies from MongoDB...</span>
+          <span>Loading leave policies...</span>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

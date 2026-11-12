@@ -112,7 +112,7 @@ export default function EmployeePayslipsPage() {
         </h3>
         {loading ? (
           <div className="py-12 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading payslips from MongoDB...
+            <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading payslips...
           </div>
         ) : payslips.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">

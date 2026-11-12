@@ -217,7 +217,7 @@ export default function ManagerApprovalsPage() {
       {/* Approval Cards */}
       {loading ? (
         <div className="py-20 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading approvals from MongoDB...
+          <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading approvals...
         </div>
       ) : pending.length === 0 ? (
         <div className="p-12 text-center border border-dashed border-emerald-300 dark:border-emerald-500/20 rounded-2xl bg-white dark:bg-[#0B0F19]/60">

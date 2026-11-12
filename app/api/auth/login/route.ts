@@ -38,7 +38,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     );
   }
 
-  // Authenticate against MongoDB — catch auth errors and return 401
+  // Authenticate against database — catch auth errors and return 401
   let user;
   try {
     user = await signInWithMongo(email, password);
@@ -54,7 +54,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   await clearFailures(rateKey);
 
-  // Create session in MongoDB
+  // Create session in database
   const sessionToken = await createSession(user.id);
 
   // ── Role-by-email: the authoritative HRMS_ACCOUNT_ROLES map decides the role. ──

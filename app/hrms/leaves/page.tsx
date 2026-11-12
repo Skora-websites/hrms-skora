@@ -198,7 +198,7 @@ export default function LeavesPage() {
 
         {loading ? (
           <div className="py-10 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading leave requests from MongoDB...
+            <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading leave requests...
           </div>
         ) : leaves.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 text-xs">

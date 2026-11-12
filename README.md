@@ -1,6 +1,6 @@
 # SKORA HRMS
 
-A full-stack Human Resource Management System built with **Next.js 16 (App Router)**, **MongoDB**, **Tailwind v4**, and **Vercel**. Role-based access: **CEO (super_admin) → HR Admin → Manager → Employee**.
+A full-stack Human Resource Management System built with **Next.js 16 (App Router)**, **MySQL / MariaDB**, **Tailwind v4**, and **Vercel**. Role-based access: **CEO (super_admin) → HR Admin → Manager → Employee**.
 
 - **Production:** https://hrms-skora.vercel.app
 - **Repo:** https://github.com/Skora-websites/hrms-skora
@@ -19,7 +19,7 @@ Next.js App Router  ──  middleware.ts (Edge: session fencing per role)
         ├── app/api/hrm/v2/**      JSON APIs (requireAuth → role guards)
         ├── lib/api-auth.ts        session verify + requireAuth/requireAdmin
         ├── lib/rbac.ts            roles, hierarchy, normalizeRole, permissions
-        ├── lib/hrm/firestore.ts   typed collection services (Mongo backend)
+        ├── lib/hrm/firestore.ts   typed collection services (MySQL backend)
         └── services/hrm/**        business logic per domain
 ```
 
@@ -27,9 +27,9 @@ Next.js App Router  ──  middleware.ts (Edge: session fencing per role)
 |---|---|---|
 | Pages (per role) | `app/hrms/` | `superadmin/` (CEO), `hr-admin/`, `manager/`, `employee/` |
 | APIs | `app/api/hrm/v2/` | One route file per module (`leaves`, `employees`, `onboarding`, …) |
-| Auth | `lib/auth.ts`, `app/api/auth/login` | Token in Mongo `sessions` collection, 5-day expiry |
+| Auth | `lib/auth.ts`, `app/api/auth/login` | Token in MySQL `sessions` table, 5-day expiry |
 | RBAC | `lib/rbac.ts`, `lib/api-auth.ts` | Role hierarchy levels: super_admin 100 > hr_admin/admin 80 > manager 50 > employee 20 |
-| DB | MongoDB Atlas | Single `default` tenant; collection map in `lib/hrm/firestore.ts` |
+| DB | MySQL / MariaDB | Single `default` tenant; tables mapped in `lib/db/mysql.ts` |
 
 ---
 
@@ -73,7 +73,7 @@ Next.js App Router  ──  middleware.ts (Edge: session fencing per role)
 
 ---
 
-## 4. Data Collections (MongoDB `hrms` DB)
+## 4. Database Tables (MySQL `hrms` DB)
 
 `users`, `sessions`, `employee_onboarding_tasks`, `leave_types`, `leave_balances`, `leave_balance_history`, `leave_requests`, `attendance`, `attendance_stats`, `regularization_requests`, `notifications`, `audit_logs`, `payroll_transactions`, `employee_salaries`, `tasks`, `tickets`, `documents`, `performance_goals`, `password_resets`.
 
@@ -83,7 +83,11 @@ Next.js App Router  ──  middleware.ts (Edge: session fencing per role)
 
 | Var | Purpose |
 |---|---|
-| `MONGODB_URI` | Atlas connection string (SRV) |
+| `MYSQL_HOST` | Hostname (e.g. `localhost` or remote host) |
+| `MYSQL_PORT` | Port (default `3306`) |
+| `MYSQL_USER` | MySQL user (e.g. `root`) |
+| `MYSQL_PASSWORD` | MySQL password |
+| `MYSQL_DATABASE` | Database name (`hrms`) |
 | `HRMS_ACCOUNT_ROLES_JSON` | Authoritative role map — CEO account yahan `super_admin` ke saath listed hai |
 | `SMTP_*` / `RESEND_*` | Welcome/reset emails |
 | `SESSION_COOKIE_SECRET` | Session cookie HMAC (production mein set karo) |
