@@ -187,7 +187,7 @@ export default function PayrollPage() {
           { label: "Avg. Salary", value: "—", icon: Banknote, color: "text-success" },
           { label: "YTD Growth", value: "—", icon: TrendingUp, color: "text-warning" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between mb-2">
               <stat.icon className={`h-5 w-5 ${stat.color}`} />
             </div>

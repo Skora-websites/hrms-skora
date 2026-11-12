@@ -301,10 +301,10 @@ export default function ManagerMyTeamPage() {
                       </span>
                       {/* Live indicator dot */}
                       {isOnline && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0B0F19] bg-emerald-500 shadow-sm" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0B0F19] bg-emerald-500" />
                       )}
                       {isPunchedOut && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0B0F19] bg-slate-400 shadow-sm" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0B0F19] bg-slate-400" />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -436,7 +436,7 @@ export default function ManagerMyTeamPage() {
       {showModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)}>
           <div
-            className="bg-white dark:bg-[#0B0F19] rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
+            className="bg-white dark:bg-[#0B0F19] rounded-2xl border border-gray-200 dark:border-white/10 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

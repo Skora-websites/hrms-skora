@@ -308,7 +308,7 @@ export default function HrAdminDashboardPage() {
       )}
 
       {/* ═══ Header Banner — Personal Profile ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
@@ -568,7 +568,7 @@ export default function HrAdminDashboardPage() {
       {/* ═══ Add Employee Modal ═══ */}
       {showAddEmployee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" /> Add New Employee
             </h3>
@@ -613,7 +613,7 @@ export default function HrAdminDashboardPage() {
 
 function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">
         {icon}
       </div>
@@ -629,7 +629,7 @@ function DashboardSection({
   title: string; subtitle: string; icon: React.ReactNode; action?: React.ReactNode; children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white mb-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-bold text-base flex items-center gap-2">{icon} {title}</h3>

@@ -384,7 +384,7 @@ export default function HrAdminOnboardingPage() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
           <h3 className="font-bold text-base flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" /> Requests &amp; Applications

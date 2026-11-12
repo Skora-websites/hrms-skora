@@ -196,7 +196,7 @@ export default function PerformancePage() {
         sortable: true,
         cell: (goal: any) => (
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center text-white shrink-0 shadow-sm">
+            <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center text-white shrink-0">
               <Target className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -381,7 +381,7 @@ export default function PerformancePage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
         >
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Total Goals</p>
@@ -395,7 +395,7 @@ export default function PerformancePage() {
               <span className="text-success font-medium">{stats.achievedGoals}</span> achieved
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Active Reviews</p>
@@ -409,7 +409,7 @@ export default function PerformancePage() {
               <span className="text-amber-500 font-medium">{reviews.length - stats.activeReviews}</span> completed
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Avg Progress</p>
@@ -428,7 +428,7 @@ export default function PerformancePage() {
               <span>overall</span>
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Pending Feedback</p>
@@ -476,7 +476,7 @@ export default function PerformancePage() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-lg shadow-primary/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white">
                 <Target className="h-6 w-6" />
               </div>
               <div>

@@ -48,7 +48,7 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
               // Hover
               "hover:border-gray-300 dark:hover:border-gray-500",
               // Focus — uses CSS var so it follows theme color
-              "focus:border-[var(--color-primary,#5e72e4)] focus:shadow-[0_0_0_4px_var(--color-primary-alpha,rgba(94,114,228,0.1))]",
+              "focus:border-[var(--color-primary,#5e72e4)]",
               // Filled state — subtle accent on left border
               hasValue && !error && !props.disabled && "border-l-[var(--color-primary,#5e72e4)]",
               // Icon padding
@@ -58,10 +58,10 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
               floating && "pt-5 pb-1.5",
               // Error state
               error
-                ? "border-danger focus:border-danger focus:shadow-[0_0_0_4px_rgba(245,54,92,0.1)] hover:border-danger"
+                ? "border-danger focus:border-danger hover:border-danger"
                 : "border-border",
               // Success state
-              success && !error && "border-success focus:border-success focus:shadow-[0_0_0_4px_rgba(45,206,137,0.1)]",
+              success && !error && "border-success focus:border-success",
               className
             )}
             aria-invalid={!!error}

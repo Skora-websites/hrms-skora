@@ -36,7 +36,7 @@ export function ThemeConfigurator() {
         variant="default"
         size="icon"
         onClick={() => setIsOpen(true)}
-        className="fixed right-4 bottom-4 z-40 h-12 w-12 rounded-full shadow-lg hover:shadow-xl bg-primary text-white"
+        className="fixed right-4 bottom-4 z-40 h-12 w-12 rounded-full bg-primary text-white"
         aria-label="Theme settings"
       >
         <Settings className="h-5 w-5 animate-spin-slow" />
@@ -57,7 +57,7 @@ export function ThemeConfigurator() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 z-50 h-full w-[360px] bg-card shadow-xl border-l border-border"
+              className="fixed right-0 top-0 z-50 h-full w-[360px] bg-card border-l border-border"
             >
               <div className="flex h-full flex-col">
                 {/* Header */}
@@ -101,7 +101,7 @@ export function ThemeConfigurator() {
                             title={color.name}
                           >
                             {isActive && (
-                              <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-sm" />
+                              <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-" />
                             )}
                           </button>
                         );

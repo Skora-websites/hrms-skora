@@ -251,7 +251,7 @@ export default function AssetsPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary text-white shadow-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary text-white">
                 <Plus className="h-5 w-5" />
               </div>
               <div>
@@ -274,7 +274,7 @@ export default function AssetsPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary text-white shadow-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary text-white">
                 <Pencil className="h-5 w-5" />
               </div>
               <div>
@@ -297,7 +297,7 @@ export default function AssetsPage() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-danger text-white shadow-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-danger text-white">
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>

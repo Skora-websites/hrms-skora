@@ -217,7 +217,7 @@ export default function ExitPage() {
           { label: "Completed", value: safeDashboard.completedThisMonth, icon: CheckCircle2, color: "text-success" },
           { label: "Total Exits", value: safeDashboard.totalExits, icon: UserX, color: "text-primary" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
             <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>

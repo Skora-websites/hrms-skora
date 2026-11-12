@@ -165,7 +165,7 @@ export default function DocumentsPage() {
           { label: "Verified", value: safeDocs.filter((d: any) => d.isVerified).length, icon: Folder, color: "text-warning" },
           { label: "Expired", value: safeDocs.filter((d: any) => d.status === "expired").length, icon: Upload, color: "text-success" },
         ].map((stat: any) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
             <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>

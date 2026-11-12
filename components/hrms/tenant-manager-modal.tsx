@@ -80,7 +80,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg flex items-center space-x-1.5 transition-all"
+        className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl flex items-center space-x-1.5 transition-all"
       >
         <Plus className="w-3.5 h-3.5" />
         <span>Create Organization & HR Admin</span>
@@ -88,7 +88,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-6 text-slate-900 dark:text-white my-8">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-xl w-full p-6 space-y-6 text-slate-900 dark:text-white my-8">
             <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
@@ -220,7 +220,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   {loading ? (
                     <>

@@ -104,7 +104,7 @@ export default function EmployeeMyTasksPage() {
   return (
     <AppShell title="My Tasks">
       {msg && (
-        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-lg">
+        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
           <CheckCircle2 className="h-4 w-4" />
           {msg}
         </div>
@@ -156,7 +156,7 @@ export default function EmployeeMyTasksPage() {
                       return (
                         <div
                           key={taskId}
-                          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-3 shadow-sm hover:border-primary/40 transition-all"
+                          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-3 hover:border-primary/40 transition-all"
                         >
                           <div className="flex items-center justify-between gap-2 mb-2">
                             <span

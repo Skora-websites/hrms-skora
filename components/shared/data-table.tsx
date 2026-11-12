@@ -419,7 +419,7 @@ export function DataTable<T extends Record<string, any>>({
       {/* Table Container */}
       <div
         className={cn(
-          "bg-card rounded-xl border border-border shadow-sm overflow-hidden",
+          "bg-card rounded-xl border border-border overflow-hidden",
           minHeight && "relative"
         )}
         style={minHeight ? { minHeight } : undefined}
@@ -639,10 +639,7 @@ export function DataTable<T extends Record<string, any>>({
                         variant={page === p ? "primary" : "ghost"}
                         size="icon-xs"
                         onClick={() => handlePageChange(p)}
-                        className={cn(
-                          "text-xs min-w-[1.75rem]",
-                          page === p && "shadow-sm"
-                        )}
+                        className="text-xs min-w-[1.75rem]"
                         aria-label={`Page ${p + 1}`}
                         aria-current={page === p ? "page" : undefined}
                       >

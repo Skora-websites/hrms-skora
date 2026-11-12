@@ -104,7 +104,7 @@ export default function EmployeeTimesheetPage() {
         <div className="lg:col-span-1">
           <form
             onSubmit={submit}
-            className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4"
+            className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4"
           >
             <h3 className="font-bold text-base flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" /> Log Hours
@@ -173,7 +173,7 @@ export default function EmployeeTimesheetPage() {
 
         {/* Right 2 Cols: Timesheet Log History */}
         <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
             <h3 className="font-bold text-slate-900 dark:text-white text-base mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" /> Submitted Timesheet History
             </h3>

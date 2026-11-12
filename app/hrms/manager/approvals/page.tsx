@@ -329,7 +329,7 @@ export default function ManagerApprovalsPage() {
                       size="sm"
                       disabled={processingId === item.id}
                       onClick={() => handleApprove(item)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-9 px-4 gap-1.5 shadow-sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-9 px-4 gap-1.5"
                     >
                       {processingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                       Approve
@@ -375,7 +375,7 @@ function accentClass(type: string): string {
 
 function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">{icon}</div>
       <p className="text-2xl font-extrabold">{value}</p>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>

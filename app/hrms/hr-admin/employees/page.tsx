@@ -268,13 +268,13 @@ export default function HrAdminEmployeesPage() {
     <AppShell title="Employee Directory">
       {/* Toast Notifications */}
       {successMsg && (
-        <div className="fixed top-4 right-4 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-xl backdrop-blur-md">
+        <div className="fixed top-4 right-4 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold backdrop-blur-md">
           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           {successMsg}
         </div>
       )}
       {errorMsg && (
-        <div className="fixed top-4 right-4 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold shadow-xl backdrop-blur-md">
+        <div className="fixed top-4 right-4 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold backdrop-blur-md">
           <AlertCircle className="h-4 w-4 text-red-500" />
           {errorMsg}
         </div>
@@ -307,7 +307,7 @@ export default function HrAdminEmployeesPage() {
 
           <Button
             onClick={() => setShowAdd(true)}
-            className="bg-primary hover:bg-primary/90 text-white font-bold text-xs gap-2 shadow-md shadow-primary/20"
+            className="bg-primary hover:bg-primary/90 text-white font-bold text-xs gap-2"
           >
             <Plus className="h-4 w-4" /> Add Employee
           </Button>
@@ -316,7 +316,7 @@ export default function HrAdminEmployeesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-slate-500">TOTAL WORKFORCE</span>
             <Users className="h-4 w-4 text-primary" />
@@ -324,7 +324,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{employees.length}</p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">ACTIVE STATUS</span>
             <UserCheck className="h-4 w-4 text-emerald-500" />
@@ -332,7 +332,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{activeCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400">INACTIVE / ON LEAVE</span>
             <UserX className="h-4 w-4 text-yellow-500" />
@@ -340,7 +340,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{inactiveCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">DEPARTMENTS</span>
             <Building2 className="h-4 w-4 text-indigo-500" />
@@ -358,14 +358,14 @@ export default function HrAdminEmployeesPage() {
             placeholder="Search by name, email, employee code, designation..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:outline-none focus:border-primary"
           />
         </div>
 
         <select
           value={filterDept}
           onChange={(e) => setFilterDept(e.target.value)}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm cursor-pointer"
+          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
         >
           <option value="all">All Departments ({departments.length})</option>
           {departments.map((d) => (
@@ -378,7 +378,7 @@ export default function HrAdminEmployeesPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary shadow-sm cursor-pointer"
+          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
         >
           <option value="all">All Statuses</option>
           <option value="active">Active</option>
@@ -388,7 +388,7 @@ export default function HrAdminEmployeesPage() {
       </div>
 
       {/* Employee Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
         {loading ? (
           <div className="py-12 text-center text-slate-500 text-xs">
             <RefreshCw className="h-6 w-6 animate-spin mx-auto text-primary mb-2" />
@@ -494,7 +494,7 @@ export default function HrAdminEmployeesPage() {
       {/* ═══ ADD EMPLOYEE MODAL ═══ */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/10 pb-3">
               <div>
                 <h3 className="font-bold text-lg">Add New Employee</h3>
@@ -617,7 +617,7 @@ export default function HrAdminEmployeesPage() {
       {/* ═══ EDIT EMPLOYEE MODAL ═══ */}
       {editEmp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/10 pb-3">
               <div>
                 <h3 className="font-bold text-lg">Edit Employee Profile</h3>
@@ -719,7 +719,7 @@ export default function HrAdminEmployeesPage() {
       {/* ═══ DELETE CONFIRMATION MODAL ═══ */}
       {deleteEmp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg text-red-600 dark:text-red-400">Delete Employee</h3>
             <p className="text-sm text-slate-600 dark:text-slate-300">
               Are you sure you want to permanently delete <strong>{deleteEmp.name}</strong> ({deleteEmp.email}) from the live database?

@@ -70,7 +70,7 @@ function showInstallBanner(deferredPrompt: any) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      border-top: 1px solid rgba(255,255,255,0.2);
       font-family: system-ui, -apple-system, sans-serif;
     ">
       <div>

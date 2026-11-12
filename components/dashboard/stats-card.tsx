@@ -43,7 +43,7 @@ export function StatsCard({
     return (
       <div
         className={cn(
-          "rounded-xl border-0 shadow p-4",
+          "rounded-xl border border-border p-4",
           gradient
             ? cn(gradientMap[color], "text-white")
             : "bg-card text-card-foreground"
@@ -69,7 +69,7 @@ export function StatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
       className={cn(
-        "rounded-xl border-0 shadow p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
+        "rounded-xl border border-border p-4 transition-colors",
         gradient
           ? cn(gradientMap[color], "text-white")
           : "bg-card text-card-foreground"

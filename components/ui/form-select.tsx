@@ -42,14 +42,14 @@ const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
             className={cn(
               "peer w-full h-12 rounded-xl border-2 bg-background text-sm text-dark dark:text-white",
               "transition-all duration-300 ease-out outline-none appearance-none cursor-pointer",
-              "focus:border-[var(--color-primary,#5e72e4)] focus:shadow-[0_0_0_4px_var(--color-primary-alpha,rgba(94,114,228,0.1))]",
+              "focus:border-[var(--color-primary,#5e72e4)]",
               "hover:border-gray-300 dark:hover:border-gray-500",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800/50",
               icon ? "pl-11 pr-10" : "pl-4 pr-10",
               "pt-5 pb-1.5",
               hasValue && !error && !props.disabled && "border-l-[var(--color-primary,#5e72e4)]",
               error
-                ? "border-danger focus:border-danger focus:shadow-[0_0_0_4px_rgba(245,54,92,0.1)] hover:border-danger"
+                ? "border-danger focus:border-danger hover:border-danger"
                 : "border-border",
               !hasValue && "text-transparent",
               className

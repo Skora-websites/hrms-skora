@@ -234,7 +234,7 @@ export default function ProfilePage({ roleLabel, backHref }: ProfilePageProps) {
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-3xl font-extrabold text-white shadow-lg shadow-primary/20 overflow-hidden">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-3xl font-extrabold text-white overflow-hidden">
               {displayImage ? (
                 <img src={displayImage} alt={displayName} className="w-24 h-24 rounded-full object-cover" />
               ) : (

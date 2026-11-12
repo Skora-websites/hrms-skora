@@ -9,7 +9,7 @@ export default function AccessDeniedPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
       <div className="w-full max-w-md text-center animate-section-in">
         {/* Icon */}
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-danger shadow-lg shadow-danger/25 mb-6">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-danger mb-6">
           <ShieldAlert className="h-10 w-10 text-white" />
         </div>
 

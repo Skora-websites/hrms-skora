@@ -162,7 +162,7 @@ function useEmployeeColumns(
           const fullName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.displayName || "—";
           return (
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
+              <div className="h-9 w-9 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0">
                 {fullName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -502,7 +502,7 @@ export default function EmployeesPage() {
       <select
         value={statusFilter}
         onChange={(e) => { setStatusFilter(e.target.value); }}
-        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:shadow-[0_3px_9px_rgba(94,114,228,0.1)] focus:outline-none"
+        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:-[0_3px_9px_rgba(94,114,228,0.1)] focus:outline-none"
         aria-label="Filter by status"
       >
         {EMPLOYEE_STATUSES.map((s) => (
@@ -578,7 +578,7 @@ export default function EmployeesPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"
         >
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Total Employees</p>
@@ -591,7 +591,7 @@ export default function EmployeesPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Active</p>
@@ -602,7 +602,7 @@ export default function EmployeesPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">On Probation</p>
@@ -646,7 +646,7 @@ export default function EmployeesPage() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-lg shadow-primary/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white">
                 <UserPlus className="h-6 w-6" />
               </div>
               <div>
@@ -695,7 +695,7 @@ export default function EmployeesPage() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-lg shadow-primary/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white">
                 <Pencil className="h-6 w-6" />
               </div>
               <div>
@@ -746,7 +746,7 @@ export default function EmployeesPage() {
           <form onSubmit={(e) => { e.preventDefault(); handleDelete(); }}>
           <DialogHeader>
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-danger text-white shadow-lg shadow-danger/20">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-danger text-white">
                 <Trash2 className="h-6 w-6" />
               </div>
               <div>
@@ -775,7 +775,7 @@ export default function EmployeesPage() {
                 value={deleteConfirmName}
                 onChange={(e) => setDeleteConfirmName(e.target.value)}
                 placeholder="Type the employee name..."
-                className="border-danger/40 focus:border-danger focus:shadow-[0_3px_9px_rgba(245,54,92,0.15)]"
+                className="border-danger/40 focus:border-danger focus:-[0_3px_9px_rgba(245,54,92,0.15)]"
               />
             </div>
           </div>

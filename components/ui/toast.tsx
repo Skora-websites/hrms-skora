@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 // ── Variants ────────────────────────────────────────────
 
 const toastVariants = cva(
-  "fixed bottom-6 right-6 z-[100] flex items-start gap-3 rounded-xl border p-4 shadow-lg max-w-sm animate-slide-up",
+  "fixed bottom-6 right-6 z-[100] flex items-start gap-3 rounded-xl border p-4 max-w-sm animate-slide-up",
   {
     variants: {
       variant: {

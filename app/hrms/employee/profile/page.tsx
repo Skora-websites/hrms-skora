@@ -341,7 +341,7 @@ export default function EmployeeProfilePage() {
         )}
 
         {!isSuperAdmin && verificationStatus === "REJECTED_48H" && (
-          <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-xs text-red-700 dark:text-red-400 flex items-start gap-3 shadow-lg">
+          <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-xs text-red-700 dark:text-red-400 flex items-start gap-3">
             <AlertTriangle className="h-6 w-6 shrink-0 text-red-500 animate-bounce mt-0.5" />
             <div className="flex-1">
               <div className="flex items-center justify-between">
@@ -358,7 +358,7 @@ export default function EmployeeProfilePage() {
         )}
 
         {/* Profile Card & Form */}
-        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-5">
+        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-5">
           {saved && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
               <CheckCircle2 className="h-4 w-4" />
@@ -387,7 +387,7 @@ export default function EmployeeProfilePage() {
 
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Employee Code</span>
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-mono font-bold text-primary shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-mono font-bold text-primary">
                 <IdCard className="h-4 w-4 text-primary" />
                 {empCode}
               </span>
@@ -468,14 +468,14 @@ export default function EmployeeProfilePage() {
           </div>
 
           <div className="pt-2">
-            <Button type="submit" className="bg-primary text-white hover:bg-primary/90 font-bold shadow-md">
+            <Button type="submit" className="bg-primary text-white hover:bg-primary/90 font-bold">
               Save Profile Changes
             </Button>
           </div>
         </form>
 
         {/* Change Password */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
           <div>
             <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
               <Lock className="h-5 w-5 text-primary" /> Change Password
@@ -543,7 +543,7 @@ export default function EmployeeProfilePage() {
               type="button"
               onClick={handlePasswordChange}
               disabled={passwordSaving}
-              className="bg-primary text-white hover:bg-primary/90 font-bold gap-1.5 shadow-md"
+              className="bg-primary text-white hover:bg-primary/90 font-bold gap-1.5"
             >
               <Lock className="h-3.5 w-3.5" />
               {passwordSaving ? "Updating..." : "Save New Password"}
@@ -552,7 +552,7 @@ export default function EmployeeProfilePage() {
         </div>
 
         {/* Onboarding Documents */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
@@ -573,7 +573,7 @@ export default function EmployeeProfilePage() {
                 setUploadProgress(0);
                 setUploadComplete(false);
               }}
-              className="bg-primary text-white hover:bg-primary/90 font-bold text-xs gap-1.5 shadow-md"
+              className="bg-primary text-white hover:bg-primary/90 font-bold text-xs gap-1.5"
             >
               <Plus className="h-4 w-4" /> Add Document
             </Button>
@@ -646,7 +646,7 @@ export default function EmployeeProfilePage() {
       {/* Modal 1: View Document Preview */}
       {viewingDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="w-full max-w-lg rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 space-y-4 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
               <h3 className="font-bold text-base flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" /> Document Preview: {viewingDoc.type}
@@ -683,7 +683,7 @@ export default function EmployeeProfilePage() {
       {/* Modal 2: Upload Document */}
       {(editingDoc || showAddModal) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 space-y-4 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
               <h3 className="font-bold text-base flex items-center gap-2">
                 <FileUp className="h-5 w-5 text-primary" /> {editingDoc ? `Upload New File (${editingDoc.type})` : "Add New Onboarding Document"}

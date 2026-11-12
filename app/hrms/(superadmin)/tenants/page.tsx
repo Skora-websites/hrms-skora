@@ -159,7 +159,7 @@ export default function SuperadminTenantsPage() {
       {/* Modal for creating new tenant */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0F19] p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0F19] p-6 space-y-4">
             <h3 className="font-bold text-white text-lg flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" /> Register New Tenant Company
             </h3>

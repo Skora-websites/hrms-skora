@@ -104,7 +104,7 @@ export default function SettingsPage() {
           )}
 
           {/* Theme & Display Configuration */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4">
             <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
               <Sun className="h-5 w-5 text-primary" /> Appearance & Dual-Theme System
             </h3>
@@ -125,7 +125,7 @@ export default function SettingsPage() {
 
           {/* Role-Specific: Office Timings & Policy (HR Admin & Superadmin ONLY) */}
           {isAdmin && (
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4">
               <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
                 <Clock className="h-5 w-5 text-primary" /> Company Office Hours & Geofence Policy
               </h3>
@@ -168,7 +168,7 @@ export default function SettingsPage() {
           )}
 
           {/* Notifications & Security Preferences */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white space-y-4">
+          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4">
             <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
               <Bell className="h-5 w-5 text-primary" /> Notifications & Security
             </h3>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
             )}
 
             <div>
-              <Button type="submit" disabled={saving} className="bg-primary text-white font-bold px-6 py-2.5 shadow-md disabled:opacity-50">
+              <Button type="submit" disabled={saving} className="bg-primary text-white font-bold px-6 py-2.5 disabled:opacity-50">
                 {saving ? (<span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Saving...</span>) : "Save All Settings"}
               </Button>
             </div>

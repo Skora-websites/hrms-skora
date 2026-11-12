@@ -306,7 +306,7 @@ export default function TasksPage() {
             return (
               <div
                 key={task.id}
-                className="group rounded-xl border border-border bg-card p-4 hover:shadow-sm hover:border-primary/20 transition-all duration-200"
+                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/20 transition-all duration-200"
               >
                 <div className="flex items-start gap-4">
                   {/* Status icon */}

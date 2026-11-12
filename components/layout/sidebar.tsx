@@ -195,10 +195,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Active indicator bar - gradient accent */}
         {isActive && !isCollapsed && (
-          <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary/80 to-primary/30 shadow-sm shadow-primary/20" />
+          <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary/80 to-primary/30" />
         )}
         {isActive && isCollapsed && (
-          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary/80 to-primary/30 shadow-sm shadow-primary/20" />
+          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary/80 to-primary/30" />
         )}
 
         {/* Active background glow */}
@@ -217,7 +217,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             className={cn(
               "h-[18px] w-[18px] transition-all duration-200",
               isActive
-                ? "text-primary drop-shadow-sm"
+                ? "text-primary"
                 : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground group-hover:scale-105"
             )}
             strokeWidth={isActive ? 2.5 : 2}
@@ -246,7 +246,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <TooltipContent
             side="right"
             sideOffset={16}
-            className="z-60 border border-white/10 bg-[#0b1120]/95 backdrop-blur-xl text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-xl"
+            className="z-60 border border-white/10 bg-[#0b1120]/95 backdrop-blur-xl text-white text-xs font-medium px-3 py-1.5 rounded-lg"
           >
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
@@ -344,10 +344,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           "bg-sidebar dark:bg-sidebar",
           "border-r border-sidebar-border",
           "transition-[width,margin,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          // Light mode shadow
-          "shadow-sm shadow-sidebar-border/50",
-          // Dark mode subtle glow
-          "dark:shadow-none dark:border-white/[0.06]",
+          "dark:border-white/[0.06]",
           isMobile
             ? cn("w-[270px]", open ? "translate-x-0" : "-translate-x-full")
             : "",
@@ -372,7 +369,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             )}
           >
             {/* Logo icon */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/20 transition-transform duration-200 group-hover:scale-105">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary transition-transform duration-200 group-hover:scale-105">
               <span className="relative z-10 text-sm font-bold text-white">
                 S
               </span>
@@ -400,7 +397,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               className={cn(
                 "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
                 searchFocused
-                  ? "border-primary/40 bg-primary/[0.04] dark:bg-primary/[0.06] shadow-sm shadow-primary/5"
+                  ? "border-primary/40 bg-primary/[0.04] dark:bg-primary/[0.06]"
                   : "border-sidebar-border/60 bg-sidebar-accent/40 dark:bg-sidebar-accent/50 hover:border-sidebar-border hover:bg-sidebar-accent/60"
               )}
             >
@@ -453,7 +450,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-all duration-200",
                     theme === "light"
-                      ? "bg-white dark:bg-sidebar-accent/80 text-amber-500 shadow-sm"
+                      ? "bg-white dark:bg-sidebar-accent/80 text-amber-500 font-semibold"
                       : "text-sidebar-foreground/50 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
                   )}
                 >
@@ -465,7 +462,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-all duration-200",
                     theme === "dark"
-                      ? "bg-sidebar-accent/80 text-indigo-400 shadow-sm dark:bg-sidebar"
+                      ? "bg-sidebar-accent/80 text-indigo-400 font-semibold dark:bg-sidebar"
                       : "text-sidebar-foreground/50 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
                   )}
                 >
@@ -503,7 +500,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                       )}
                     </Avatar>
                     {/* Online indicator */}
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-sidebar bg-success shadow-sm" />
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-sidebar bg-success" />
                   </div>
 
                   {!isCollapsed && (
@@ -522,7 +519,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <TooltipContent
                   side="right"
                   sideOffset={16}
-                  className="z-60 border border-white/10 bg-[#0b1120]/95 backdrop-blur-xl text-white shadow-xl rounded-xl px-3 py-2"
+                  className="z-60 border border-white/10 bg-[#0b1120]/95 backdrop-blur-xl text-white rounded-xl px-3 py-2"
                 >
                   <p className="font-semibold text-sm">{displayName}</p>
                   <p className="text-muted-foreground text-[11px] capitalize mt-0.5">

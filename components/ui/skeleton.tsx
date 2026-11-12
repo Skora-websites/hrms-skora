@@ -17,7 +17,7 @@ function Skeleton({
 
 function CardSkeleton() {
   return (
-    <div className="rounded-xl border-0 shadow bg-card p-4 space-y-3">
+    <div className="rounded-xl border border-border bg-card p-4 space-y-3">
       <div className="flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-lg" />
         <div className="space-y-2 flex-1">

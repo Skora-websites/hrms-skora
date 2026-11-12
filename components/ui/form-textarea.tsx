@@ -56,14 +56,14 @@ const FormTextarea = React.forwardRef<HTMLTextAreaElement, FormTextareaProps>(
               "peer w-full rounded-xl border-2 bg-background text-sm text-dark dark:text-white",
               "transition-all duration-300 ease-out outline-none resize-none min-h-[100px]",
               "placeholder:text-transparent",
-              "focus:border-[var(--color-primary,#5e72e4)] focus:shadow-[0_0_0_4px_var(--color-primary-alpha,rgba(94,114,228,0.1))]",
+              "focus:border-[var(--color-primary,#5e72e4)]",
               "hover:border-gray-300 dark:hover:border-gray-500",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800/50",
               icon ? "pl-11" : "pl-4",
               "pr-4 pt-6 pb-3",
               hasValue && !error && !props.disabled && "border-l-[var(--color-primary,#5e72e4)]",
               error
-                ? "border-danger focus:border-danger focus:shadow-[0_0_0_4px_rgba(245,54,92,0.1)] hover:border-danger"
+                ? "border-danger focus:border-danger hover:border-danger"
                 : "border-border",
               className
             )}

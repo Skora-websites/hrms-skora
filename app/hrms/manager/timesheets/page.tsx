@@ -105,7 +105,7 @@ export default function ManagerTimesheetsPage() {
       </div>
 
       {/* Pending Timesheets */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white mb-6">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <Clock className="h-5 w-5 text-yellow-500" /> Pending Review ({pending.length})
         </h3>
@@ -158,7 +158,7 @@ export default function ManagerTimesheetsPage() {
 
       {/* Approved → Locked */}
       {approved.length > 0 && (
-        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
           <h3 className="font-bold text-base mb-3 flex items-center gap-2">
             <Lock className="h-5 w-5 text-emerald-500" /> Approved & Ready to Lock ({approved.length})
           </h3>

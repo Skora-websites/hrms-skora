@@ -156,7 +156,7 @@ export default function RecruitmentPage() {
         sortable: true,
         cell: (job: any) => (
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center text-white shrink-0 shadow-sm">
+            <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center text-white shrink-0">
               <Briefcase className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -244,7 +244,7 @@ export default function RecruitmentPage() {
       <select
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
-        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:shadow-[0_3px_9px_rgba(94,114,228,0.1)] focus:outline-none"
+        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:-[0_3px_9px_rgba(94,114,228,0.1)] focus:outline-none"
         aria-label="Filter by status"
       >
         {STATUS_OPTIONS.map((s) => (
@@ -337,7 +337,7 @@ export default function RecruitmentPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
         >
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Open Positions</p>
@@ -348,7 +348,7 @@ export default function RecruitmentPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Total Candidates</p>
@@ -359,7 +359,7 @@ export default function RecruitmentPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Interviews</p>
@@ -370,7 +370,7 @@ export default function RecruitmentPage() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-muted uppercase tracking-wider">Offers Extended</p>
@@ -415,7 +415,7 @@ export default function RecruitmentPage() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-lg shadow-primary/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white">
                 <Briefcase className="h-6 w-6" />
               </div>
               <div>

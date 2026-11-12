@@ -8,14 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-primary text-white shadow-sm",
-        primary: "bg-gradient-primary text-white shadow-sm",
-        success: "bg-gradient-success text-white shadow-sm",
-        info: "bg-gradient-info text-white shadow-sm",
-        warning: "bg-gradient-warning text-white shadow-sm",
-        danger: "bg-gradient-danger text-white shadow-sm",
-        dark: "bg-gradient-dark text-white shadow-sm",
-        light: "bg-gradient-light text-dark shadow-sm",
+        default: "bg-gradient-primary text-white",
+        primary: "bg-gradient-primary text-white",
+        success: "bg-gradient-success text-white",
+        info: "bg-gradient-info text-white",
+        warning: "bg-gradient-warning text-white",
+        danger: "bg-gradient-danger text-white",
+        dark: "bg-gradient-dark text-white",
+        light: "bg-gradient-light text-dark",
         outline: "border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white",
         "outline-success": "border-2 border-success text-success bg-transparent hover:bg-success hover:text-white",
         "outline-danger": "border-2 border-danger text-danger bg-transparent hover:bg-danger hover:text-white",

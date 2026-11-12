@@ -428,7 +428,7 @@ export default function SuperadminOverviewPage() {
     <AppShell title="CEO Command Center">
       {/* ── Success Toast ── */}
       {successMsg && (
-        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-lg">
+        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
           <CheckCircle2 className="h-4 w-4" />
           {successMsg}
         </div>
@@ -447,7 +447,7 @@ export default function SuperadminOverviewPage() {
         </div>
         <Link
           href="/hrms/superadmin/settings"
-          className="flex items-center space-x-2 bg-white dark:bg-[#0B0F19] hover:bg-gray-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 border border-gray-200 dark:border-white/10 font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+          className="flex items-center space-x-2 bg-white dark:bg-[#0B0F19] hover:bg-gray-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 border border-gray-200 dark:border-white/10 font-semibold text-xs px-4 py-2.5 rounded-xl transition-colors"
         >
           <Shield className="w-4 h-4 text-primary" />
           <span>Platform Settings</span>
@@ -529,7 +529,7 @@ export default function SuperadminOverviewPage() {
       <MailStatusCard />
 
       {/* ═══ LIVE OPERATIONS DASHBOARD ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-gray-100 dark:border-white/10">
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
@@ -1259,7 +1259,7 @@ export default function SuperadminOverviewPage() {
       {/* ═══ EDIT USER MODAL ═══ */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg">Edit User Role & Status</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Editing: {editingUser.email}
@@ -1344,7 +1344,7 @@ export default function SuperadminOverviewPage() {
       {/* ═══ DELETE CONFIRMATION MODAL ═══ */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg text-red-600 dark:text-red-400">
               Delete User
             </h3>
@@ -1394,7 +1394,7 @@ function KPICard({
   trendUp: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md text-slate-900 dark:text-white">
       <div className="flex items-center justify-between mb-2">{icon}</div>
       <p className="text-2xl font-extrabold">{value}</p>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">

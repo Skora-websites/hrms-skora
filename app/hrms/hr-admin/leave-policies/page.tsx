@@ -282,7 +282,7 @@ export default function HrAdminLeavePoliciesPage() {
         </div>
         <Button
           onClick={handleOpenAdd}
-          className="bg-primary text-white hover:bg-primary/90 gap-2 font-bold text-xs shadow-md"
+          className="bg-primary text-white hover:bg-primary/90 gap-2 font-bold text-xs"
         >
           <Plus className="h-4 w-4" /> Add Leave Type
         </Button>
@@ -290,7 +290,7 @@ export default function HrAdminLeavePoliciesPage() {
 
       {/* Metrics Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Configured Policies</span>
             <CalendarDays className="h-4 w-4 text-primary" />
@@ -300,7 +300,7 @@ export default function HrAdminLeavePoliciesPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Paid Leave Types</span>
             <Shield className="h-4 w-4 text-emerald-500" />
@@ -310,7 +310,7 @@ export default function HrAdminLeavePoliciesPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Carry-Forward Enabled</span>
             <Clock className="h-4 w-4 text-purple-500" />
@@ -332,7 +332,7 @@ export default function HrAdminLeavePoliciesPage() {
           {leaveTypes.map((lt) => (
             <div
               key={lt.id || lt.code}
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white flex flex-col justify-between"
+              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-3">
@@ -403,7 +403,7 @@ export default function HrAdminLeavePoliciesPage() {
       {/* ═══ ADD LEAVE TYPE MODAL ═══ */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-primary" /> Add New Leave Type
             </h3>
@@ -541,7 +541,7 @@ export default function HrAdminLeavePoliciesPage() {
       {/* ═══ EDIT LEAVE TYPE MODAL ═══ */}
       {editingType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
               <Edit3 className="h-5 w-5 text-primary" /> Edit Leave Policy
             </h3>
@@ -675,7 +675,7 @@ export default function HrAdminLeavePoliciesPage() {
       {/* ═══ DELETE CONFIRMATION MODAL ═══ */}
       {deletingType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl text-slate-900 dark:text-white space-y-4">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
             <h3 className="font-bold text-base text-red-600 dark:text-red-400 flex items-center gap-2">
               <Trash2 className="h-5 w-5" /> Delete Leave Policy
             </h3>

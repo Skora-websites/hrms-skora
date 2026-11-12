@@ -133,7 +133,7 @@ export default function OrganizationPage() {
           { label: "Designations", value: safeDesigs.length || "—", icon: Users, color: "text-info" },
           { label: "Locations", value: "—", icon: MapPin, color: "text-success" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-4 shadow-sm">
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between mb-2">
               <stat.icon className={`h-5 w-5 ${stat.color}`} />
               <LayoutGrid className="h-4 w-4 text-muted" />
@@ -145,7 +145,7 @@ export default function OrganizationPage() {
       </div>
 
       {/* Departments */}
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-6">
+      <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h3 className="text-sm font-bold text-dark dark:text-white">Departments</h3>
           <div className="relative">
@@ -186,7 +186,7 @@ export default function OrganizationPage() {
 
       {/* Designations + Locations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-bold text-dark dark:text-white">Designations</h3></div>
           {safeDesigs.length > 0 ? (
             <div className="divide-y divide-border">
@@ -211,7 +211,7 @@ export default function OrganizationPage() {
           )}
         </div>
 
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-bold text-dark dark:text-white">Locations</h3></div>
           <div className="p-6 text-center"><MapPin className="h-8 w-8 text-muted mx-auto mb-2" /><p className="text-sm text-muted">No locations configured.</p></div>
         </div>

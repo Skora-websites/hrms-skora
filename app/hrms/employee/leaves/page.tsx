@@ -295,7 +295,7 @@ export default function EmployeeLeavesPage() {
       {/* ═══ Apply Leave Modal ═══ */}
       {showApplyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
               <CalendarDays className="h-5 w-5 text-primary" /> Apply for Leave
             </h3>
@@ -365,7 +365,7 @@ export default function EmployeeLeavesPage() {
       {/* ═══ Regularization Modal ═══ */}
       {showRegModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 shadow-2xl text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
               <FileText className="h-5 w-5 text-blue-500" /> Attendance Regularization
             </h3>

@@ -311,7 +311,7 @@ export default function HrAdminPayrollPage() {
             <Download className="h-4 w-4" /> Export All Runs
           </Button>
           <Button
-            className="bg-primary text-white gap-2 font-bold text-xs shadow-md"
+            className="bg-primary text-white gap-2 font-bold text-xs"
             onClick={() => setShowRunModal(true)}
           >
             <Receipt className="h-4 w-4" /> Run Payroll
@@ -321,22 +321,22 @@ export default function HrAdminPayrollPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
           <DollarSign className="h-5 w-5 text-primary mb-2" />
           <p className="text-2xl font-extrabold">₹{totalPayroll.toLocaleString()}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Total Payroll Disbursed</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
           <Receipt className="h-5 w-5 text-blue-500 mb-2" />
           <p className="text-2xl font-extrabold">{totalRuns}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Payroll Runs Executed</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
           <TrendingUp className="h-5 w-5 text-emerald-500 mb-2" />
           <p className="text-2xl font-extrabold">{latestRun ? latestRun.status.toUpperCase() : "READY"}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Latest Cycle Status</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
           <Users className="h-5 w-5 text-yellow-500 mb-2" />
           <p className="text-2xl font-extrabold">{latestRun?.totalEmployees ?? 0}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Active Employees on Payroll</p>
@@ -344,7 +344,7 @@ export default function HrAdminPayrollPage() {
       </div>
 
       {/* Payroll Runs Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white shadow-sm">
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" /> Payroll Cycle History ({payrollRuns.length})
         </h3>
@@ -449,7 +449,7 @@ export default function HrAdminPayrollPage() {
       {/* ═══ RUN PAYROLL MODAL ═══ */}
       {showRunModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Receipt className="h-5 w-5 text-primary" /> Run Monthly Payroll
             </h3>
@@ -497,7 +497,7 @@ export default function HrAdminPayrollPage() {
               <Button
                 onClick={handleRunPayroll}
                 disabled={processing}
-                className="bg-primary text-white font-bold text-xs gap-1.5 shadow-md"
+                className="bg-primary text-white font-bold text-xs gap-1.5"
               >
                 {processing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Receipt className="h-3.5 w-3.5" />}
                 {processing ? "Processing 14 Employees..." : "Execute Payroll"}
@@ -510,7 +510,7 @@ export default function HrAdminPayrollPage() {
       {/* ═══ ITEMISED RUN DETAILS MODAL ═══ */}
       {selectedRunForView && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white max-h-[85vh] flex flex-col">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-3xl w-full p-6 space-y-4 text-slate-900 dark:text-white max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
               <div>
                 <h3 className="font-bold text-base flex items-center gap-2">

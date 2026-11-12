@@ -126,7 +126,7 @@ export default function ForceChangePasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900 p-4">
         <div className="w-full max-w-md text-center space-y-6 animate-section-in">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/20 shadow-lg shadow-emerald-500/20">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/20">
             <CheckCircle2 className="h-10 w-10 text-emerald-400" />
           </div>
           <div>
@@ -148,7 +148,7 @@ export default function ForceChangePasswordPage() {
       <div className="w-full max-w-md space-y-8 animate-section-in">
         {/* Header */}
         <div className="text-center space-y-3">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 shadow-lg shadow-primary/20">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20">
             <Shield className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-white">Set Your New Password</h1>
@@ -270,7 +270,7 @@ export default function ForceChangePasswordPage() {
           <button
             type="submit"
             disabled={saving || !newPassword || !confirmPassword}
-            className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20"
+            className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors"
           >
             {saving ? (
               <>

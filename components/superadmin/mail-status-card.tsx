@@ -93,7 +93,7 @@ export function MailStatusCard() {
   const t = status?.transport;
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md shadow-sm dark:shadow-2xl">
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-primary" />
@@ -179,7 +179,7 @@ export function MailStatusCard() {
               type="button"
               onClick={sendTest}
               disabled={sending}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-xs font-bold px-4 py-2 hover:bg-primary/90 disabled:opacity-50 shadow-md"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-xs font-bold px-4 py-2 hover:bg-primary/90 disabled:opacity-50"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               {sending ? "Sending…" : "Send Test Email"}

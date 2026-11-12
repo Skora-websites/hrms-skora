@@ -116,11 +116,11 @@ export default function FeedbackPage() {
             return (
               <div
                 key={item._id}
-                className="bg-card rounded-xl border border-border shadow-sm p-4 hover:shadow-md transition-shadow"
+                className="bg-card rounded-xl border border-border p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
+                    <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0">
                       {item.fromUser.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">

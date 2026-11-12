@@ -93,7 +93,7 @@ export default function EngagePage() {
       />
 
       {/* Create Post */}
-      <div className="bg-card rounded-xl border border-border p-4 shadow-sm mb-6">
+      <div className="bg-card rounded-xl border border-border p-4 mb-6">
         <div className="flex gap-3">
           <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold shrink-0">U</div>
           <div className="flex-1">
@@ -133,7 +133,7 @@ export default function EngagePage() {
       ) : (
         <div className="space-y-4">
           {filtered.map((post) => (
-            <div key={post.id} className="bg-card rounded-xl border border-border shadow-sm">
+            <div key={post.id} className="bg-card rounded-xl border border-border">
               <div className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
