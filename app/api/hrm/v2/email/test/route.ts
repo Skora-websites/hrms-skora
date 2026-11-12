@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
 import { sendMail, getMailTransportInfo } from "@/lib/email";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 const TEST_STATUS_KEY = "email_test_status";
 

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (!session) return NextResponse.json({ required: false, role: null });
 
     const user = await db.collection("users").findOne(
-      { _id: new (await import("mongodb")).ObjectId(session.userId) },
+      { _id: new (await import("@/lib/db/mysql")).ObjectId(session.userId) },
       { projection: { mustChangePassword: 1, role: 1, passwordChangedAt: 1, passwordUpdatedAt: 1 } }
     );
 

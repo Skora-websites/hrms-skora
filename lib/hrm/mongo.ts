@@ -1,5 +1,8 @@
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId, Filter, Sort } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
+
+export type Filter<T = any> = any;
+export type Sort = any;
 
 // Re-export types so existing imports from firestore.ts keep working
 export type FirestoreWhereOp = "<" | "<=" | "==" | ">=" | ">" | "!=" | "array-contains" | "array-contains-any" | "in" | "not-in";

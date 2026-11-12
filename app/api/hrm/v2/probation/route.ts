@@ -44,6 +44,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data: reviews });
     }
 
+    if (auth.role === "employee") {
+      return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+    }
+
     if (type === "review" && id) {
       const review = await getProbationReviewById(id);
       if (!review) {
@@ -102,6 +106,9 @@ export async function POST(request: NextRequest) {
     const policy = await createProbationPolicy(tenantId, body);
     return NextResponse.json({ data: policy }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/probation error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -126,6 +133,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ data: policy });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/probation error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

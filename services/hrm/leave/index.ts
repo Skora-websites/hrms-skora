@@ -272,7 +272,7 @@ export async function approveLeave(
   const { getDb } = await import("@/lib/db/mongo-helper");
   const db = await getDb();
   if (!db) return null;
-  const { ObjectId } = await import("mongodb");
+  const { ObjectId } = await import("@/lib/db/mysql");
   const decisionFilter = ObjectId.isValid(id)
     ? { _id: new ObjectId(id), status: "pending" }
     : { id, status: "pending" };
@@ -321,7 +321,7 @@ export async function rejectLeave(
   const { getDb } = await import("@/lib/db/mongo-helper");
   const db = await getDb();
   if (!db) return null;
-  const { ObjectId } = await import("mongodb");
+  const { ObjectId } = await import("@/lib/db/mysql");
   const decisionFilter = ObjectId.isValid(id)
     ? { _id: new ObjectId(id), status: "pending" }
     : { id, status: "pending" };

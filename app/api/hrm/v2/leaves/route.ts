@@ -17,7 +17,7 @@ import {
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { leaveApplySchema, leaveDecisionSchema, parseValidated } from "@/lib/validations";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
 
@@ -184,7 +184,6 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-
       const result = await applyLeave(tenantId, {
         userId,
         leaveTypeId: data.leaveTypeId,
@@ -231,7 +230,6 @@ export async function POST(request: NextRequest) {
       if (auth.role === "employee") {
         return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
       }
-
       const parsed = parseValidated(body, leaveDecisionSchema);
       if (!parsed.success) return parsed.response!;
       const decision = parsed.data!;
@@ -364,6 +362,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action. Use: apply, approve, reject, cancel, create_type, update_type, delete_type" }, { status: 400 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
+    if (error?.message === "Leave type not found") {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    if (error?.message === "Insufficient leave balance") {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/leaves error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

@@ -132,6 +132,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof SyntaxError || (error as Error)?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("Settings save error:", error);
     return NextResponse.json(
       { error: (error as Error).message || "Save failed" },

@@ -13,7 +13,7 @@ import {
 } from "@/services/hrm/documents";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 import { validateUpload } from "@/lib/upload-security";
 
 const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
@@ -166,6 +166,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/documents error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -212,6 +215,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/documents error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

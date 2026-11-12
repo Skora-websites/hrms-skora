@@ -1,10 +1,13 @@
-import { getMongoClient } from "@/lib/mongodb";
-import { Db } from "mongodb";
+import "server-only";
+import { getDb as getMySQLDb, MySQLDatabase } from "./mysql";
 
-const DB_NAME = process.env.MONGODB_DB || "hrms";
+export type { MySQLDatabase as Db };
 
-export async function getDb(): Promise<Db | null> {
-  const client = await getMongoClient();
-  if (!client) return null;
-  return client.db(DB_NAME);
+export async function getDb(): Promise<MySQLDatabase | null> {
+  try {
+    return await getMySQLDb();
+  } catch (error) {
+    console.error("[MySQL] Failed to get database connection:", error);
+    return null;
+  }
 }

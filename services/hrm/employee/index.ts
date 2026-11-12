@@ -31,6 +31,11 @@ import type {
 
 // ── Users ──────────────────────────────────────────────
 
+function sanitizeEmployee<T extends Record<string, any>>(u: T): T {
+  const { passwordHash: _ph, password: _pw, ...rest } = u as any;
+  return rest as T;
+}
+
 export async function getEmployees(tenantId: string): Promise<HRMUser[]> {
   const users = await hrmUsersService.findManyInTenant(tenantId, {
     orderByField: "displayName",
@@ -41,7 +46,7 @@ export async function getEmployees(tenantId: string): Promise<HRMUser[]> {
       const r = (u.role || "").toLowerCase();
       return r !== "super_admin" && r !== "superadmin" && r !== "ceo";
     })
-    .map((u: any) => ({
+    .map((u: any) => sanitizeEmployee({
       ...u,
       id: u.id || u._id || "",
       name: u.displayName || u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
@@ -136,7 +141,7 @@ export async function getEmployeesPaginated(
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(page, totalPages - 1);
-  const data = filtered.slice(safePage * pageSize, (safePage + 1) * pageSize);
+  const data = filtered.slice(safePage * pageSize, (safePage + 1) * pageSize).map((u) => sanitizeEmployee(u));
 
   return { data, totalItems, page: safePage, pageSize, totalPages };
 }
@@ -145,14 +150,14 @@ export async function getEmployeeById(id: string): Promise<HRMUser | null> {
   const user = await hrmUsersService.findById(id);
   if (!user) return null;
   const u = user as any;
-  return {
+  return sanitizeEmployee({
     ...u,
     id: u.id || u._id || id,
     name: u.displayName || u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
     displayName: u.displayName || u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
     department: u.department || u.departmentName || "General",
     designation: u.designation || u.designationName || "Staff",
-  };
+  });
 }
 
 export async function createEmployee(
@@ -224,7 +229,8 @@ export async function createEmployee(
     updatedAt: new Date(),
   };
 
-  return hrmUsersService.create(userDoc as any);
+  const created = await hrmUsersService.create(userDoc as any);
+  return sanitizeEmployee(created);
 }
 
 export async function updateEmployee(
@@ -262,7 +268,8 @@ export async function updateEmployee(
     updateData.designation = data.designation;
   }
 
-  return hrmUsersService.update(id, updateData);
+  const updated = await hrmUsersService.update(id, updateData);
+  return updated ? sanitizeEmployee(updated) : null;
 }
 
 export async function deleteEmployee(id: string): Promise<boolean> {
@@ -520,7 +527,7 @@ export async function getEmployeeProfile(userId: string): Promise<EmployeeProfil
     : null;
 
   return {
-    user,
+    user: user ? sanitizeEmployee(user) : null,
     job,
     detail,
     family,

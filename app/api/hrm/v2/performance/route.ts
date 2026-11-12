@@ -21,7 +21,7 @@ import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-han
 import { getTasks } from "@/services/hrm/tasks";
 import { getAttendanceRecords } from "@/lib/db/attendance";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
 

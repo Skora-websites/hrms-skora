@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { tenantsService, hrmUsersService } from "@/lib/hrm/firestore";
 import { requireSuperAdmin, isErrorResponse } from "@/lib/api-auth";
-import { withErrorHandler, badRequest, created, ok, noContent } from "@/lib/api-handler";
+import { withErrorHandler, badRequest, created, ok, noContent, notFound } from "@/lib/api-handler";
 import { normalizeRole } from "@/lib/rbac";
 
 export const GET = withErrorHandler(async () => {
@@ -110,7 +110,10 @@ export const DELETE = withErrorHandler(async (request: NextRequest) => {
     return badRequest("Tenant ID is required");
   }
 
-  await tenantsService.delete(id);
+  const deleted = await tenantsService.delete(id);
+  if (!deleted) {
+    return notFound("Tenant not found");
+  }
   return noContent();
 }, { label: "Tenants DELETE" });
 

@@ -12,7 +12,7 @@ import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
 import { employeeCreateSchema, parseBody } from "@/lib/validations";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 import bcrypt from "bcryptjs";
 import { normalizeRole } from "@/lib/rbac";
 import { validatePasswordPolicy } from "@/lib/password-policy";

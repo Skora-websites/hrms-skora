@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth } from "@/lib/api-auth";
 import { hrmUsersService } from "@/lib/hrm/firestore";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 export async function punchInAction(data: {
   userId: string;

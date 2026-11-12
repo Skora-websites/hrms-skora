@@ -16,7 +16,7 @@ import {
 } from "@/services/hrm/exit";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,10 +86,18 @@ export async function POST(request: NextRequest) {
 
     const tenantId = "default";
 
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     const action = body.action;
 
     if (action === "initiate") {
+      if (!body.userId) {
+        return NextResponse.json({ error: "userId is required to initiate exit" }, { status: 400 });
+      }
       const exit = await initiateExit(tenantId, {
         userId: body.userId,
         resignationDate: new Date(body.resignationDate),

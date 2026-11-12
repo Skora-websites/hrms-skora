@@ -45,7 +45,17 @@ export async function POST(request: NextRequest) {
     const auth = await requireAuth();
     if (isErrorResponse(auth)) return auth;
 
-    const formData = await request.formData();
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data") && !contentType.includes("application/x-www-form-urlencoded")) {
+      return NextResponse.json({ error: "Expected multipart/form-data payload" }, { status: 400 });
+    }
+
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: "Invalid multipart form data" }, { status: 400 });
+    }
     const file = formData.get("file") as File | null;
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });

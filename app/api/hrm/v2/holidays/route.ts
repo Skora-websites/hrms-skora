@@ -112,6 +112,9 @@ export async function POST(request: NextRequest) {
     const holiday = await createHoliday(tenantId, body);
     return NextResponse.json({ data: holiday }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/holidays error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -144,6 +147,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ data: updated });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/holidays error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

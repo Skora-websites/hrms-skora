@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 // Generic CRUD factory for simple CRM collections (leads, contacts, ...).
 // GET returns a bare array — useApiData consumers expect the raw body.

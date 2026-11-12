@@ -16,7 +16,7 @@ import {
   markPayrollTransactionPaid,
 } from "@/services/hrm/payroll";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 /** Managers may only read their direct reports' payroll data. Same
  *  resolution rule as leaves/employees/documents: reportingManager stores
@@ -140,6 +140,9 @@ export async function POST(request: NextRequest) {
     let result;
 
     if (action === "process") {
+      if (!body.payGroupId || !body.periodStart || !body.periodEnd) {
+        return NextResponse.json({ error: "payGroupId, periodStart, and periodEnd are required" }, { status: 400 });
+      }
       result = await processPayroll(
         tenantId,
         body.payGroupId,
@@ -160,6 +163,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/payroll error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -226,7 +232,7 @@ export async function PATCH(request: NextRequest) {
               companyName: cfg.companyName || "SKORA",
               pdfAttachment: { filename: pdf.filename, content: pdf.buffer },
             });
-            const { ObjectId } = await import("mongodb");
+            const { ObjectId } = await import("@/lib/db/mysql");
             await db.collection("payroll_transactions").updateOne(
               { _id: ObjectId.isValid(id) ? new ObjectId(id) : (id as any) },
               { $set: { emailSent: sent === true, emailSentAt: sent ? new Date() : null } }
@@ -253,6 +259,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ data: result });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/payroll error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

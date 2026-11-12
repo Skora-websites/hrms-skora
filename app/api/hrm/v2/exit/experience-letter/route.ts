@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getEmployeeExitById } from "@/services/hrm/exit";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 import { generateExperienceLetterPdf } from "@/lib/experience-letter-pdf";
 
 /**

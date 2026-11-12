@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getEmployeePayrollTransactions } from "@/services/hrm/payroll";
 import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "@/lib/db/mysql";
 import { generatePayslipPdf } from "@/lib/payslip-pdf";
 
 /**
@@ -33,7 +34,10 @@ export async function GET(request: NextRequest) {
     } else {
       const db = await getDb();
       if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
-      tx = await db.collection("payroll_transactions").findOne({ _id: new (require("mongodb").ObjectId)(id) });
+      if (!ObjectId.isValid(id)) {
+        return NextResponse.json({ error: "Invalid payslip ID" }, { status: 400 });
+      }
+      tx = await db.collection("payroll_transactions").findOne({ _id: new ObjectId(id) });
       if (!tx) return NextResponse.json({ error: "Payslip not found" }, { status: 404 });
     }
     if (threeMonthWindow && tx.createdAt && new Date(tx.createdAt) < cutoff) {

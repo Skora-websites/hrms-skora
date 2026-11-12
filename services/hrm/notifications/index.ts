@@ -1,5 +1,5 @@
 import "server-only";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 import {
   notificationsService,
   notificationTemplatesService,

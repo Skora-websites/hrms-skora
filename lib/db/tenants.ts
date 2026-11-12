@@ -1,5 +1,5 @@
 import { getDb } from "./mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "./mysql";
 
 export interface Tenant {
   _id?: ObjectId | string;
@@ -28,7 +28,7 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
   if (!db || !ObjectId.isValid(id)) return null;
   const tenant = await db.collection<Tenant>("tenants").findOne({ _id: new ObjectId(id) });
   if (!tenant) return null;
-  return { ...tenant, _id: tenant._id.toString() };
+  return { ...tenant, _id: tenant._id ? tenant._id.toString() : id };
 }
 
 export async function createTenant(data: Omit<Tenant, "_id" | "createdAt" | "updatedAt">): Promise<Tenant | null> {

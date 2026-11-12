@@ -8,7 +8,17 @@ export async function POST(request: NextRequest) {
     const auth = await requireAuth();
     if (isErrorResponse(auth)) return auth;
 
-    const formData = await request.formData();
+    const contentType = request.headers.get("content-type") || "";
+    if (!contentType.includes("multipart/form-data") && !contentType.includes("application/x-www-form-urlencoded")) {
+      return NextResponse.json({ error: "Expected multipart/form-data payload" }, { status: 400 });
+    }
+
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: "Invalid multipart form data" }, { status: 400 });
+    }
     const file = formData.get("file") as File | null;
     // Always use the authenticated user's ID, never trust client-provided userId
     const userId = auth.userId;
@@ -54,7 +64,7 @@ export async function POST(request: NextRequest) {
       // Older accounts never got a task row — create one so the uploaded
       // document is always attached and visible to HR.
       if (!task) {
-        const { ObjectId } = await import("mongodb");
+        const { ObjectId } = await import("@/lib/db/mysql");
         const userFilter: Record<string, unknown> = ObjectId.isValid(userId)
           ? { _id: new ObjectId(userId) }
           : { _id: userId };

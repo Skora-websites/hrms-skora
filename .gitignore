@@ -42,6 +42,9 @@ scripts/backup-cleanup.json
 *.md
 !README.md
 !CHANGELOG.md
+API_*
+scripts/audit/
+__tests__/api/
 AGENTS.md
 CLAUDE.md
 DESIGN.md

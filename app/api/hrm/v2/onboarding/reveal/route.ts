@@ -4,7 +4,7 @@ import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-han
 import { getDb } from "@/lib/db/mongo-helper";
 import { isSensitiveField, revealToken } from "@/lib/pii-masking";
 import { recordAuditLog } from "@/services/hrm/audit";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 /**
  * POST /api/hrm/v2/onboarding/reveal

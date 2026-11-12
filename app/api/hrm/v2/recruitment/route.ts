@@ -16,7 +16,7 @@ import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-han
 // ── GET ─────────────────────────────────────────────────
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";
@@ -67,7 +67,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 // ── POST ────────────────────────────────────────────────
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";
