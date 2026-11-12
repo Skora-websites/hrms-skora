@@ -437,9 +437,6 @@ export default function SuperadminOverviewPage() {
       {/* ═══ HEADER ═══ */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-white/10 pb-6">
         <div>
-          <span className="text-xs font-semibold text-primary uppercase tracking-widest">
-            Command Center
-          </span>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
             Welcome back, {user?.name || "CEO"}
           </h1>

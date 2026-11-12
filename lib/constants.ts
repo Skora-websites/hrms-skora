@@ -88,7 +88,7 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "My Team", href: "/hrms/manager/my-team", icon: "Users", group: "overview" },
     { title: "Approvals", href: "/hrms/manager/approvals", icon: "CheckCircle2", group: "hrm" },
     { title: "Timesheets", href: "/hrms/manager/timesheets", icon: "FileText", group: "hrm" },
-    { title: "KPI Analytics", href: "/hrms/manager/analytics", icon: "TrendingUp", group: "hrm" },
+    { title: "Performance & Goals", href: "/hrms/performance", icon: "TrendingUp", group: "hrm" },
     { title: "My Leave", href: "/hrms/employee/leaves", icon: "CalendarDays", group: "lifecycle" },
     { title: "My Payslips", href: "/hrms/employee/payslips", icon: "DollarSign", group: "lifecycle" },
     { title: "Team Attendance", href: "/hrms/attendance", icon: "Clock", group: "hrm" },

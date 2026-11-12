@@ -648,7 +648,7 @@ function DetailsPanel({
     <div className="space-y-5 max-h-[480px] overflow-y-auto pr-2">
       {/* Personal and Contact Details */}
       <section>
-        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold text-slate-900 dark:text-white pb-1 border-b border-gray-100 dark:border-white/5 mb-3">
           <User className="h-3 w-3 text-primary" /> Personal and Contact Details
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -663,7 +663,7 @@ function DetailsPanel({
 
       {/* Employment Details */}
       <section>
-        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold text-slate-900 dark:text-white pb-1 border-b border-gray-100 dark:border-white/5 mb-3">
           <Briefcase className="h-3 w-3 text-primary" /> Employment Details
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -689,7 +689,7 @@ function DetailsPanel({
 
       {/* Nominee Details */}
       <section>
-        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold text-slate-900 dark:text-white pb-1 border-b border-gray-100 dark:border-white/5 mb-3">
           <Users className="h-3 w-3 text-primary" /> Nominee Details
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -704,7 +704,7 @@ function DetailsPanel({
 
       {/* Bank Details */}
       <section>
-        <h4 className="flex items-center gap-2 text-[11px] font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-2 py-0.5 bg-white dark:bg-white/5 rounded-r mb-3">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold text-slate-900 dark:text-white pb-1 border-b border-gray-100 dark:border-white/5 mb-3">
           <Landmark className="h-3 w-3 text-primary" /> Bank Details
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

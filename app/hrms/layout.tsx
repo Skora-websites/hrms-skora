@@ -8,11 +8,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | HRMS.pro",
-    default: "HRMS.pro — Human Resource Management System",
+    template: "%s | SKORA HRMS",
+    default: "SKORA HRMS — Human Resource Management System",
   },
   description:
-    "A comprehensive HRM platform for managing employees, attendance, payroll, leaves, assets, and more.",
+    "Enterprise HRM platform for managing employees, attendance, payroll, leaves, and assets.",
   keywords: [
     "HRM",
     "human resource management",

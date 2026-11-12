@@ -50,7 +50,7 @@ function Section({
 }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 sm:p-6 space-y-4">
-      <h2 className="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-white border-l-4 border-primary pl-3 py-1 bg-slate-50 dark:bg-white/5 rounded-r-lg">
+      <h2 className="flex items-center gap-2.5 text-sm font-bold text-slate-900 dark:text-white pb-2 border-b border-gray-100 dark:border-white/5">
         {icon}
         {title}
       </h2>

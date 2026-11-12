@@ -170,7 +170,7 @@ export default function SuperadminTenantsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Acme Corporation"
+                  placeholder="e.g. Skora Infotech"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
@@ -181,7 +181,7 @@ export default function SuperadminTenantsPage() {
                 <label className="block text-slate-300 font-semibold mb-1">Domain Name (Optional)</label>
                 <input
                   type="text"
-                  placeholder="acme.com"
+                  placeholder="skorainfotech.com"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Navbar } from "@/components/layout/navbar";
-import { ThemeConfigurator } from "@/components/layout/theme-configurator";
 import { RouteGuard } from "@/components/shared/route-guard";
 import { useBreakpoint } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
@@ -48,14 +47,11 @@ export function AppShell({ children, title }: AppShellProps) {
           {/* Footer */}
           <footer className="border-t border-border py-4 px-6">
             <div className="flex items-center justify-between text-xs text-muted">
-              <p>&copy; {new Date().getFullYear()} HRMS.pro. All rights reserved.</p>
-              <p>Built with Next.js + MongoDB</p>
+              <p>&copy; {new Date().getFullYear()} SKORA HRMS. All rights reserved.</p>
+              <p>Enterprise Portal</p>
             </div>
           </footer>
         </div>
-
-        {/* Theme Configurator */}
-        <ThemeConfigurator />
       </div>
     </RouteGuard>
   );

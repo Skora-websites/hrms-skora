@@ -371,12 +371,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               isCollapsed && "justify-center"
             )}
           >
-            {/* Logo icon with subtle glow */}
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg shadow-primary/20 transition-transform duration-200 group-hover:scale-105 group-hover:shadow-primary/30">
-              {/* Inner glow */}
-              <div className="absolute inset-0 rounded-xl bg-white/10" />
+            {/* Logo icon */}
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-md shadow-primary/20 transition-transform duration-200 group-hover:scale-105">
               <span className="relative z-10 text-sm font-bold text-white">
-                H
+                S
               </span>
             </div>
 
@@ -384,13 +382,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="text-base font-bold tracking-tight text-sidebar-accent-foreground dark:text-white leading-tight">
-                    HRMS
-                    <span className="text-primary font-light">.pro</span>
+                    SKORA <span className="text-primary font-light">HRMS</span>
                   </span>
-                  <Sparkles className="h-3 w-3 text-primary/60" />
                 </div>
-                <span className="text-[10px] font-medium text-sidebar-foreground/40 tracking-[0.12em] uppercase leading-tight">
-                  HR Platform
+                <span className="text-[10px] font-medium text-sidebar-foreground/50 tracking-wider uppercase leading-tight">
+                  Enterprise Portal
                 </span>
               </div>
             )}
