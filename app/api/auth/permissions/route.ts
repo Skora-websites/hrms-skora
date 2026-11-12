@@ -64,7 +64,7 @@ export const GET = withErrorHandler(async () => {
       permissionGroups: PERMISSION_GROUPS,
       routeAccess,
       auditLogs,
-      systemRoles: Object.keys(ROLES),
+      systemRoles: Object.values(ROLES),
     },
   });
 }, { label: "Permissions" });

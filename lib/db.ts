@@ -212,7 +212,7 @@ export async function getLeads(): Promise<Lead[]> {
         const collection = db.collection<Lead>("leads");
         const leads = await collection.find({}).sort({ createdAt: -1 }).toArray();
         if (leads.length > 0) {
-          return leads.map(({ _id, ...l }) => l as Lead);
+          return leads.map(({ _id, ...l }: any) => l as Lead);
         }
         // Auto-seed MongoDB with initial leads if collection is empty
         const localDb = ensureLocalDbFile();

@@ -51,10 +51,14 @@ export async function createPost(
     content: string;
     mediaURLs?: string[];
     tags?: string[];
+    slug?: string;
   }
 ): Promise<Post> {
+  const uniqueSlug =
+    data.slug || `post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return postsService.create({
     ...data,
+    slug: uniqueSlug,
     mediaURLs: data.mediaURLs || [],
     tags: data.tags || [],
     likes: 0,

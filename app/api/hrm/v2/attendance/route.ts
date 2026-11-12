@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAttendanceRecords, getAttendanceById, markAttendance, updateAttendance, deleteAttendance, getAttendanceDashboard, getAttendanceStats, calculateAttendanceStats } from "@/services/hrm/attendance";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 
 async function getManagerDepartmentUserIds(userId: string, tenantId: string): Promise<string[]> {
   const db = await getDb();
@@ -106,6 +106,9 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ data: record }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/attendance error:", error);
     return NextResponse.json({ error: "Unable to save attendance" }, { status: 500 });
   }
@@ -126,6 +129,9 @@ export async function PATCH(request: NextRequest) {
     if (!record) return NextResponse.json({ error: "Attendance not found" }, { status: 404 });
     return NextResponse.json({ data: record });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/attendance error:", error);
     return NextResponse.json({ error: "Unable to update attendance" }, { status: 500 });
   }

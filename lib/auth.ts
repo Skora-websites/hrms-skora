@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { getDb } from "./db/mongo-helper";
 import { ApiError } from "./api-handler";
 import { normalizeRoleStrict } from "./role-utils";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "./db/mysql";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 

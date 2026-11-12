@@ -63,11 +63,21 @@ export async function POST(request: NextRequest) {
 
     if (action === "send") {
       // Only admins can send notifications to others
+      if (auth.role === "employee" && body.userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
+      }
+      if (!body.userId || !body.title) {
+        return NextResponse.json({ error: "userId and title are required" }, { status: 400 });
+      }
       const notification = await sendNotification(body);
       return NextResponse.json({ data: notification }, { status: 201 });
     }
 
     if (action === "send_to_role") {
+      // Only admins/managers can broadcast notifications to a role
+      if (auth.role === "employee") {
+        return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+      }
       // Send notifications to all users with a specific role
       const { role, title, body: notifBody, type, referenceType, referenceId } = body;
       if (!role || !title || !notifBody) {
@@ -110,6 +120,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/notifications error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -144,6 +157,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/notifications error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

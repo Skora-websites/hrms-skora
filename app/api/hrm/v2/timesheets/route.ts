@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "@/lib/db/mysql";
 
 /**
  * GET /api/hrm/v2/timesheets
@@ -94,6 +95,9 @@ export async function POST(request: NextRequest) {
     const result = await db.collection("timesheets").insertOne(doc);
     return NextResponse.json({ data: { id: result.insertedId.toString(), ...doc } }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/timesheets error:", error);
     return NextResponse.json({ error: error.message || "Failed" }, { status: 500 });
   }
@@ -118,8 +122,11 @@ export async function PATCH(request: NextRequest) {
     const id = new URL(request.url).searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid timesheet ID" }, { status: 400 });
+    }
+
     const body = await request.json();
-    const { ObjectId } = require("mongodb");
 
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (body.status) updateData.status = body.status;
@@ -136,6 +143,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/timesheets error:", error);
     return NextResponse.json({ error: error.message || "Failed" }, { status: 500 });
   }

@@ -91,10 +91,10 @@ export function withErrorHandler(
         );
       }
 
-      // Handle MongoDB Duplicate Key (E11000) errors
+      // Handle Database Duplicate Key errors (Mongo E11000 or MySQL ER_DUP_ENTRY 1062)
       if (error && typeof error === "object" && "code" in error) {
         const dbError = error as { code: number | string };
-        if (dbError.code === 11000) {
+        if (dbError.code === 11000 || dbError.code === 1062 || dbError.code === "ER_DUP_ENTRY") {
           return conflict("A record with this identifier or email already exists");
         }
       }
@@ -102,6 +102,20 @@ export function withErrorHandler(
       // Handle validation errors
       if (error instanceof Error && error.name === "ZodError") {
         return badRequest(error.message);
+      }
+
+      // Handle JSON body syntax errors (e.g. empty body or invalid JSON)
+      if (isInvalidJsonError(error)) {
+        return badRequest("Invalid or empty JSON payload");
+      }
+
+      // Handle invalid MongoDB ObjectId (BSONError)
+      if (
+        error instanceof Error &&
+        (error.name === "BSONError" ||
+          error.message.includes("24 character hex string"))
+      ) {
+        return badRequest("Invalid ID format");
       }
 
       // Don't leak internal error details to the client
@@ -116,6 +130,32 @@ export function withErrorHandler(
       );
     }
   };
+}
+
+export function isInvalidJsonError(error: unknown): boolean {
+  if (error instanceof SyntaxError) return true;
+  if (error instanceof Error) {
+    return (
+      error.name === "SyntaxError" ||
+      error.message.includes("JSON") ||
+      error.message.includes("Unexpected end of JSON input")
+    );
+  }
+  return false;
+}
+
+export async function safeParseJson<T = Record<string, any>>(
+  request: NextRequest
+): Promise<{ data: T; error?: never } | { data?: never; error: NextResponse }> {
+  try {
+    const data = await request.json();
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return { error: badRequest("Request body must be a JSON object") };
+    }
+    return { data: data as T };
+  } catch {
+    return { error: badRequest("Invalid or empty JSON payload") };
+  }
 }
 
 // ── Custom API Error class ───────────────────────────

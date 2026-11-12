@@ -57,7 +57,12 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        return NextResponse.json({ data: filtered });
+        const sanitized = filtered.map((u: any) => {
+          const { passwordHash, password, ...rest } = u;
+          return rest;
+        });
+
+        return NextResponse.json({ data: sanitized });
       }
 
       case "get": {
@@ -74,7 +79,8 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ data: user });
+        const { passwordHash, password, ...rest } = user as any;
+        return NextResponse.json({ data: rest });
       }
 
       case "audit-logs": {
@@ -174,6 +180,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/users error:", error);
 
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
@@ -434,6 +443,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/users error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -465,6 +477,9 @@ export async function DELETE(request: NextRequest) {
 
     // Get user info for audit log before deletion
     const targetUser = await hrmUsersService.findById(userId);
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
     const targetUserEmail = (targetUser as any)?.email || "unknown";
 
     // Delete sessions for this user

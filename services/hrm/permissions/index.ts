@@ -260,12 +260,12 @@ export async function getAllRoles(tenantId: string): Promise<RoleWithPermissions
  * Get the system-defined roles (hardcoded in rbac.ts).
  */
 export function getSystemRoles(): RoleWithPermissions[] {
-  return (Object.keys(ROLES) as Role[]).map((role) => ({
+  return (Object.values(ROLES) as Role[]).map((role) => ({
     key: role,
     label: ROLE_LABELS[role],
     level: ROLE_HIERARCHY[role],
-    permissions: [...HARDCODED_PERMISSIONS[role]],
-    permissionCount: HARDCODED_PERMISSIONS[role].length,
+    permissions: HARDCODED_PERMISSIONS[role] ? [...HARDCODED_PERMISSIONS[role]] : [],
+    permissionCount: HARDCODED_PERMISSIONS[role] ? HARDCODED_PERMISSIONS[role].length : 0,
     isSystem: true,
     isCustom: false,
   }));

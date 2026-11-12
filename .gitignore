@@ -34,6 +34,9 @@
 # Markdown Documentation & AGENTS Rules (NEVER EXPOSE)
 *.md
 !README.md
+API_*
+scripts/audit/
+__tests__/api/
 AGENTS.md
 CLAUDE.md
 DESIGN.md

@@ -1,5 +1,5 @@
 import { getDb } from "./mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "./mysql";
 
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";

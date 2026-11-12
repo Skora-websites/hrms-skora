@@ -94,8 +94,11 @@ export async function POST(request: NextRequest) {
     const action = body.action;
 
     if (action === "apply") {
+      if (!body.leaveTypeId || !body.fromDate || !body.toDate) {
+        return NextResponse.json({ error: "leaveTypeId, fromDate, and toDate are required" }, { status: 400 });
+      }
       // Employees can only apply for themselves
-      const userId = body.userId === "current" ? auth.userId : (body.userId || auth.userId);
+      const userId = auth.role === "employee" ? auth.userId : (body.userId === "current" ? auth.userId : (body.userId || auth.userId));
       const result = await applyLeave(tenantId, {
         userId: userId,
         leaveTypeId: body.leaveTypeId,
@@ -110,6 +113,9 @@ export async function POST(request: NextRequest) {
     if (action === "approve" || action === "reject") {
       if (auth.role === "employee") {
         return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
+      }
+      if (!body.id) {
+        return NextResponse.json({ error: "Leave request id is required" }, { status: 400 });
       }
       if (action === "approve") {
         const result = await approveLeave(body.id, body.approvedById);
@@ -127,6 +133,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "cancel") {
+      if (!body.id) {
+        return NextResponse.json({ error: "Leave request id is required" }, { status: 400 });
+      }
+      if (auth.role === "employee") {
+        const existing = await getLeaveRequestById(body.id);
+        if (!existing) {
+          return NextResponse.json({ error: "Leave request not found" }, { status: 404 });
+        }
+        if (existing.userId !== auth.userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      }
       const result = await cancelLeave(body.id);
       if (!result) {
         return NextResponse.json({ error: "Leave request not found or cannot be cancelled" }, { status: 400 });
@@ -136,12 +154,18 @@ export async function POST(request: NextRequest) {
 
     // ── Leave Type CRUD ──────────────────────────────────
     if (action === "create_type") {
+      if (auth.role === "employee") {
+        return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
+      }
       const { id: _id, tenantId: _t, createdAt: _c, updatedAt: _u, deletedAt: _d, ...data } = body;
       const result = await createLeaveType(tenantId, data as any);
       return NextResponse.json({ data: result }, { status: 201 });
     }
 
     if (action === "update_type") {
+      if (auth.role === "employee") {
+        return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
+      }
       const { id, action: _a, ...data } = body;
       const result = await updateLeaveType(id, data as any);
       if (!result) {
@@ -151,6 +175,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "delete_type") {
+      if (auth.role === "employee") {
+        return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
+      }
       const success = await deleteLeaveType(body.id);
       if (!success) {
         return NextResponse.json({ error: "Leave type not found" }, { status: 404 });
@@ -160,6 +187,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action. Use: apply, approve, reject, cancel, create_type, update_type, delete_type" }, { status: 400 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
+    if (error?.message === "Leave type not found") {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    if (error?.message === "Insufficient leave balance") {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/leaves error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

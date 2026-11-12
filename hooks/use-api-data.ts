@@ -85,48 +85,6 @@ export function useApiData<T>(
 // ── Utility Hooks ───────────────────────────────────────
 
 /**
- * Hook to fetch leads from the API.
- */
-export function useLeads() {
-  return useApiData<import("@/types").Lead[]>("/api/leads");
-}
-
-/**
- * Hook to fetch customers from the API.
- */
-export function useCustomers() {
-  return useApiData<import("@/types").Customer[]>("/api/customers");
-}
-
-/**
- * Hook to fetch contacts from the API.
- */
-export function useContacts() {
-  return useApiData<import("@/types").Contact[]>("/api/contacts");
-}
-
-/**
- * Hook to fetch activities from the API.
- */
-export function useActivities() {
-  return useApiData<import("@/types").Activity[]>("/api/activities");
-}
-
-/**
- * Hook to fetch tasks from the API.
- */
-export function useTasks() {
-  return useApiData<import("@/types").Task[]>("/api/tasks");
-}
-
-/**
- * Hook to fetch deals from the API.
- */
-export function useDeals() {
-  return useApiData<import("@/types").Deal[]>("/api/deals");
-}
-
-/**
  * Hook to fetch dashboard stats from the API.
  */
 export function useDashboardStats() {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "@/lib/db/mysql";
 import crypto from "crypto";
 import { sendOfferLetterEmail } from "@/lib/email";
 
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       salary: l.salary || null,
       joiningDate: l.joiningDate || null,
       offerContent: l.offerContent || null,
-      password: auth.role === "super_admin" ? l.password : undefined,
+      hasPassword: Boolean(l.password),
       createdAt: l.createdAt,
       releasedAt: l.releasedAt || null,
       downloadedAt: l.downloadedAt || null,
@@ -73,7 +74,6 @@ export async function POST(request: NextRequest) {
     });
 
     // Get user details
-    const { ObjectId } = require("mongodb");
     const user = await db.collection("users").findOne({ _id: new ObjectId(auth.userId) });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -154,6 +154,10 @@ export async function PATCH(request: NextRequest) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id parameter required" }, { status: 400 });
 
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid offer letter ID" }, { status: 400 });
+    }
+
     const body = await request.json();
     const updateData: any = { updatedAt: new Date() };
 
@@ -165,7 +169,6 @@ export async function PATCH(request: NextRequest) {
       if (body.status === "released") updateData.releasedAt = new Date();
     }
 
-    const { ObjectId } = require("mongodb");
     const result = await db.collection("offerLetters").updateOne(
       { _id: new ObjectId(id) },
       { $set: updateData }
@@ -236,6 +239,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/offer-letters error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

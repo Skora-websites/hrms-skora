@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "@/lib/db/mysql";
 import { generateOfferLetterPdf, type OfferLetterPdfInput } from "@/lib/offer-letter-pdf";
 
 /**
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id parameter required" }, { status: 400 });
 
-    const { ObjectId } = require("mongodb");
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid offer letter ID" }, { status: 400 });
+    }
     const letter = await db.collection("offerLetters").findOne({ _id: new ObjectId(id) });
     if (!letter) return NextResponse.json({ error: "Offer letter not found" }, { status: 404 });
 

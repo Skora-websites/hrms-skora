@@ -1,5 +1,5 @@
 import "server-only";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "@/lib/db/mysql";
 import { getDb } from "@/lib/db/mongo-helper";
 import {
   projectsService,

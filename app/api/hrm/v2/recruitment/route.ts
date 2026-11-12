@@ -10,13 +10,13 @@ import {
   createCandidate,
   getApplications,
 } from "@/services/hrm/recruitment";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound } from "@/lib/api-handler";
 
 // ── GET ─────────────────────────────────────────────────
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";
@@ -61,7 +61,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 // ── POST ────────────────────────────────────────────────
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";

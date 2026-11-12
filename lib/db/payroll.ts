@@ -1,5 +1,5 @@
 import { getDb } from "./mongo-helper";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "./mysql";
 
 export interface PayrollRun {
   _id?: string;

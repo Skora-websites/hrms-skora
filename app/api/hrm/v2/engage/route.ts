@@ -71,19 +71,37 @@ export async function POST(request: NextRequest) {
     let result;
 
     if (action === "comment") {
-      result = await createComment(tenantId, body);
+      if (!body.postId || !body.content) {
+        return NextResponse.json({ error: "postId and content are required" }, { status: 400 });
+      }
+      result = await createComment(tenantId, { ...body, userId: body.userId || auth.userId });
     } else if (action === "react") {
-      result = await toggleReaction(tenantId, body);
+      if (!body.postId && !body.commentId) {
+        return NextResponse.json({ error: "postId or commentId is required" }, { status: 400 });
+      }
+      result = await toggleReaction(tenantId, { ...body, userId: body.userId || auth.userId });
     } else if (action === "poll") {
+      if (!body.question || !Array.isArray(body.options) || body.options.length === 0) {
+        return NextResponse.json({ error: "question and options are required" }, { status: 400 });
+      }
       result = await createPoll(tenantId, body);
     } else if (action === "vote") {
-      result = await castVote(tenantId, body.pollId, body.optionId, body.userId);
+      if (!body.pollId || !body.optionId) {
+        return NextResponse.json({ error: "pollId and optionId are required" }, { status: 400 });
+      }
+      result = await castVote(tenantId, body.pollId, body.optionId, body.userId || auth.userId);
     } else {
-      result = await createPost(tenantId, body);
+      if (!body.content || typeof body.content !== "string" || !body.content.trim()) {
+        return NextResponse.json({ error: "content is required" }, { status: 400 });
+      }
+      result = await createPost(tenantId, { ...body, userId: body.userId || body.authorId || auth.userId });
     }
 
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("POST /api/hrm/v2/engage error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
@@ -108,6 +126,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ data: post });
   } catch (error: any) {
+    if (error instanceof SyntaxError || error?.message?.includes("JSON")) {
+      return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
+    }
     console.error("PATCH /api/hrm/v2/engage error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

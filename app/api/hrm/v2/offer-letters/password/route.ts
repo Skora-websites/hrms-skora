@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "@/lib/db/mysql";
 
 /**
  * GET /api/hrm/v2/offer-letters/password?id=xxx
@@ -16,7 +17,9 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id parameter required" }, { status: 400 });
 
-    const { ObjectId } = require("mongodb");
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid offer letter ID" }, { status: 400 });
+    }
     const db = await getDb();
     if (!db) return NextResponse.json({ error: "Database not available" }, { status: 503 });
 

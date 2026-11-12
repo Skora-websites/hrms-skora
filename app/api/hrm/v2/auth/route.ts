@@ -144,11 +144,17 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       const user = await hrmUsersService.findById(userId);
       if (!user || (user as any).tenantId !== auth.tenantId) return notFound("User not found");
       if (auth.role === "employee" && userId !== auth.userId) return forbidden();
-      return NextResponse.json({ data: user });
+      const { passwordHash: _ph, password: _pw, ...safeUser } = user as any;
+      return NextResponse.json({ data: safeUser });
     }
     case "users": {
       if (auth.role === "employee") return forbidden();
-      return NextResponse.json({ data: await hrmUsersService.findManyInTenant(auth.tenantId) });
+      const users = await hrmUsersService.findManyInTenant(auth.tenantId);
+      const safeUsers = users.map((u: any) => {
+        const { passwordHash: _ph, password: _pw, ...rest } = u;
+        return rest;
+      });
+      return NextResponse.json({ data: safeUsers });
     }
     default: return badRequest("Invalid action. Use: roles, user, users");
   }
