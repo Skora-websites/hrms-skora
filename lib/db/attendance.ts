@@ -153,7 +153,18 @@ export async function getAttendanceRecords(filter?: { userId?: string; date?: st
   return docs.map((d) => withAuxFields(d as unknown as Record<string, unknown>));
 }
 
-export async function recordPunchIn(data: { userId: string; userName: string; userEmail: string; employeeCode?: string; status?: string; tenantId?: string; managerId?: string; }): Promise<AttendanceRecord | null> {
+export async function recordPunchIn(data: {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  employeeCode?: string;
+  status?: string;
+  tenantId?: string;
+  managerId?: string;
+  location?: string;
+  workLocation?: string;
+  currentLocation?: Record<string, unknown>;
+}): Promise<AttendanceRecord | null> {
   const db = await getDb();
   if (!db) return null;
   const now = new Date();
@@ -176,6 +187,9 @@ export async function recordPunchIn(data: { userId: string; userName: string; us
         workHours: 0,
         auxState: "active" as AUXState,
         status: calculateAttendanceStatus(now, rules.lateAfter ?? 10.5),
+        location: data.location || existing.location || "Office",
+        workLocation: data.workLocation || existing.workLocation || "office",
+        ...(data.currentLocation ? { currentLocation: data.currentLocation } : {}),
         ...(existing.tenantId ? {} : { tenantId: data.tenantId || "default" }),
       },
       $unset: { punchOutTime: "" },
@@ -198,7 +212,9 @@ export async function recordPunchIn(data: { userId: string; userName: string; us
     employeeCode: data.employeeCode,
     date: todayStr,
     punchInTime: nowISO,
-    location: "Office",
+    location: data.location || "Office",
+    workLocation: data.workLocation || "office",
+    currentLocation: data.currentLocation,
     status,
     managerId: data.managerId,
     auxState: "active" as AUXState,

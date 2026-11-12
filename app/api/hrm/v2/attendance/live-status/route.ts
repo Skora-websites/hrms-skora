@@ -83,7 +83,8 @@ export async function GET() {
         currentLocation: record.currentLocation || null,
         auxSince: currentPeriod && !currentPeriod.endTime ? currentPeriod.startTime : null,
         location: record.location || null,
-        workLocation: record.workLocation || (record.location && record.location.includes("[remote]") ? "remote" : "office"),
+        workLocation: record.workLocation || (record.location && record.location.toLowerCase().includes("remote") ? "remote" : "office"),
+        distanceMeters: record.currentLocation?.distanceFromOffice,
         status_label: record.status || "—",
       };
     });

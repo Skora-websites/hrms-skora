@@ -7,11 +7,16 @@ const DEFAULT_RULES = {
   officeStart: 10,
   officeEnd: 19,
   lateAfter: 10.5,
-  workDays: [1, 2, 3, 4, 5],
+  workDays: [1, 2, 3, 4, 5, 6],
   halfDayAfter: 14.5,
   requiredHours: 8.5,
   breakAllowance: 30,
   meetingCountsAsWork: true,
+  officeLocation: {
+    lat: 28.6007974,
+    lng: 77.4323678,
+    radiusMeters: 100,
+  },
 };
 
 export const GET = withErrorHandler(async () => {
