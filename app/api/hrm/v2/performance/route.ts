@@ -12,11 +12,16 @@ import {
   deleteReview,
   getDashboardStats,
   getFeedback,
-  getKpis,
+  createFeedback,
+  updateFeedback,
   deleteFeedback,
+  getKpis,
+  getKpiById,
+  createKpi,
+  updateKpi,
   deleteKpi,
 } from "@/services/hrm/performance";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAuth, requireAdmin, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound, forbidden } from "@/lib/api-handler";
 import { getTasks } from "@/services/hrm/tasks";
 import { getAttendanceRecords } from "@/lib/db/attendance";
@@ -131,14 +136,24 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     if (id) {
       const goal = await getGoalById(id);
       if (!goal) return notFound("Goal not found");
+      if (!(await canActOn(auth, (goal as any).userId))) {
+        return forbidden("You can only view goals for yourself or direct reports");
+      }
       return NextResponse.json({ data: goal });
     }
-    const goals = await getGoals(tenantId, userId || undefined);
-    // Filter for employee role
-    const filtered = auth.role === "employee" && userId
-      ? goals.filter((g) => g.userId === auth.userId)
-      : goals;
-    return NextResponse.json({ data: filtered });
+    const targetUserId = auth.role === "employee" ? auth.userId : (userId || undefined);
+    if (auth.role === "manager" && userId && !(await canActOn(auth, userId))) {
+      return forbidden("You can only view goals for yourself or direct reports");
+    }
+    let goals = await getGoals(tenantId, targetUserId);
+    if (auth.role === "manager" && !userId) {
+      const allowed: any[] = [];
+      for (const g of goals) {
+        if (await canActOn(auth, (g as any).userId)) allowed.push(g);
+      }
+      goals = allowed;
+    }
+    return NextResponse.json({ data: goals });
   }
 
   // Reviews
@@ -146,21 +161,69 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     if (id) {
       const review = await getReviewById(id);
       if (!review) return notFound("Review not found");
+      const rev = review as any;
+      const canView = rev.userId === auth.userId || rev.reviewerId === auth.userId || (await canActOn(auth, rev.userId));
+      if (!canView) return forbidden("You can only view your own or direct reports' reviews");
       return NextResponse.json({ data: review });
     }
-    const reviews = await getReviews(tenantId, userId || undefined);
+    if (auth.role === "manager" && userId && !(await canActOn(auth, userId))) {
+      return forbidden("You can only view reviews for yourself or direct reports");
+    }
+    const targetUserId = auth.role === "employee" ? auth.userId : (userId || undefined);
+    let reviews = await getReviews(tenantId, targetUserId);
+    if (auth.role === "employee") {
+      reviews = reviews.filter((r: any) => r.userId === auth.userId || r.reviewerId === auth.userId);
+    } else if (auth.role === "manager" && !userId) {
+      const allowed: any[] = [];
+      for (const r of reviews) {
+        if (r.userId === auth.userId || r.reviewerId === auth.userId || (await isDirectReportOf(auth.userId, (r as any).userId))) {
+          allowed.push(r);
+        }
+      }
+      reviews = allowed;
+    }
     return NextResponse.json({ data: reviews });
   }
 
   // Feedback
   if (type === "feedback") {
-    const feedback = await getFeedback(tenantId, userId || undefined);
+    if (auth.role === "manager" && userId && !(await canActOn(auth, userId))) {
+      return forbidden("You can only view feedback for yourself or direct reports");
+    }
+    const targetUserId = auth.role === "employee" ? auth.userId : (userId || undefined);
+    let feedback = await getFeedback(tenantId, targetUserId);
+    if (auth.role === "employee") {
+      feedback = feedback.filter((f: any) => f.userId === auth.userId || f.fromUserId === auth.userId);
+    } else if (auth.role === "manager" && !userId) {
+      const allowed: any[] = [];
+      for (const f of feedback) {
+        if (f.userId === auth.userId || (await isDirectReportOf(auth.userId, (f as any).userId))) {
+          allowed.push(f);
+        }
+      }
+      feedback = allowed;
+    }
     return NextResponse.json({ data: feedback });
   }
 
   // KPIs
   if (type === "kpis") {
-    const kpis = await getKpis(tenantId, userId || undefined);
+    if (auth.role === "manager" && userId && !(await canActOn(auth, userId))) {
+      return forbidden("You can only view KPIs for yourself or direct reports");
+    }
+    const targetUserId = auth.role === "employee" ? auth.userId : (userId || undefined);
+    let kpis = await getKpis(tenantId, targetUserId);
+    if (auth.role === "employee") {
+      kpis = kpis.filter((k: any) => k.userId === auth.userId);
+    } else if (auth.role === "manager" && !userId) {
+      const allowed: any[] = [];
+      for (const k of kpis) {
+        if (k.userId === auth.userId || (await isDirectReportOf(auth.userId, (k as any).userId))) {
+          allowed.push(k);
+        }
+      }
+      kpis = allowed;
+    }
     return NextResponse.json({ data: kpis });
   }
 
@@ -228,7 +291,39 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: review }, { status: 201 });
   }
 
-  return badRequest("Invalid action. Use: create_goal, create_review");
+  // Create KPI
+  if (action === "create_kpi") {
+    if (!body.title || body.target === undefined) {
+      return badRequest("title and target are required for KPI");
+    }
+    const kpi = await createKpi({
+      ...body,
+      tenantId,
+      actual: body.actual ?? 0,
+      unit: body.unit || "%",
+      weight: body.weight ?? 1,
+      status: body.status || "active",
+    } as any);
+    return NextResponse.json({ data: kpi }, { status: 201 });
+  }
+
+  // Create feedback
+  if (action === "create_feedback") {
+    if (!body.userId || !body.feedback) {
+      return badRequest("userId and feedback are required");
+    }
+    const fb = await createFeedback({
+      ...body,
+      tenantId,
+      fromUserId: auth.userId,
+      type: body.type || "praise",
+      rating: body.rating ?? 5,
+      status: "active",
+    } as any);
+    return NextResponse.json({ data: fb }, { status: 201 });
+  }
+
+  return badRequest("Invalid action. Use: create_goal, create_review, create_kpi, create_feedback");
 }, { label: "Performance" });
 
 // ── PATCH ───────────────────────────────────────────────
@@ -271,13 +366,25 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ data: review });
   }
 
-  return badRequest("Invalid type. Use: goal, review");
+  if (type === "kpi") {
+    const updated = await updateKpi(id, body);
+    if (!updated) return notFound("KPI not found");
+    return NextResponse.json({ data: updated });
+  }
+
+  if (type === "feedback") {
+    const updated = await updateFeedback(id, body);
+    if (!updated) return notFound("Feedback not found");
+    return NextResponse.json({ data: updated });
+  }
+
+  return badRequest("Invalid type. Use: goal, review, kpi, feedback");
 }, { label: "Performance" });
 
 // ── DELETE ──────────────────────────────────────────────
 
 export const DELETE = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAdmin();
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const { searchParams } = new URL(request.url);
@@ -287,24 +394,40 @@ export const DELETE = withErrorHandler(async (request: NextRequest) => {
   if (!id) return badRequest("id parameter required");
 
   if (type === "goal") {
+    const existing: any = await getGoalById(id);
+    if (!existing) return notFound("Goal not found");
+    if (!(await canActOn(auth, existing.userId))) {
+      return forbidden("You can only delete your own goals or those of direct reports");
+    }
     const deleted = await deleteGoal(id);
     if (!deleted) return notFound("Goal not found");
     return NextResponse.json({ success: true });
   }
 
   if (type === "review") {
+    const existing: any = await getReviewById(id);
+    if (!existing) return notFound("Review not found");
+    if (!HR_LEVEL_ROLES.has(auth.role) && existing.reviewerId !== auth.userId) {
+      return forbidden("Only HR or the review author can delete this review");
+    }
     const deleted = await deleteReview(id);
     if (!deleted) return notFound("Review not found");
     return NextResponse.json({ success: true });
   }
 
   if (type === "feedback") {
+    if (!HR_LEVEL_ROLES.has(auth.role)) {
+      return forbidden("Only HR admins can delete feedback");
+    }
     const deleted = await deleteFeedback(id);
     if (!deleted) return notFound("Feedback not found");
     return NextResponse.json({ success: true });
   }
 
   if (type === "kpi") {
+    if (!HR_LEVEL_ROLES.has(auth.role)) {
+      return forbidden("Only HR admins can delete KPIs");
+    }
     const deleted = await deleteKpi(id);
     if (!deleted) return notFound("KPI not found");
     return NextResponse.json({ success: true });

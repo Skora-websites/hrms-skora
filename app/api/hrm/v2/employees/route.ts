@@ -147,6 +147,35 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   // Server-side paginated query
   if (hasPagination) {
+    if (scopedEmployees !== null) {
+      let filtered = scopedEmployees;
+      if (search) {
+        const q = search.toLowerCase().trim();
+        filtered = filtered.filter((emp: any) =>
+          ["displayName", "email", "employeeCode", "firstName", "lastName", "departmentName", "designationName", "phone"]
+            .some((f) => {
+              const val = emp[f];
+              return val != null && String(val).toLowerCase().includes(q);
+            })
+        );
+      }
+      if (status) {
+        filtered = filtered.filter((emp: any) => (emp.status || "active").toLowerCase() === status.toLowerCase());
+      }
+      const pageNum = page ? parseInt(page) : 0;
+      const size = pageSize ? parseInt(pageSize) : 10;
+      const totalItems = filtered.length;
+      const totalPages = Math.ceil(totalItems / size) || 1;
+      const paginated = filtered.slice(pageNum * size, (pageNum + 1) * size);
+      return NextResponse.json({
+        data: paginated.map(projectUser),
+        totalItems,
+        page: pageNum,
+        pageSize: size,
+        totalPages,
+      });
+    }
+
     const result = await getEmployeesPaginated(tenantId, {
       page: page ? parseInt(page) : 0,
       pageSize: pageSize ? parseInt(pageSize) : 10,

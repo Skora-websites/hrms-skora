@@ -9,6 +9,7 @@ import {
   Lock,
   Globe,
   Clock,
+  MapPin,
 } from "lucide-react";
 
 export default function SuperAdminSettingsPage() {
@@ -30,6 +31,13 @@ export default function SuperAdminSettingsPage() {
   const [breakAllowance, setBreakAllowance] = useState(30);
   const [meetingCountsAsWork, setMeetingCountsAsWork] = useState(true);
   const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri
+
+  // Geofencing & Location
+  const [geofencingEnabled, setGeofencingEnabled] = useState(true);
+  const [officeLatitude, setOfficeLatitude] = useState(28.6007974);
+  const [officeLongitude, setOfficeLongitude] = useState(77.4323678);
+  const [geofenceRadius, setGeofenceRadius] = useState(100); // meters
+  const [allowRemotePunch, setAllowRemotePunch] = useState(true);
 
   const toggleWorkDay = (day: number) => {
     setWorkDays((prev) =>
@@ -74,6 +82,13 @@ export default function SuperAdminSettingsPage() {
             if (s.sessionTimeout !== undefined) setSessionTimeout(s.sessionTimeout);
             if (s.passwordMinLength !== undefined) setPasswordMinLength(s.passwordMinLength);
             if (s.passwordExpiryDays !== undefined) setPasswordExpiryDays(s.passwordExpiryDays);
+            if (s.geofencing) {
+              if (s.geofencing.enabled !== undefined) setGeofencingEnabled(s.geofencing.enabled);
+              if (s.geofencing.latitude !== undefined) setOfficeLatitude(s.geofencing.latitude);
+              if (s.geofencing.longitude !== undefined) setOfficeLongitude(s.geofencing.longitude);
+              if (s.geofencing.radius !== undefined) setGeofenceRadius(s.geofencing.radius);
+              if (s.geofencing.allowRemote !== undefined) setAllowRemotePunch(s.geofencing.allowRemote);
+            }
           }
         }
       } catch { /* use defaults */ }
@@ -98,6 +113,13 @@ export default function SuperAdminSettingsPage() {
             sessionTimeout,
             passwordMinLength,
             passwordExpiryDays,
+            geofencing: {
+              enabled: geofencingEnabled,
+              latitude: officeLatitude,
+              longitude: officeLongitude,
+              radius: geofenceRadius,
+              allowRemote: allowRemotePunch,
+            },
           },
         }),
       });
@@ -299,6 +321,76 @@ export default function SuperAdminSettingsPage() {
               </div>
               <p className="text-[10px] text-slate-400 mt-2">
                 Non-work days are marked as WEEK_OFF. Employees cannot punch in on off days.
+              </p>
+            </div>
+          </div>
+        </SettingsSection>
+
+        {/* ═══ Office Geofencing & Location Verification ═══ */}
+        <SettingsSection
+          title="Office Geofencing & Location Verification"
+          icon={<MapPin className="h-5 w-5 text-indigo-500" />}
+          description="Configure GPS boundary coordinates, punch radius, and remote attendance verification"
+        >
+          <div className="space-y-4">
+            <SettingsRow
+              label="Enable Geofence Verification"
+              description="Verify employee device GPS coordinates on every punch-in and punch-out"
+            >
+              <Toggle checked={geofencingEnabled} onChange={setGeofencingEnabled} />
+            </SettingsRow>
+
+            <SettingsRow
+              label="Office Latitude"
+              description="Center latitude coordinate of the primary office premises"
+            >
+              <input
+                type="number"
+                step="any"
+                value={officeLatitude}
+                onChange={(e) => setOfficeLatitude(Number(e.target.value))}
+                className="w-36 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right font-mono"
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              label="Office Longitude"
+              description="Center longitude coordinate of the primary office premises"
+            >
+              <input
+                type="number"
+                step="any"
+                value={officeLongitude}
+                onChange={(e) => setOfficeLongitude(Number(e.target.value))}
+                className="w-36 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right font-mono"
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              label="Geofence Radius (meters)"
+              description="Allowed distance radius from office coordinates to qualify as IN_OFFICE"
+            >
+              <select
+                value={geofenceRadius}
+                onChange={(e) => setGeofenceRadius(Number(e.target.value))}
+                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              >
+                {[50, 100, 150, 250, 500, 1000].map((r) => (
+                  <option key={r} value={r}>{r} meters</option>
+                ))}
+              </select>
+            </SettingsRow>
+
+            <SettingsRow
+              label="Allow Remote / WFH Punch"
+              description="Allow employees outside the geofence to punch in with work location flagged as REMOTE"
+            >
+              <Toggle checked={allowRemotePunch} onChange={setAllowRemotePunch} />
+            </SettingsRow>
+
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20">
+              <p className="text-[11px] text-indigo-700 dark:text-indigo-300 font-semibold">
+                Geofence coordinates are verified using high-precision Haversine geodesic distance against the browser navigator geolocation. Employees within {geofenceRadius}m are logged as <strong>IN_OFFICE</strong>; authorized remote workers outside are marked <strong>REMOTE</strong>.
               </p>
             </div>
           </div>

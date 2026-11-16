@@ -125,7 +125,7 @@ export default function MyDocumentsPage() {
               onClick={() => setFilter(cat)}
               className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
                 active
-                  ? "bg-primary text-white border-primary shadow-md"
+                  ? "bg-primary text-white border-primary"
                   : "bg-white dark:bg-black/40 text-slate-600 dark:text-slate-300 border-gray-200 dark:border-white/10 hover:border-primary/40"
               }`}
             >

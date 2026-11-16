@@ -362,7 +362,10 @@ export function AttendancePunchCard() {
               )}
             </Button>
           ) : punchedOut ? (
-            <span className="text-xs font-bold text-emerald-600 px-4 py-2 rounded-xl border border-emerald-200 bg-emerald-50">✓ Shift Complete</span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 px-4 py-2 rounded-xl border border-emerald-200 bg-emerald-50">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>Shift Complete</span>
+            </span>
           ) : (
             <Button onClick={handlePunchOut} disabled={punching} variant="danger" className="font-bold gap-2 px-6 h-11">
               <LogOut className="h-4 w-4" />

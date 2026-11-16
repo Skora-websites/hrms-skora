@@ -3,6 +3,39 @@ import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "@/lib/db/mysql";
 
+async function isDirectReport(managerId: string, employeeId: string): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+    const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
+    const rm = (employee as any)?.reportingManager;
+    if (!rm) return false;
+    if (rm === managerId) return true;
+    const manager = await db.collection("users").findOne({ _id: new ObjectId(managerId) });
+    return !!manager && rm === (manager as any).displayName;
+  } catch {
+    return false;
+  }
+}
+
+async function getDirectReportIds(managerId: string): Promise<string[]> {
+  try {
+    const db = await getDb();
+    if (!db) return [];
+    const manager = await db.collection("users").findOne({ _id: new ObjectId(managerId) });
+    const managerName = (manager as any)?.displayName || "";
+    const users = await db.collection("users").find({
+      $or: [
+        { reportingManager: managerId },
+        ...(managerName ? [{ reportingManager: managerName }] : []),
+      ],
+    }).project({ _id: 1 }).toArray();
+    return users.map((u: any) => u._id.toString());
+  } catch {
+    return [];
+  }
+}
+
 /**
  * GET /api/hrm/v2/timesheets
  * - Manager: sees team timesheets for a given date
@@ -24,6 +57,16 @@ export async function GET(request: NextRequest) {
 
     if (auth.role === "employee") {
       query.userId = auth.userId;
+    } else if (auth.role === "manager") {
+      if (userId) {
+        if (userId !== auth.userId && !(await isDirectReport(auth.userId, userId))) {
+          return NextResponse.json({ error: "Forbidden: you can only view your direct reports' timesheets" }, { status: 403 });
+        }
+        query.userId = userId;
+      } else {
+        const reportIds = await getDirectReportIds(auth.userId);
+        query.userId = { $in: [auth.userId, ...reportIds] };
+      }
     } else if (userId) {
       query.userId = userId;
     }
@@ -124,6 +167,20 @@ export async function PATCH(request: NextRequest) {
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid timesheet ID" }, { status: 400 });
+    }
+
+    const timesheet = await db.collection("timesheets").findOne({ _id: new ObjectId(id) });
+    if (!timesheet) {
+      return NextResponse.json({ error: "Timesheet not found" }, { status: 404 });
+    }
+
+    if (auth.role === "manager") {
+      if (timesheet.userId === auth.userId) {
+        return NextResponse.json({ error: "Forbidden: you cannot approve your own timesheet" }, { status: 403 });
+      }
+      if (!(await isDirectReport(auth.userId, String(timesheet.userId)))) {
+        return NextResponse.json({ error: "Forbidden: you can only approve timesheets for your direct reports" }, { status: 403 });
+      }
     }
 
     const body = await request.json();

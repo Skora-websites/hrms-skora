@@ -5,6 +5,21 @@ import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "@/lib/db/mysql";
 import { generatePayslipPdf } from "@/lib/payslip-pdf";
 
+async function isDirectReport(managerId: string, employeeId: string): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) return false;
+    const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
+    const rm = (employee as any)?.reportingManager;
+    if (!rm) return false;
+    if (rm === managerId) return true;
+    const manager = await db.collection("users").findOne({ _id: new ObjectId(managerId) });
+    return !!manager && rm === (manager as any).displayName;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * GET /api/hrm/v2/payroll/payslip-pdf?id=xxx
  * Renders a payroll transaction as a payslip PDF. Employees can only fetch
@@ -39,6 +54,14 @@ export async function GET(request: NextRequest) {
       }
       tx = await db.collection("payroll_transactions").findOne({ _id: new ObjectId(id) });
       if (!tx) return NextResponse.json({ error: "Payslip not found" }, { status: 404 });
+
+      // IDOR guard: Managers may only download their own payslip or their direct reports' payslips
+      if (auth.role === "manager") {
+        const txUserId = String(tx.userId || "");
+        if (txUserId !== auth.userId && !(await isDirectReport(auth.userId, txUserId))) {
+          return NextResponse.json({ error: "Forbidden: you can only view your direct reports' payslips" }, { status: 403 });
+        }
+      }
     }
     if (threeMonthWindow && tx.createdAt && new Date(tx.createdAt) < cutoff) {
       return NextResponse.json({ error: "Payslips older than three months are available from HR" }, { status: 403 });

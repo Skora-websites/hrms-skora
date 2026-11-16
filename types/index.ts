@@ -439,6 +439,16 @@ export interface Shift extends BaseEntity {
   status: "active" | "inactive";
 }
 
+export interface ShiftAssignment extends BaseEntity {
+  userId: string;
+  userName?: string;
+  shiftId: string;
+  shiftName?: string;
+  startDate: Timestamp;
+  endDate?: Timestamp;
+  status: "active" | "inactive";
+}
+
 export interface WeeklyOff extends BaseEntity {
   name: string;
   days: number[]; // 0=Sun, 1=Mon, ..., 6=Sat

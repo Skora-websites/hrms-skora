@@ -13,6 +13,8 @@ import {
   Activity,
   Search,
   MapPin,
+  Home,
+  Building2,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────
@@ -126,8 +128,21 @@ export default function ManagerMyTeamPage() {
     return { ...m, live };
   });
 
-  // Filter by search
+  // Stats from all merged team members
+  const totalMembers = mergedMembers.length;
+  const punchedIn = mergedMembers.filter((m) => m.live?.status === "punched_in").length;
+  const onBreak = mergedMembers.filter((m) => m.live?.auxState === "on_break").length;
+  const inMeeting = mergedMembers.filter((m) => m.live?.auxState === "meeting").length;
+
+  // Filter by liveFilter and search
   const filteredMembers = mergedMembers.filter((m) => {
+    if (liveFilter === "punched_in" && m.live?.status !== "punched_in") return false;
+    if (liveFilter === "active" && (m.live?.status !== "punched_in" || m.live?.auxState !== "active")) return false;
+    if (liveFilter === "on_break" && m.live?.auxState !== "on_break") return false;
+    if (liveFilter === "in_meeting" && m.live?.auxState !== "meeting") return false;
+    if (liveFilter === "punched_out" && m.live?.status !== "punched_out") return false;
+    if (liveFilter === "absent" && m.live && m.live.status !== "absent") return false;
+
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -137,20 +152,6 @@ export default function ManagerMyTeamPage() {
       (m.designation || "").toLowerCase().includes(q)
     );
   });
-
-  // Stats
-  const totalMembers = filteredMembers.length;
-  const liveMap = filteredMembers.reduce(
-    (acc, m) => {
-      const s = m.live?.status || "absent";
-      acc[s] = (acc[s] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-  const punchedIn = liveMap["punched_in"] || 0;
-  const onBreak = filteredMembers.filter((m) => m.live?.auxState === "on_break").length;
-  const inMeeting = filteredMembers.filter((m) => m.live?.auxState === "meeting").length;
 
   return (
     <AppShell title="My Team Roster">
@@ -210,7 +211,7 @@ export default function ManagerMyTeamPage() {
               className={
                 "px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap " +
                 (liveFilter === k
-                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900")
               }
             >
@@ -283,13 +284,39 @@ export default function ManagerMyTeamPage() {
             return (
               <div
                 key={m._id}
+                onClick={() => {
+                  if (m.live) {
+                    setSelectedEmployee(m.live);
+                  } else {
+                    setSelectedEmployee({
+                      userId: m._id,
+                      name: m.displayName || m.email,
+                      email: m.email,
+                      employeeCode: m.employeeCode || "—",
+                      department: m.department || "General",
+                      designation: m.designation || m.role,
+                      role: m.role,
+                      status: "absent",
+                      auxState: null,
+                      punchInTime: null,
+                      punchOutTime: null,
+                      effectiveWorkMinutes: 0,
+                      totalBreakMinutes: 0,
+                      workHours: 0,
+                      totalElapsedMinutes: 0,
+                      auxSince: null,
+                      workLocation: null,
+                    });
+                  }
+                  setShowModal(true);
+                }}
                 className={
-                  "rounded-2xl border p-5 backdrop-blur-md transition-all " +
+                  "rounded-2xl border p-5 backdrop-blur-md transition-all cursor-pointer " +
                   (isOnline
-                    ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] shadow-sm dark:shadow-2xl hover:shadow-md"
+                    ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] hover:border-primary/60 hover:shadow-md"
                     : isPunchedOut
-                    ? "border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0B0F19]/70 opacity-70"
-                    : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]")
+                    ? "border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0B0F19]/70 opacity-70 hover:opacity-100 hover:border-slate-400"
+                    : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] hover:border-gray-400")
                 }
               >
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -324,13 +351,21 @@ export default function ManagerMyTeamPage() {
                       {/* Work Location */}
                       <span
                         className={
-                          "px-2.5 py-1 rounded-full text-[10px] font-bold border " +
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border " +
                           (live.workLocation === "remote"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30"
                             : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30")
                         }
                       >
-                        {live.workLocation === "remote" ? "🏠 Remote" : "🏢 Office"}
+                        {live.workLocation === "remote" ? (
+                          <>
+                            <Home className="h-3 w-3" /> Remote
+                          </>
+                        ) : (
+                          <>
+                            <Building2 className="h-3 w-3" /> Office
+                          </>
+                        )}
                       </span>
 
                       {/* AUX Badge */}
@@ -475,11 +510,19 @@ export default function ManagerMyTeamPage() {
                   </span>
                 )}
                 {selectedEmployee.status === "punched_in" && (
-                  <span className={"px-2.5 py-1 rounded-full text-[10px] font-bold border " + (
+                  <span className={"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border " + (
                     selectedEmployee.workLocation === "remote" ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30"
                     : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"
                   )}>
-                    {selectedEmployee.workLocation === "remote" ? "🏠 Remote" : "🏢 Office"}
+                    {selectedEmployee.workLocation === "remote" ? (
+                      <>
+                        <Home className="h-3 w-3" /> Remote
+                      </>
+                    ) : (
+                      <>
+                        <Building2 className="h-3 w-3" /> Office
+                      </>
+                    )}
                   </span>
                 )}
               </div>

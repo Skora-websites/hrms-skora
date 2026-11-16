@@ -13,7 +13,7 @@ import type {
   HRMUser, EmployeeJob, EmployeeDetail, EmployeeJobEvent, FamilyDetail, PastEmployer,
   EmployeeEducation, EmployeeCertification, EmployeeSalary, EmployeeSalaryHistory, ReportingManager,
   Role, Permission, ApprovalChain,
-  Shift, WeeklyOff, EmployeeAttendance, AttendanceStats, RegularizationRequest,
+  Shift, ShiftAssignment, WeeklyOff, EmployeeAttendance, AttendanceStats, RegularizationRequest,
   LeavePlan, LeaveType, LeaveBalance, LeaveBalanceHistory, LeaveRequest,
   OvertimePolicy, OvertimeRequest, OvertimeTerm,
   HolidayPlan, Holiday, CalendarEvent,
@@ -57,6 +57,7 @@ export const COLLECTIONS = {
   permissions: "permissions",
   approvalChains: "approval_chains",
   shifts: "shifts",
+  shiftAssignments: "shift_assignments",
   weeklyOffs: "weekly_offs",
   attendance: "attendance",
   attendanceStats: "attendance_stats",
@@ -160,6 +161,7 @@ export const approvalChainsService = createFirestoreService<ApprovalChain>(COLLE
 
 // ── Attendance ─────────────────────────────────────────
 export const shiftsService = createFirestoreService<Shift>(COLLECTIONS.shifts);
+export const shiftAssignmentsService = createFirestoreService<ShiftAssignment>(COLLECTIONS.shiftAssignments);
 export const weeklyOffsService = createFirestoreService<WeeklyOff>(COLLECTIONS.weeklyOffs);
 export const attendanceService = createFirestoreService<EmployeeAttendance>(COLLECTIONS.attendance);
 export const attendanceStatsService = createFirestoreService<AttendanceStats>(COLLECTIONS.attendanceStats);

@@ -37,6 +37,7 @@ scripts/backup-cleanup.json
 !package.json
 !package-lock.json
 !tsconfig.json
+!public/manifest.json
 
 # Markdown Documentation & AGENTS Rules (NEVER EXPOSE)
 *.md

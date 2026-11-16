@@ -118,7 +118,7 @@ export default function AttendancePage() {
                 onClick={() => setActiveTab("table")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   activeTab === "table"
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
@@ -128,7 +128,7 @@ export default function AttendancePage() {
                 onClick={() => setActiveTab("calendar")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   activeTab === "calendar"
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
@@ -142,7 +142,7 @@ export default function AttendancePage() {
                 onClick={() => setSelectedDate(todayStr)}
                 className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
                   isToday
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -156,7 +156,7 @@ export default function AttendancePage() {
                 }}
                 className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
                   selectedDate === (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().split("T")[0]; })()
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >

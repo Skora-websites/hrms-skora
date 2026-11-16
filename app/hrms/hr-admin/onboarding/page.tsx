@@ -525,7 +525,7 @@ function FragmentRow({
         </td>
         <td className="py-3">
           {c.status === "invite_requested" ? <Chip color="blue">NEW REQUEST</Chip>
-            : c.status === "approved" ? (c.inviteEmailed ? <Chip color="emerald">INVITED ✓</Chip> : <Chip color="yellow">APPROVED (EMAIL FAILED)</Chip>)
+            : c.status === "approved" ? (c.inviteEmailed ? <Chip color="emerald">INVITED</Chip> : <Chip color="yellow">APPROVED (EMAIL FAILED)</Chip>)
             : c.status === "rejected_48h" ? <Chip color="red">REJECTED ({c.deadlineHoursRemaining}h)</Chip>
             : <Chip color="yellow">PENDING DOCS</Chip>}
         </td>

@@ -15,7 +15,7 @@ import {
   deleteDesignation,
   getOrganizationTree,
 } from "@/services/hrm/organization";
-import { requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAdmin, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 import { withErrorHandler, badRequest, notFound } from "@/lib/api-handler";
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
@@ -58,7 +58,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 }, { label: "HRM Organizations" });
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAdmin();
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const tenantId = "default";
@@ -79,7 +79,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 }, { label: "HRM Organizations" });
 
 export const PATCH = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAdmin();
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const { searchParams } = new URL(request.url);
@@ -108,7 +108,7 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
 }, { label: "HRM Organizations" });
 
 export const DELETE = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAdmin();
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const { searchParams } = new URL(request.url);

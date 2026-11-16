@@ -388,3 +388,15 @@ export async function getPayrollDashboard(tenantId: string): Promise<{
     lastPayrollDate: lastRun?.processedAt || null,
   };
 }
+
+export async function updatePayrollRun(id: string, data: Partial<PayrollRun>): Promise<PayrollRun | null> {
+  const doc = await payrollRunsService.findById(id);
+  if (!doc) return null;
+  const updateData = { ...data, updatedAt: new Date() };
+  await payrollRunsService.update(id, updateData as any);
+  return { ...doc, ...updateData, id } as PayrollRun;
+}
+
+export async function deletePayrollRun(id: string): Promise<boolean> {
+  return payrollRunsService.delete(id);
+}

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
+import { withErrorHandler } from "@/lib/api-handler";
 
 // Real aggregates from the CRM/HRMS collections — no fabricated numbers.
-export const GET = async () => {
+export const GET = withErrorHandler(async () => {
   const auth = await requireAuth();
   if (isErrorResponse(auth)) return auth;
   const db = await getDb();
@@ -53,4 +54,4 @@ export const GET = async () => {
     dealsByStage,
     leadsBySource: sourceNames.map((name) => ({ name, value: leads.filter((l) => l.source === name).length })),
   });
-};
+}, { label: "Dashboard Stats" });

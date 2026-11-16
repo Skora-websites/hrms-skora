@@ -92,7 +92,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { isSidebarMini, setSidebarMini, theme, toggleTheme } = useTheme();
+  const { isSidebarMini, setSidebarMini, theme, toggleTheme, setTheme } = useTheme();
   const { isMobile, isTablet } = useBreakpoint();
   const { user } = useAuth();
   const [searchFocused, setSearchFocused] = useState(false);
@@ -446,7 +446,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="px-2 pt-2 pb-1">
               <div className="flex items-center gap-1 rounded-xl bg-sidebar-accent/30 dark:bg-sidebar-accent/40 p-1">
                 <button
-                  onClick={toggleTheme}
+                  onClick={() => setTheme("light")}
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-all duration-200",
                     theme === "light"
@@ -458,7 +458,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   <span>Light</span>
                 </button>
                 <button
-                  onClick={toggleTheme}
+                  onClick={() => setTheme("dark")}
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-all duration-200",
                     theme === "dark"
@@ -484,6 +484,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <TooltipTrigger asChild>
                 <Link
                   href={roleSettingsMap[user?.role || "employee"] || "/hrms/employee/settings"}
+                  onClick={() => isMobile && onClose()}
                   className={cn(
                     "flex items-center gap-3 rounded-xl transition-all duration-200 hover:bg-sidebar-accent/60 px-2.5 py-2 flex-1 min-w-0 group/user",
                     isCollapsed && "px-0 py-0 justify-center"

@@ -43,8 +43,8 @@ export async function getPayrollRuns(tenantId?: string): Promise<PayrollRun[]> {
   return docs.map((d) => ({
     ...d,
     _id: d._id.toString(),
-    processedAt: d.processedAt ? d.processedAt.toISOString() : undefined,
-    createdAt: d.createdAt ? d.createdAt.toISOString() : new Date().toISOString(),
+    processedAt: d.processedAt ? (d.processedAt instanceof Date ? d.processedAt.toISOString() : String(d.processedAt)) : undefined,
+    createdAt: d.createdAt ? (d.createdAt instanceof Date ? d.createdAt.toISOString() : String(d.createdAt)) : new Date().toISOString(),
   })) as PayrollRun[];
 }
 
@@ -61,7 +61,7 @@ export async function getPayslips(userId?: string, month?: number, year?: number
   return docs.map((d) => ({
     ...d,
     _id: d._id.toString(),
-    generatedAt: d.generatedAt ? d.generatedAt.toISOString() : new Date().toISOString(),
+    generatedAt: d.generatedAt ? (d.generatedAt instanceof Date ? d.generatedAt.toISOString() : String(d.generatedAt)) : new Date().toISOString(),
   })) as Payslip[];
 }
 

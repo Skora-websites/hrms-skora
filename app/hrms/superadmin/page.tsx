@@ -25,6 +25,8 @@ import {
   Loader2,
   XCircle,
   FileText,
+  Home,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
@@ -545,8 +547,8 @@ export default function SuperadminOverviewPage() {
               {([
                 ["all", "All"],
                 ["punched_in", "Punched In"],
-                ["in_office", "🏢 Office"],
-                ["remote", "🏠 Remote"],
+                ["in_office", "In Office"],
+                ["remote", "Remote"],
                 ["on_break", "On Break"],
                 ["in_meeting", "In Meeting"],
                 ["active", "Active"],
@@ -558,7 +560,7 @@ export default function SuperadminOverviewPage() {
                   onClick={() => setLiveFilter(key)}
                   className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
                     liveFilter === key
-                      ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                      ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                   }`}
                 >
@@ -588,11 +590,11 @@ export default function SuperadminOverviewPage() {
             </div>
             <div className="text-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
               <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{liveSummary.inOffice}</p>
-              <p className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">🏢 In Office</p>
+              <p className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">In Office</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20">
               <p className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{liveSummary.remote}</p>
-              <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium">🏠 Remote</p>
+              <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium">Remote</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
               <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{liveSummary.active}</p>
@@ -659,7 +661,7 @@ export default function SuperadminOverviewPage() {
                   key={emp.userId}
                   className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border transition-all ${
                     emp.status === "punched_in"
-                      ? "bg-white dark:bg-black/30 border-gray-100 dark:border-white/5 hover:shadow-md"
+                      ? "bg-white dark:bg-black/30 border-gray-100 dark:border-white/5 hover:border-primary/30"
                       : emp.status === "punched_out"
                       ? "bg-slate-50 dark:bg-black/20 border-gray-100 dark:border-white/5 opacity-70"
                       : "bg-red-50/50 dark:bg-red-500/5 border-red-100 dark:border-red-500/10"
@@ -688,12 +690,20 @@ export default function SuperadminOverviewPage() {
                     {emp.status === "punched_in" && (
                       <>
                         {/* Work Location Badge */}
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                           emp.workLocation === "remote"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30"
                             : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"
                         }`}>
-                          {emp.workLocation === "remote" ? "🏠 Remote" : "🏢 Office"}
+                          {emp.workLocation === "remote" ? (
+                            <>
+                              <Home className="h-3 w-3" /> Remote
+                            </>
+                          ) : (
+                            <>
+                              <Building2 className="h-3 w-3" /> Office
+                            </>
+                          )}
                         </span>
 
                         {/* AUX Badge — with "since N min" highlight for the
@@ -886,7 +896,7 @@ export default function SuperadminOverviewPage() {
                 onClick={() => setSelectedAttendanceDate(todayStr)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
                   isSelectedToday
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -899,7 +909,7 @@ export default function SuperadminOverviewPage() {
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
                   selectedAttendanceDate === (() => { const y = new Date(); y.setDate(y.getDate() - 1); return toLocalDateStr(y); })()
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -1468,7 +1478,7 @@ function SectionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md shadow-sm dark:shadow-2xl text-slate-900 dark:text-white ${
+      className={`rounded-2xl border bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white ${
         variant === "danger"
           ? "border-red-200 dark:border-red-500/20"
           : "border-gray-200 dark:border-white/10"

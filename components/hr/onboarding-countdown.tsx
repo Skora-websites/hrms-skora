@@ -88,8 +88,9 @@ export function OnboardingCountdown({
           </span>
         </div>
         {isUrgent && (
-          <span className="text-[10px] text-red-500 dark:text-red-400 mt-1 block font-semibold">
-            ⚠ Less than 12 hours remaining — upload immediately!
+          <span className="text-[10px] text-red-500 dark:text-red-400 mt-1 flex items-center gap-1 font-semibold">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            <span>Less than 12 hours remaining — upload immediately!</span>
           </span>
         )}
       </div>

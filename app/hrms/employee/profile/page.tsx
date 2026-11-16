@@ -345,7 +345,7 @@ export default function EmployeeProfilePage() {
             <AlertTriangle className="h-6 w-6 shrink-0 text-red-500 animate-bounce mt-0.5" />
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <p className="font-bold text-sm text-red-600 dark:text-red-300">⚠️ Document Verification Rejected by HR</p>
+                <p className="font-bold text-sm text-red-600 dark:text-red-300">Document Verification Rejected by HR</p>
                 <span className="font-mono font-extrabold text-sm text-red-600 dark:text-red-400 bg-red-500/20 px-3 py-1 rounded-lg border border-red-500/30">
                   Deadline: {formatCountdown(deadlineSeconds)}
                 </span>

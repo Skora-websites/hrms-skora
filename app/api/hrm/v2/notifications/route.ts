@@ -27,12 +27,15 @@ export async function GET(request: NextRequest) {
       ? Math.min(limitCountRaw, 50)
       : undefined;
 
-    // Employees can only view their own notifications
-    if (auth.role === "employee" && userId !== auth.userId) {
+    // Users can only view their own notifications unless HR-level
+    if (!["super_admin", "hr_admin", "admin"].includes(auth.role) && userId && userId !== auth.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (count === "true" && userId) {
+      if (!["super_admin", "hr_admin", "admin"].includes(auth.role) && userId !== auth.userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       const unreadCount = await getUnreadCount(userId);
       return NextResponse.json({ data: { unreadCount } });
     }
@@ -145,6 +148,18 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
 
     if (id) {
+      const db = await (await import("@/lib/db/mongo-helper")).getDb();
+      if (db) {
+        const { ObjectId } = await import("@/lib/db/mysql");
+        const filter = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id };
+        const notifDoc = await db.collection("notifications").findOne(filter);
+        if (!notifDoc) {
+          return NextResponse.json({ error: "Notification not found" }, { status: 404 });
+        }
+        if (notifDoc.userId !== auth.userId && !["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+          return NextResponse.json({ error: "Forbidden: you can only mark your own notifications as read" }, { status: 403 });
+        }
+      }
       const notification = await markAsRead(id);
       if (!notification) {
         return NextResponse.json({ error: "Notification not found" }, { status: 404 });
@@ -153,9 +168,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (body.markAll && body.userId) {
-      // Employees can only mark their own as read
-      if (auth.role === "employee" && body.userId !== auth.userId) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // Users can only mark their own notifications as read unless HR
+      if (body.userId !== auth.userId && !["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: you can only mark your own notifications as read" }, { status: 403 });
       }
       await markAllAsRead(body.userId);
       return NextResponse.json({ success: true });

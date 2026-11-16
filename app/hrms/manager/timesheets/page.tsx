@@ -110,8 +110,9 @@ export default function ManagerTimesheetsPage() {
           <Clock className="h-5 w-5 text-yellow-500" /> Pending Review ({pending.length})
         </h3>
         {pending.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
-            ✓ All timesheets reviewed for this date!
+          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs flex items-center justify-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span>All timesheets reviewed for this date!</span>
           </div>
         ) : (
           <div className="space-y-3">

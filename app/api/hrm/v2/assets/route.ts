@@ -13,9 +13,10 @@ import {
   updateAssetType,
   assignAsset,
   returnAsset,
+  getAssignments,
   getAssetsDashboard,
 } from "@/services/hrm/assets";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAuth, requireAdmin, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,6 +51,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data: types });
     }
 
+    if (type === "assignments") {
+      const assetId = searchParams.get("assetId") || undefined;
+      const targetUserId = auth.role === "employee" ? auth.userId : (userId || undefined);
+      const assignments = await getAssignments(assetId, targetUserId);
+      return NextResponse.json({ data: assignments });
+    }
+
     if (id) {
       const asset = await getAssetById(id);
       if (!asset) {
@@ -81,7 +89,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const tenantId = "default";
@@ -98,7 +106,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "return") {
-      result = await returnAsset(body.assignmentId, body.condition, body.notes);
+      let assignmentId = body.assignmentId;
+      if (!assignmentId && body.assetId) {
+        const activeList = await getAssignments(body.assetId);
+        const active = activeList.find((a) => a.status === "active");
+        if (active) assignmentId = active.id;
+      }
+      if (!assignmentId && body.assetId) {
+        await updateAsset(body.assetId, { status: "available", assignedToUserId: null, condition: body.condition || "good" } as any);
+        return NextResponse.json({ data: { success: true, message: "Asset marked available" } });
+      }
+      if (!assignmentId) {
+        return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+      }
+      result = await returnAsset(assignmentId, body.condition || "good", body.notes);
       if (!result) {
         return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
       }
@@ -125,7 +146,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const { searchParams } = new URL(request.url);
@@ -162,7 +183,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const { searchParams } = new URL(request.url);

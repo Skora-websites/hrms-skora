@@ -113,6 +113,10 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
   const auth = await requireAdmin();
   if (isErrorResponse(auth)) return auth;
 
+  if (auth.role === "employee" || auth.role === "manager") {
+    return forbidden("Only HR admins can update recruitment records");
+  }
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
@@ -129,6 +133,10 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
 export const DELETE = withErrorHandler(async (request: NextRequest) => {
   const auth = await requireAdmin();
   if (isErrorResponse(auth)) return auth;
+
+  if (auth.role === "employee" || auth.role === "manager") {
+    return forbidden("Only HR admins can delete recruitment records");
+  }
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");

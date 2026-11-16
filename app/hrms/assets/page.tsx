@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -30,16 +30,22 @@ import {
   Calendar,
   DollarSign,
   ClipboardList,
+  UserCheck,
+  RotateCcw,
+  Users,
 } from "lucide-react";
 import { useAssets } from "@/hooks/hrm/use-assets";
 import { useMutation } from "@/hooks/use-mutation";
+import { useToast } from "@/hooks/use-toast";
+import { Toast, ToastPortal } from "@/components/ui/toast";
+import { AnimatePresence } from "framer-motion";
 import { ASSET_CONDITIONS, ASSET_STATUS_OPTIONS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 
-const conditionColors: Record<string, "success" | "danger" | "info"> = {
+const conditionColors: Record<string, "success" | "danger" | "info" | "warning"> = {
   new: "success",
   good: "info",
-  fair: "info",
+  fair: "warning",
   damaged: "danger",
   disposed: "danger",
 };
@@ -51,17 +57,61 @@ const statusColors: Record<string, "success" | "warning" | "danger" | "primary" 
   disposed: "danger",
 };
 
-const emptyForm = { name: "", assetCode: "", serialNumber: "", categoryId: "", condition: "new", status: "available", purchaseDate: "", purchasePrice: "", notes: "" };
+const emptyForm = {
+  name: "",
+  assetCode: "",
+  serialNumber: "",
+  categoryId: "",
+  condition: "new",
+  status: "available",
+  purchaseDate: "",
+  purchasePrice: "",
+  notes: "",
+};
+
+interface UserOption {
+  id: string;
+  displayName?: string;
+  email?: string;
+}
 
 export default function AssetsPage() {
   const { data: assets, loading, error, refetch } = useAssets();
   const mutation = useMutation();
+  const toast = useToast();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
+
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
+
+  // Assign & Return state
+  const [assignUserId, setAssignUserId] = useState("");
+  const [assignCondition, setAssignCondition] = useState("good");
+  const [returnCondition, setReturnCondition] = useState("good");
+  const [returnNotes, setReturnNotes] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // User list for assignments
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch("/api/hrm/v2/users?action=list")
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((data) => {
+        const users = (data.data || []) as UserOption[];
+        setUserOptions(users);
+        setUserNames(
+          Object.fromEntries(users.map((u) => [u.id, u.displayName || u.email || u.id]))
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   const resetForm = useCallback(() => setForm(emptyForm), []);
 
@@ -70,19 +120,102 @@ export default function AssetsPage() {
       ...form,
       purchaseDate: form.purchaseDate ? new Date(form.purchaseDate).toISOString() : undefined,
     });
-    if (result) { setShowAddDialog(false); resetForm(); refetch(); }
+    if (result) {
+      setShowAddDialog(false);
+      resetForm();
+      refetch();
+      toast.success("Asset registered", "New asset added to inventory.");
+    }
   };
 
   const handleEdit = async () => {
     if (!selectedAsset) return;
     const result = await mutation.updateRecord(`/api/hrm/v2/assets?id=${selectedAsset.id}`, form);
-    if (result) { setShowEditDialog(false); setSelectedAsset(null); resetForm(); refetch(); }
+    if (result) {
+      setShowEditDialog(false);
+      setSelectedAsset(null);
+      resetForm();
+      refetch();
+      toast.success("Asset updated", "Asset details updated successfully.");
+    }
   };
 
   const handleDelete = async () => {
     if (!selectedAsset) return;
     const result = await mutation.deleteRecord(`/api/hrm/v2/assets?id=${selectedAsset.id}`);
-    if (result) { setShowDeleteDialog(false); setSelectedAsset(null); refetch(); }
+    if (result) {
+      setShowDeleteDialog(false);
+      setSelectedAsset(null);
+      refetch();
+      toast.success("Asset removed", "Asset has been deleted.");
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedAsset || !assignUserId) {
+      toast.error("Validation error", "Please select an employee to assign this asset.");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/hrm/v2/assets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "assign",
+          assetId: selectedAsset.id,
+          userId: assignUserId,
+          condition: assignCondition,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to assign asset");
+      }
+
+      toast.success("Asset assigned", `Asset assigned to ${userNames[assignUserId] || assignUserId}.`);
+      setShowAssignDialog(false);
+      setSelectedAsset(null);
+      setAssignUserId("");
+      refetch();
+    } catch (e: any) {
+      toast.error("Assign error", e.message || "Could not assign asset");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReturn = async () => {
+    if (!selectedAsset) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/hrm/v2/assets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "return",
+          assetId: selectedAsset.id,
+          condition: returnCondition,
+          notes: returnNotes,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to process asset return");
+      }
+
+      toast.success("Asset returned", "Asset marked available and checked back into inventory.");
+      setShowReturnDialog(false);
+      setSelectedAsset(null);
+      setReturnNotes("");
+      refetch();
+    } catch (e: any) {
+      toast.error("Return error", e.message || "Could not process return");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const openEdit = (asset: any) => {
@@ -106,6 +239,20 @@ export default function AssetsPage() {
     setShowDeleteDialog(true);
   };
 
+  const openAssign = (asset: any) => {
+    setSelectedAsset(asset);
+    setAssignUserId("");
+    setAssignCondition(asset.condition || "good");
+    setShowAssignDialog(true);
+  };
+
+  const openReturn = (asset: any) => {
+    setSelectedAsset(asset);
+    setReturnCondition(asset.condition || "good");
+    setReturnNotes("");
+    setShowReturnDialog(true);
+  };
+
   const columns: Column<any>[] = useMemo(
     () => [
       {
@@ -117,16 +264,12 @@ export default function AssetsPage() {
             <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center text-white">
               <Package className="h-4 w-4" />
             </div>
-            <p className="text-sm font-medium text-dark dark:text-white">{asset.name}</p>
+            <div>
+              <p className="text-sm font-medium text-dark dark:text-white">{asset.name}</p>
+              {asset.assetCode && <p className="text-xs font-mono text-muted">{asset.assetCode}</p>}
+            </div>
           </div>
         ),
-      },
-      {
-        key: "assetCode",
-        header: "Asset Code",
-        sortable: true,
-        cell: (asset: any) => <span className="text-sm font-mono text-muted">{asset.assetCode || "—"}</span>,
-        hideOnMobile: true,
       },
       {
         key: "serialNumber",
@@ -140,6 +283,20 @@ export default function AssetsPage() {
         sortable: true,
         cell: (asset: any) => <span className="text-sm text-muted">{asset.categoryId || "—"}</span>,
         hideOnMobile: true,
+      },
+      {
+        key: "assignedTo",
+        header: "Assigned To",
+        cell: (asset: any) => {
+          const uid = asset.assignedToUserId || asset.assignedTo;
+          if (!uid) return <span className="text-xs text-muted">—</span>;
+          return (
+            <span className="text-xs font-medium text-dark dark:text-white flex items-center gap-1">
+              <Users className="h-3 w-3 text-muted" />
+              {userNames[uid] || uid}
+            </span>
+          );
+        },
       },
       {
         key: "condition",
@@ -172,11 +329,23 @@ export default function AssetsPage() {
         hideOnMobile: true,
       },
     ],
-    []
+    [userNames]
   );
 
   const actions: Action<any>[] = useMemo(
     () => [
+      {
+        label: "Assign",
+        icon: UserCheck,
+        onClick: (asset: any) => openAssign(asset),
+        variant: "ghost",
+      },
+      {
+        label: "Return",
+        icon: RotateCcw,
+        onClick: (asset: any) => openReturn(asset),
+        variant: "ghost",
+      },
       {
         label: "Edit",
         icon: Pencil,
@@ -219,7 +388,21 @@ export default function AssetsPage() {
 
   return (
     <AppShell title="Assets">
-      <PageHeader title="Assets" description="Track and manage company assets, assignments, and maintenance.">
+      <ToastPortal>
+        <AnimatePresence>
+          {toast.toasts.map((t) => (
+            <Toast
+              key={t.id}
+              variant={t.variant}
+              message={t.message}
+              description={t.description}
+              onClose={() => toast.dismissToast(t.id)}
+            />
+          ))}
+        </AnimatePresence>
+      </ToastPortal>
+
+      <PageHeader title="Assets & Equipment" description="Track and manage company equipment, employee allocations, and returns.">
         <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Asset
@@ -239,7 +422,7 @@ export default function AssetsPage() {
         loading={loading}
         error={error}
         onRetry={() => refetch()}
-        emptyMessage="No assets found yet"
+        emptyMessage="No assets found in inventory"
         showEntriesSelector
         showRecordCount
         skeletonRows={5}
@@ -256,7 +439,7 @@ export default function AssetsPage() {
               </div>
               <div>
                 <DialogTitle>Add Asset</DialogTitle>
-                <DialogDescription>Register a new company asset.</DialogDescription>
+                <DialogDescription>Register a new company asset into inventory.</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -279,7 +462,7 @@ export default function AssetsPage() {
               </div>
               <div>
                 <DialogTitle>Edit Asset</DialogTitle>
-                <DialogDescription>Update asset details.</DialogDescription>
+                <DialogDescription>Update asset inventory details.</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -288,6 +471,95 @@ export default function AssetsPage() {
               <FormFields isEdit />
             </div>
             <FormActions onCancel={() => setShowEditDialog(false)} submitLabel="Save Changes" submitIcon={<Pencil className="h-4 w-4" />} loading={mutation.loading} error={mutation.error} />
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Dialog */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <UserCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle>Assign Asset</DialogTitle>
+                <DialogDescription>Allocate {selectedAsset?.name} to an employee.</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleAssign(); }}>
+            <div className="space-y-4">
+              <FormSelect
+                label="Assign to Employee"
+                options={[
+                  { value: "", label: "Select employee" },
+                  ...userOptions.map((u) => ({ value: u.id, label: u.displayName || u.email || u.id })),
+                ]}
+                value={assignUserId}
+                onChange={(e) => setAssignUserId(e.target.value)}
+                required
+              />
+              <FormSelect
+                label="Condition at Assignment"
+                options={[
+                  { value: "new", label: "New" },
+                  { value: "good", label: "Good" },
+                  { value: "fair", label: "Fair" },
+                ]}
+                value={assignCondition}
+                onChange={(e) => setAssignCondition(e.target.value)}
+              />
+              <FormActions
+                onCancel={() => setShowAssignDialog(false)}
+                submitLabel="Assign Asset"
+                loading={actionLoading}
+              />
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Return Dialog */}
+      <Dialog open={showReturnDialog} onOpenChange={setShowReturnDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
+                <RotateCcw className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle>Process Asset Return</DialogTitle>
+                <DialogDescription>Check in {selectedAsset?.name} back into inventory.</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleReturn(); }}>
+            <div className="space-y-4">
+              <FormSelect
+                label="Condition at Return"
+                options={[
+                  { value: "good", label: "Good" },
+                  { value: "fair", label: "Fair" },
+                  { value: "damaged", label: "Damaged" },
+                  { value: "needs_maintenance", label: "Needs Maintenance" },
+                ]}
+                value={returnCondition}
+                onChange={(e) => setReturnCondition(e.target.value)}
+              />
+              <FormTextarea
+                label="Return Notes / Inspection Summary"
+                placeholder="Include charger, cable condition, physical scratches, etc..."
+                value={returnNotes}
+                onChange={(e) => setReturnNotes(e.target.value)}
+              />
+              <FormActions
+                onCancel={() => setShowReturnDialog(false)}
+                submitLabel="Complete Return"
+                loading={actionLoading}
+              />
+            </div>
           </form>
         </DialogContent>
       </Dialog>

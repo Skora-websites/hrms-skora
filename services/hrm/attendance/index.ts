@@ -3,6 +3,7 @@ import {
   attendanceService,
   attendanceStatsService,
   shiftsService,
+  shiftAssignmentsService,
   weeklyOffsService,
   regularizationRequestsService,
 } from "@/lib/hrm/firestore";
@@ -10,6 +11,7 @@ import type {
   EmployeeAttendance,
   AttendanceStats,
   Shift,
+  ShiftAssignment,
   WeeklyOff,
   RegularizationRequest,
 } from "@/types";
@@ -41,6 +43,34 @@ export async function updateShift(id: string, data: Partial<Shift>): Promise<Shi
 
 export async function deleteShift(id: string): Promise<boolean> {
   return shiftsService.delete(id);
+}
+
+export async function getShiftAssignments(tenantId: string, userId?: string): Promise<ShiftAssignment[]> {
+  const where: any[] = [];
+  if (userId) where.push({ field: "userId", op: "==", value: userId });
+  return shiftAssignmentsService.findManyInTenant(tenantId, { where });
+}
+
+export async function assignEmployeeToShift(
+  tenantId: string,
+  data: { userId: string; userName?: string; shiftId: string; shiftName?: string; startDate: Date; endDate?: Date }
+): Promise<ShiftAssignment> {
+  const shift = await shiftsService.findById(data.shiftId);
+  const shiftName = shift?.name || data.shiftName || "Standard Shift";
+  return shiftAssignmentsService.create({
+    tenantId,
+    userId: data.userId,
+    userName: data.userName || "Employee",
+    shiftId: data.shiftId,
+    shiftName,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    status: "active",
+  } as any);
+}
+
+export async function deleteShiftAssignment(id: string): Promise<boolean> {
+  return shiftAssignmentsService.delete(id);
 }
 
 // ── Weekly Offs ────────────────────────────────────────

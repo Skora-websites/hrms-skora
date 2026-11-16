@@ -114,10 +114,12 @@ export function ThemeToggle({ className, variant = "icon" }: ThemeToggleProps) {
       </TooltipTrigger>
       <TooltipContent side="bottom" className="text-xs">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px]">
-            {isDark ? "☀️" : "🌙"}
-          </span>
-          Switch to {isDark ? "Light" : "Dark"} Mode
+          {isDark ? (
+            <Sun className="h-3 w-3 text-amber-500" />
+          ) : (
+            <Moon className="h-3 w-3 text-indigo-400" />
+          )}
+          <span>Switch to {isDark ? "Light" : "Dark"} Mode</span>
         </div>
       </TooltipContent>
     </Tooltip>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Building2, User, Mail, Lock, MapPin, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Building2, User, Mail, Lock, MapPin, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 
 interface TenantManagerModalProps {
   onCreated?: () => void;
@@ -99,8 +99,8 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                   <p className="text-xs text-slate-500 dark:text-slate-400">Configure tenant and create the lead HR Administrator</p>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-lg text-lg leading-none">
-                ✕
+              <button onClick={() => setIsOpen(false)} aria-label="Close" className="text-slate-400 hover:text-white p-1 rounded-lg">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -119,7 +119,10 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                 </div>
                 {resetLink && (
                   <div className="mt-2 p-2 bg-slate-50 dark:bg-black/40 rounded-lg border border-gray-200 dark:border-white/10">
-                    <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">🔐 Password Reset Link (share with HR Admin):</p>
+                    <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-primary" />
+                      <span>Password Reset Link (share with HR Admin):</span>
+                    </p>
                     <a href={resetLink} target="_blank" rel="noreferrer" className="text-[11px] text-primary underline break-all font-mono">{resetLink}</a>
                     <p className="text-[10px] text-slate-500 mt-1">The HR Admin should click this link to set their own password for the first time.</p>
                   </div>

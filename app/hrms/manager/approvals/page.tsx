@@ -116,7 +116,7 @@ export default function ManagerApprovalsPage() {
         }),
       });
       if (res.ok) {
-        showToast(`${item.employeeName}'s leave approved ✅`);
+        showToast(`${item.employeeName}'s leave approved`);
         setApprovals((prev) => prev.map((a) => (a.id === item.id ? { ...a, status: "approved" as const } : a)));
       } else {
         const err = await res.json();
@@ -167,7 +167,7 @@ export default function ManagerApprovalsPage() {
       {toast && (
         <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4">
           <div
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-md ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold backdrop-blur-md ${
               toast.type === "success"
                 ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
                 : "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-300"
@@ -234,7 +234,7 @@ export default function ManagerApprovalsPage() {
             return (
               <div
                 key={item.id}
-                className={`relative overflow-hidden rounded-2xl border bg-white dark:bg-[#0B0F19] shadow-sm text-slate-900 dark:text-white ${
+                className={`relative overflow-hidden rounded-2xl border bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-white ${
                   isRejectErr
                     ? "border-red-400 dark:border-red-500/40"
                     : "border-gray-200 dark:border-white/10"

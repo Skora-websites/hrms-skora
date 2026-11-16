@@ -88,15 +88,16 @@ function showInstallBanner(deferredPrompt: any) {
           font-size: 13px;
           cursor: pointer;
         ">Install</button>
-        <button id="pwa-dismiss-btn" style="
+        <button id="pwa-dismiss-btn" aria-label="Dismiss" style="
           background: rgba(255,255,255,0.2);
           color: white;
           border: none;
           padding: 8px 12px;
           border-radius: 8px;
-          font-size: 13px;
+          font-size: 16px;
+          line-height: 1;
           cursor: pointer;
-        ">✕</button>
+        ">&times;</button>
       </div>
     </div>
   `;

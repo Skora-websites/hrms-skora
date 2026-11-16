@@ -9,8 +9,8 @@ import { getDb } from "@/lib/db/mongo-helper";
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const auth = await requireAuth();
   if (isErrorResponse(auth)) return auth;
-  if (auth.role === "employee") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!["super_admin", "hr_admin", "admin"].includes(auth.role)) {
+    return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
   }
   const type = new URL(request.url).searchParams.get("type") || "comprehensive";
   const db = await getDb();

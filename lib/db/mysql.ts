@@ -10,7 +10,8 @@ const MYSQL_USER = process.env.MYSQL_USER || "root";
 const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD ?? "";
 const MYSQL_DATABASE = process.env.MYSQL_DATABASE || "hrms";
 
-let globalPool: Pool | null = null;
+const globalForMySQL = globalThis as unknown as { mysqlPool: Pool | null };
+let globalPool: Pool | null = globalForMySQL.mysqlPool || null;
 
 export function getMySQLPool(): Pool {
   if (!globalPool) {
@@ -27,6 +28,7 @@ export function getMySQLPool(): Pool {
       keepAliveInitialDelay: 0,
       dateStrings: true,
     });
+    globalForMySQL.mysqlPool = globalPool;
   }
   return globalPool;
 }
@@ -157,6 +159,7 @@ export const COLLECTION_TABLE_MAP: Record<string, string> = {
   escalations: "escalations",
   ai_chat_messages: "ai_chat_messages",
   shifts: "shifts",
+  shift_assignments: "shift_assignments",
   weekly_offs: "weekly_offs",
 };
 
@@ -222,8 +225,8 @@ function rowToDoc<T = any>(row: any): T | null {
 
   const id = row.legacyId || (row.id ? String(row.id) : undefined);
   const doc: any = {
-    ...payload,
     ...row,
+    ...payload,
   };
   delete doc.payload;
 
@@ -246,6 +249,9 @@ function cleanValueForSql(val: any): any {
     return val.toISOString().slice(0, 23).replace("T", " ");
   }
   if (typeof val === "boolean") return val ? 1 : 0;
+  if (typeof val === "object" && val !== null && !Buffer.isBuffer(val)) {
+    return JSON.stringify(val);
+  }
   return val;
 }
 
@@ -552,7 +558,7 @@ export class MySQLCollection<T = any> {
     const pool = getMySQLPool();
     const columns = await getTableColumns(this.tableName);
 
-    // Apply mongo update operators ($set, $inc, etc.)
+    // Apply mongo update operators ($set, $inc, $unset, $push, $pull)
     const updatedDoc: any = { ...existing };
     if (update.$set) {
       Object.assign(updatedDoc, update.$set);
@@ -567,7 +573,27 @@ export class MySQLCollection<T = any> {
         delete updatedDoc[k];
       }
     }
-    if (!update.$set && !update.$inc && !update.$unset) {
+    if (update.$push) {
+      for (const [k, v] of Object.entries(update.$push)) {
+        if (!Array.isArray(updatedDoc[k])) {
+          updatedDoc[k] = [];
+        }
+        updatedDoc[k].push(v);
+      }
+    }
+    if (update.$pull) {
+      for (const [k, v] of Object.entries(update.$pull)) {
+        if (Array.isArray(updatedDoc[k])) {
+          updatedDoc[k] = updatedDoc[k].filter((item: any) => {
+            if (typeof v === "object" && v !== null) {
+              return !Object.entries(v).every(([pk, pv]) => item?.[pk] === pv);
+            }
+            return item !== v;
+          });
+        }
+      }
+    }
+    if (!update.$set && !update.$inc && !update.$unset && !update.$push && !update.$pull) {
       Object.assign(updatedDoc, update);
     }
 

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       to,
       subject: "Skora HRMS — SMTP test email",
       html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-        <h2 style="color:#2563eb;margin:0 0 12px;">SMTP connection works ✅</h2>
+        <h2 style="color:#2563eb;margin:0 0 12px;">SMTP connection works</h2>
         <p>This is a test message from <strong>Skora HRMS</strong>.</p>
         <p style="color:#555;font-size:13px;">Transport: <code>${transport.provider}</code> via <code>${transport.host || "resend-api"}</code><br/>
         From: <code>${transport.from}</code><br/>

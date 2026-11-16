@@ -126,7 +126,7 @@ export async function assignAsset(
   userId: string,
   condition: string
 ): Promise<AssetAssignment> {
-  await assetsService.update(assetId, { status: "assigned" } as any);
+  await assetsService.update(assetId, { status: "assigned", assignedToUserId: userId } as any);
 
   return assetAssignmentsService.create({
     assetId,
@@ -146,7 +146,7 @@ export async function returnAsset(
   const assignment = await assetAssignmentsService.findById(assignmentId);
   if (!assignment) return null;
 
-  await assetsService.update(assignment.assetId, { status: "available" } as any);
+  await assetsService.update(assignment.assetId, { status: "available", assignedToUserId: null, condition } as any);
 
   return assetAssignmentsService.update(assignmentId, {
     returnedDate: new Date(),

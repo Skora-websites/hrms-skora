@@ -27,6 +27,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  Edit3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@/hooks/use-mutation";
@@ -86,6 +87,11 @@ export default function GoalsPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [goalForm, setGoalForm] = useState(EMPTY_GOAL_FORM);
 
+  const [selectedGoal, setSelectedGoal] = useState<GoalItem | null>(null);
+  const [editProgress, setEditProgress] = useState(0);
+  const [editStatus, setEditStatus] = useState<GoalItem["status"]>("in_progress");
+  const [updating, setUpdating] = useState(false);
+
   const mutation = useMutation();
   const toast = useToast();
 
@@ -133,6 +139,34 @@ export default function GoalsPage() {
       toast.success("Goal created", `"${goalForm.title}" has been added successfully.`);
     } else {
       toast.error("Create failed", mutation.error || "Please try again.");
+    }
+  };
+
+  const handleUpdateGoal = async () => {
+    if (!selectedGoal) return;
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/hrm/v2/performance?id=${selectedGoal.id}&type=goal`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          progress: Number(editProgress),
+          status: editStatus,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to update goal");
+      }
+
+      toast.success("Goal Updated", "Goal progress updated successfully.");
+      setSelectedGoal(null);
+      fetchData();
+    } catch (e: any) {
+      toast.error("Error", e.message || "Failed to update goal");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -307,12 +341,66 @@ export default function GoalsPage() {
                       {goal.status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                     </span>
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedGoal(goal);
+                      setEditProgress(goal.progress || 0);
+                      setEditStatus(goal.status || "in_progress");
+                    }}
+                  >
+                    <Edit3 className="h-3.5 w-3.5 mr-1" />
+                    Update
+                  </Button>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
+
+      {/* Update Progress Dialog */}
+      <Dialog open={!!selectedGoal} onOpenChange={(open) => !open && setSelectedGoal(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Update Goal Progress</DialogTitle>
+            <DialogDescription>{selectedGoal?.title}</DialogDescription>
+          </DialogHeader>
+          {selectedGoal && (
+            <form onSubmit={(e) => { e.preventDefault(); handleUpdateGoal(); }}>
+              <div className="space-y-4">
+                <FormInput
+                  label="Progress (%)"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editProgress}
+                  onChange={(e) => setEditProgress(Number(e.target.value))}
+                  required
+                />
+                <FormSelect
+                  label="Status"
+                  options={[
+                    { value: "draft", label: "Draft" },
+                    { value: "in_progress", label: "In Progress" },
+                    { value: "achieved", label: "Achieved" },
+                    { value: "partially_achieved", label: "Partially Achieved" },
+                    { value: "not_achieved", label: "Not Achieved" },
+                  ]}
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as any)}
+                />
+                <FormActions
+                  onCancel={() => setSelectedGoal(null)}
+                  submitLabel="Update Progress"
+                  loading={updating}
+                />
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

@@ -17,6 +17,10 @@ import {
   FileText,
   Eye,
   X,
+  Plus,
+  Trash2,
+  Sliders,
+  Layers,
 } from "lucide-react";
 
 interface PayrollRun {
@@ -75,6 +79,33 @@ export default function HrAdminPayrollPage() {
     new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split("T")[0]
   );
 
+  const [activeTab, setActiveTab] = useState<"runs" | "components" | "pay_groups">("runs");
+  const [components, setComponents] = useState<any[]>([]);
+  const [payGroups, setPayGroups] = useState<any[]>([]);
+  const [showComponentModal, setShowComponentModal] = useState(false);
+  const [showPayGroupModal, setShowPayGroupModal] = useState(false);
+
+  const [newComponent, setNewComponent] = useState({
+    name: "",
+    code: "",
+    type: "earning" as "earning" | "deduction",
+    calculationType: "fixed" as "fixed" | "percentage_of_basic" | "attendance_based",
+    defaultPercentage: 0,
+    isTaxable: true,
+    isStatutory: false,
+    status: "active" as "active" | "inactive",
+    sortOrder: 1,
+  });
+
+  const [newPayGroup, setNewPayGroup] = useState({
+    name: "",
+    description: "",
+    frequency: "monthly" as "monthly" | "bi_weekly" | "weekly",
+    payDate: 28,
+    processingType: "manual" as "auto" | "manual",
+    status: "active" as "active" | "inactive",
+  });
+
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
@@ -82,7 +113,128 @@ export default function HrAdminPayrollPage() {
 
   useEffect(() => {
     loadPayroll();
+    loadComponents();
+    loadPayGroups();
   }, []);
+
+  const loadComponents = async () => {
+    try {
+      const res = await fetch("/api/hrm/v2/payroll?type=components");
+      if (res.ok) {
+        const data = await res.json();
+        setComponents(Array.isArray(data.data) ? data.data : []);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const loadPayGroups = async () => {
+    try {
+      const res = await fetch("/api/hrm/v2/payroll?type=pay-groups");
+      if (res.ok) {
+        const data = await res.json();
+        setPayGroups(Array.isArray(data.data) ? data.data : []);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleCreateComponent = async () => {
+    if (!newComponent.name || !newComponent.code) {
+      showToast("Name and Code are required", "error");
+      return;
+    }
+    try {
+      const res = await fetch("/api/hrm/v2/payroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_component", ...newComponent }),
+      });
+      if (res.ok) {
+        showToast("Salary component created successfully");
+        setShowComponentModal(false);
+        setNewComponent({
+          name: "",
+          code: "",
+          type: "earning",
+          calculationType: "fixed",
+          defaultPercentage: 0,
+          isTaxable: true,
+          isStatutory: false,
+          status: "active",
+          sortOrder: 1,
+        });
+        loadComponents();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Failed to create component", "error");
+      }
+    } catch {
+      showToast("Failed to create component", "error");
+    }
+  };
+
+  const handleDeleteComponent = async (id: string) => {
+    try {
+      const res = await fetch(`/api/hrm/v2/payroll?id=${id}&type=component`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Salary component deleted");
+        loadComponents();
+      } else {
+        showToast("Failed to delete component", "error");
+      }
+    } catch {
+      showToast("Failed to delete component", "error");
+    }
+  };
+
+  const handleCreatePayGroup = async () => {
+    if (!newPayGroup.name) {
+      showToast("Name is required", "error");
+      return;
+    }
+    try {
+      const res = await fetch("/api/hrm/v2/payroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_pay_group", ...newPayGroup }),
+      });
+      if (res.ok) {
+        showToast("Pay group created successfully");
+        setShowPayGroupModal(false);
+        setNewPayGroup({
+          name: "",
+          description: "",
+          frequency: "monthly",
+          payDate: 28,
+          processingType: "manual",
+          status: "active",
+        });
+        loadPayGroups();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Failed to create pay group", "error");
+      }
+    } catch {
+      showToast("Failed to create pay group", "error");
+    }
+  };
+
+  const handleDeletePayGroup = async (id: string) => {
+    try {
+      const res = await fetch(`/api/hrm/v2/payroll?id=${id}&type=pay-group`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Pay group deleted");
+        loadPayGroups();
+      } else {
+        showToast("Failed to delete pay group", "error");
+      }
+    } catch {
+      showToast("Failed to delete pay group", "error");
+    }
+  };
 
   const loadPayroll = async () => {
     setLoading(true);
@@ -277,7 +429,7 @@ export default function HrAdminPayrollPage() {
       {toast && (
         <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4">
           <div
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-md ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold backdrop-blur-md ${
               toast.type === "success"
                 ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
                 : "bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-300"
@@ -319,6 +471,51 @@ export default function HrAdminPayrollPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-white/10 pb-3">
+        <button
+          onClick={() => setActiveTab("runs")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "runs"
+              ? "bg-primary text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+          }`}
+        >
+          <Receipt className="h-4 w-4" />
+          Payroll Cycles ({payrollRuns.length})
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("components");
+            loadComponents();
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "components"
+              ? "bg-primary text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+          }`}
+        >
+          <Sliders className="h-4 w-4" />
+          Salary Components ({components.length})
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("pay_groups");
+            loadPayGroups();
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "pay_groups"
+              ? "bg-primary text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+          }`}
+        >
+          <Layers className="h-4 w-4" />
+          Pay Groups ({payGroups.length})
+        </button>
+      </div>
+
+      {activeTab === "runs" && (
+        <>
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
@@ -445,6 +642,174 @@ export default function HrAdminPayrollPage() {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* ═══ SALARY COMPONENTS TAB ═══ */}
+      {activeTab === "components" && (
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <Sliders className="h-5 w-5 text-primary" /> Configured Salary Components ({components.length})
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Earnings, statutory allowances, and deductions configured for this organization</p>
+            </div>
+            <Button
+              onClick={() => setShowComponentModal(true)}
+              className="bg-primary text-white gap-2 font-bold text-xs"
+            >
+              <Plus className="h-4 w-4" /> Add Component
+            </Button>
+          </div>
+          {components.length === 0 ? (
+            <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+              <Sliders className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+              <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No custom salary components yet</p>
+              <p className="text-slate-500 mb-4">Default baseline components (Basic, HRA, Special Allowance, PF, PT, TDS) are applied during payroll calculation.</p>
+              <Button onClick={() => setShowComponentModal(true)} className="bg-primary text-white font-bold text-xs">
+                <Plus className="h-4 w-4 mr-1.5" /> Create First Component
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="pb-3 pr-4">Component Name</th>
+                    <th className="pb-3 pr-4">Code</th>
+                    <th className="pb-3 pr-4">Type</th>
+                    <th className="pb-3 pr-4">Calculation Method</th>
+                    <th className="pb-3 pr-4">Statutory</th>
+                    <th className="pb-3 pr-4">Taxable</th>
+                    <th className="pb-3 pr-4">Status</th>
+                    <th className="pb-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                  {components.map((c: any) => (
+                    <tr key={c.id || c._id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                      <td className="py-3 pr-4 font-bold">{c.name}</td>
+                      <td className="py-3 pr-4 font-mono text-slate-500">{c.code}</td>
+                      <td className="py-3 pr-4">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          c.type === "earning"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-red-500/10 text-red-600 dark:text-red-400"
+                        }`}>
+                          {c.type?.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4 text-slate-500">{c.calculationType?.replace(/_/g, " ")}</td>
+                      <td className="py-3 pr-4">
+                        {c.isStatutory ? (
+                          <span className="text-blue-500 font-semibold">Yes</span>
+                        ) : (
+                          <span className="text-slate-400">No</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {c.isTaxable ? (
+                          <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Yes</span>
+                        ) : (
+                          <span className="text-slate-400">No</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10">
+                          {c.status || "active"}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteComponent(c.id || c._id)}
+                          className="h-7 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ PAY GROUPS TAB ═══ */}
+      {activeTab === "pay_groups" && (
+        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" /> Configured Pay Groups ({payGroups.length})
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Pay cycles and employee payment schedule groupings</p>
+            </div>
+            <Button
+              onClick={() => setShowPayGroupModal(true)}
+              className="bg-primary text-white gap-2 font-bold text-xs"
+            >
+              <Plus className="h-4 w-4" /> Add Pay Group
+            </Button>
+          </div>
+          {payGroups.length === 0 ? (
+            <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+              <Layers className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+              <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No custom pay groups configured</p>
+              <p className="text-slate-500 mb-4">All employees default to the Standard Monthly Pay Group, or create distinct pay groups.</p>
+              <Button onClick={() => setShowPayGroupModal(true)} className="bg-primary text-white font-bold text-xs">
+                <Plus className="h-4 w-4 mr-1.5" /> Create First Pay Group
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="pb-3 pr-4">Group Name</th>
+                    <th className="pb-3 pr-4">Description</th>
+                    <th className="pb-3 pr-4">Frequency</th>
+                    <th className="pb-3 pr-4">Pay Day</th>
+                    <th className="pb-3 pr-4">Processing Type</th>
+                    <th className="pb-3 pr-4">Status</th>
+                    <th className="pb-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                  {payGroups.map((g: any) => (
+                    <tr key={g.id || g._id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                      <td className="py-3 pr-4 font-bold">{g.name}</td>
+                      <td className="py-3 pr-4 text-slate-500">{g.description || "—"}</td>
+                      <td className="py-3 pr-4 capitalize">{g.frequency || "monthly"}</td>
+                      <td className="py-3 pr-4">{g.payDate || 28}th of month</td>
+                      <td className="py-3 pr-4 capitalize">{g.processingType || "manual"}</td>
+                      <td className="py-3 pr-4">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10">
+                          {g.status || "active"}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeletePayGroup(g.id || g._id)}
+                          className="h-7 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ═══ RUN PAYROLL MODAL ═══ */}
       {showRunModal && (
@@ -501,6 +866,178 @@ export default function HrAdminPayrollPage() {
               >
                 {processing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Receipt className="h-3.5 w-3.5" />}
                 {processing ? "Processing 14 Employees..." : "Execute Payroll"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADD COMPONENT MODAL ═══ */}
+      {showComponentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Sliders className="h-5 w-5 text-primary" /> Add Salary Component
+            </h3>
+            <p className="text-xs text-slate-500">
+              Configure a salary component (earning or deduction) for use in payroll processing.
+            </p>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold mb-1">Component Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Travel Allowance"
+                  value={newComponent.name}
+                  onChange={(e) => setNewComponent({ ...newComponent, name: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Code *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. TA"
+                    value={newComponent.code}
+                    onChange={(e) => setNewComponent({ ...newComponent, code: e.target.value.toUpperCase() })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Type *</label>
+                  <select
+                    value={newComponent.type}
+                    onChange={(e) => setNewComponent({ ...newComponent, type: e.target.value as any })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  >
+                    <option value="earning">Earning</option>
+                    <option value="deduction">Deduction</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Calculation Method</label>
+                <select
+                  value={newComponent.calculationType}
+                  onChange={(e) => setNewComponent({ ...newComponent, calculationType: e.target.value as any })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                >
+                  <option value="fixed">Fixed Amount</option>
+                  <option value="percentage_of_basic">Percentage of Basic Salary</option>
+                  <option value="attendance_based">Attendance / Days Based</option>
+                </select>
+              </div>
+              <div className="flex gap-4 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newComponent.isTaxable}
+                    onChange={(e) => setNewComponent({ ...newComponent, isTaxable: e.target.checked })}
+                    className="rounded"
+                  />
+                  <span>Taxable</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newComponent.isStatutory}
+                    onChange={(e) => setNewComponent({ ...newComponent, isStatutory: e.target.checked })}
+                    className="rounded"
+                  />
+                  <span>Statutory Deduction</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="w-1/2 text-xs"
+                onClick={() => setShowComponentModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="w-1/2 bg-primary text-white text-xs font-bold"
+                onClick={handleCreateComponent}
+              >
+                Save Component
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADD PAY GROUP MODAL ═══ */}
+      {showPayGroupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" /> Create Pay Group
+            </h3>
+            <p className="text-xs text-slate-500">
+              Group employees into distinct payroll cycles and payment dates.
+            </p>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold mb-1">Group Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Standard Monthly Employees"
+                  value={newPayGroup.name}
+                  onChange={(e) => setNewPayGroup({ ...newPayGroup, name: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Description</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Full-time engineering & corporate staff"
+                  value={newPayGroup.description}
+                  onChange={(e) => setNewPayGroup({ ...newPayGroup, description: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Frequency</label>
+                  <select
+                    value={newPayGroup.frequency}
+                    onChange={(e) => setNewPayGroup({ ...newPayGroup, frequency: e.target.value as any })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="bi_weekly">Bi-Weekly</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Pay Day (Day of Month)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={newPayGroup.payDate}
+                    onChange={(e) => setNewPayGroup({ ...newPayGroup, payDate: parseInt(e.target.value) || 28 })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="w-1/2 text-xs"
+                onClick={() => setShowPayGroupModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="w-1/2 bg-primary text-white text-xs font-bold"
+                onClick={handleCreatePayGroup}
+              >
+                Create Group
               </Button>
             </div>
           </div>

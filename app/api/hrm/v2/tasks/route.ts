@@ -199,7 +199,7 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
 // ── DELETE ──────────────────────────────────────────────
 
 export const DELETE = withErrorHandler(async (request: NextRequest) => {
-  const auth = await requireAdmin();
+  const auth = await requireHrLevel();
   if (isErrorResponse(auth)) return auth;
 
   const { searchParams } = new URL(request.url);

@@ -80,10 +80,25 @@ export async function GET(request: NextRequest) {
 
     // Employees can only view their own documents
     const filterUserId = auth.role === "employee" ? auth.userId : (userId || undefined);
-    const documents = await getDocuments(tenantId, {
+    let documents = await getDocuments(tenantId, {
       userId: filterUserId,
       categoryId: categoryId || undefined,
     });
+
+    // IDOR guard: Managers may only see their own documents plus direct reports
+    if (auth.role === "manager") {
+      if (userId && userId !== auth.userId && !(await isDirectReport(auth.userId, userId))) {
+        return NextResponse.json({ error: "Forbidden: you can only view documents for direct reports" }, { status: 403 });
+      }
+      const allowedDocs: any[] = [];
+      for (const doc of documents as any[]) {
+        const dUserId = String(doc.userId || "");
+        if (dUserId === auth.userId || (await isDirectReport(auth.userId, dUserId))) {
+          allowedDocs.push(doc);
+        }
+      }
+      documents = allowedDocs;
+    }
 
     return NextResponse.json({ data: documents });
   } catch (error: any) {

@@ -203,7 +203,7 @@ export async function sendPayslipEmail({
       <p>Dear <strong>${employeeName}</strong>,</p>
       <p>Your salary for <strong>${periodLabel}</strong> has been processed and paid.</p>
       <p style="font-size:15px;"><strong>Net Pay:</strong> Rs. ${Number(netPay).toLocaleString("en-IN")}</p>
-      <p>📄 <strong>Your payslip is attached</strong> as <em>${pdfAttachment.filename}</em>.</p>
+      <p><strong>Your payslip is attached</strong> as <em>${pdfAttachment.filename}</em>.</p>
       <p>If you notice any discrepancy, please reach out to HR within 7 days.</p>
       <p style="margin-top:24px;">Warm regards,<br><strong>HR Team</strong><br>${companyName}</p>
       <div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 30px; font-size: 11px; color: #999; text-align: center;">
@@ -266,7 +266,7 @@ export async function sendWelcomeEmail({
       </div>
       <p style="font-size:14px;"><a href="${loginUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:bold;">Sign in to ${companyName} HRMS</a></p>
       <p style="color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:16px;">
-        🔐 For security, you will be asked to <strong>create your own password</strong> the first time you sign in. This temporary password works only once for that purpose.
+        <strong>Security Notice:</strong> You will be asked to <strong>create your own password</strong> the first time you sign in. This temporary password works only once for that purpose.
       </p>
       <p style="margin-top:24px;">Warm regards,<br><strong>HR Team</strong><br>${companyName}</p>
       <div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 30px; font-size: 11px; color: #999; text-align: center;">

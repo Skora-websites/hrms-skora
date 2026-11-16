@@ -18,6 +18,8 @@ import {
   Shield,
   MapPin,
   Search,
+  Home,
+  Building2,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -300,7 +302,7 @@ export default function ManagerDashboardPage() {
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
               {[["all","All"],["punched_in","Punched In"],["active","Active"],["on_break","On Break"],["in_meeting","In Meeting"],["punched_out","Punched Out"],["absent","Absent"]].map(([k,l]) => (
                 <button key={k} onClick={() => setLiveFilter(k as "all" | "punched_in" | "active" | "on_break" | "in_meeting" | "punched_out" | "absent")}
-                  className={"px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap " + (liveFilter === k ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900")}>
+                  className={"px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap " + (liveFilter === k ? "bg-white dark:bg-primary text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900")}>
                   {l}
                 </button>
               ))}
@@ -353,7 +355,7 @@ export default function ManagerDashboardPage() {
               const auxCls = emp.auxState === "on_break" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30"
                 : emp.auxState === "meeting" ? "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/30"
                 : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30";
-              const statusBg = emp.status === "punched_in" ? "bg-white dark:bg-black/30 border-gray-100 dark:border-white/5 hover:shadow-md"
+              const statusBg = emp.status === "punched_in" ? "bg-white dark:bg-black/30 border-gray-100 dark:border-white/5 hover:border-primary/30"
                 : emp.status === "punched_out" ? "bg-slate-50 dark:bg-black/20 border-gray-100 dark:border-white/5 opacity-70"
                 : "bg-red-50/50 dark:bg-red-500/5 border-red-100 dark:border-red-500/10";
               const avatarBg = emp.status === "punched_in" ? "bg-emerald-500" : emp.status === "punched_out" ? "bg-slate-400" : "bg-red-400";
@@ -371,8 +373,16 @@ export default function ManagerDashboardPage() {
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     {emp.status === "punched_in" && (<>
-                      <span className={"px-2.5 py-1 rounded-full text-[10px] font-bold border " + (emp.workLocation === "remote" ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30")}>
-                        {emp.workLocation === "remote" ? "🏠 Remote" : "🏢 Office"}
+                      <span className={"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border " + (emp.workLocation === "remote" ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30")}>
+                        {emp.workLocation === "remote" ? (
+                          <>
+                            <Home className="h-3 w-3" /> Remote
+                          </>
+                        ) : (
+                          <>
+                            <Building2 className="h-3 w-3" /> Office
+                          </>
+                        )}
                       </span>
                       <span className={"px-2.5 py-1 rounded-full text-[10px] font-bold border " + auxCls}>{auxLabel}</span>
                       <div className="text-center min-w-[70px]">
@@ -438,7 +448,7 @@ export default function ManagerDashboardPage() {
                 onClick={() => setApprovalType(t)}
                 className={`px-2.5 py-1 rounded-lg text-[10px] font-bold capitalize transition-all ${
                   approvalType === t
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -632,7 +642,7 @@ export default function ManagerDashboardPage() {
           desc="Leave, regularization & overtime"
         />
         <QuickLink
-          href="/hrms/manager/analytics"
+          href="/hrms/performance"
           icon={<TrendingUp className="h-5 w-5 text-blue-500" />}
           label="KPI Analytics"
           desc="Team performance metrics"

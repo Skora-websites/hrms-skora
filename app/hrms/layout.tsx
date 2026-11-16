@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
-import { CapacitorProvider } from "@/components/mobile/capacitor-provider";
 import { MobileStyles } from "@/components/mobile/mobile-layout";
 import { PWAProvider } from "@/components/mobile/pwa-provider";
 import "./globals.css";
@@ -97,11 +96,9 @@ export default function HrmsLayout({
       />
       <Providers>
         <AuthProvider>
-          <CapacitorProvider>
           <MobileStyles />
           <PWAProvider />
           {children}
-        </CapacitorProvider>
         </AuthProvider>
       </Providers>
     </div>

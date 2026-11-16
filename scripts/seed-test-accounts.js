@@ -29,13 +29,7 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes("<")) {
-  console.error("MONGODB_URI missing. Add it to .env.local first.");
-  process.exit(1);
-}
-
 // ── Suite accounts (parsed from __tests__ to stay in sync) ──
-const { execSync } = require("child_process");
 const testsDir = path.join(__dirname, "..", "__tests__");
 const emails = new Set();
 for (const f of fs.readdirSync(testsDir)) {
@@ -103,12 +97,8 @@ function uriWantsTls(uri) {
 }
 
 async function main() {
-  const { MongoClient } = require(path.join(__dirname, "..", "node_modules", "mongodb"));
-  const uri = await resolveSRV(process.env.MONGODB_URI);
-  console.log("[seed] Connecting (SRV resolved via Google DNS)…");
-  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 15000, tls: uriWantsTls(uri) });
-  await client.connect();
-  const db = client.db(process.env.MONGODB_DB || "hrms");
+  const { getAuditDb } = require(path.join(__dirname, "audit", "db"));
+  const { db, client } = await getAuditDb();
   const bcrypt = require(path.join(__dirname, "..", "node_modules", "bcryptjs"));
 
   const withEmail = process.argv.includes("--with-email");

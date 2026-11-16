@@ -4,8 +4,11 @@ import {
   getPayGroups,
   createPayGroup,
   updatePayGroup,
+  deletePayGroup,
   getPayrollRuns,
   getPayrollRunById,
+  updatePayrollRun,
+  deletePayrollRun,
   processPayroll,
   getPayrollDashboard,
   getPayrollTransactions,
@@ -13,9 +16,10 @@ import {
   getSalaryComponents,
   createSalaryComponent,
   updateSalaryComponent,
+  deleteSalaryComponent,
   markPayrollTransactionPaid,
 } from "@/services/hrm/payroll";
-import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
+import { requireAuth, requireAdmin, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 import { ObjectId } from "@/lib/db/mysql";
 
 /** Managers may only read their direct reports' payroll data. Same
@@ -62,6 +66,8 @@ export async function GET(request: NextRequest) {
     const payGroupId = searchParams.get("payGroupId");
     const dashboard = searchParams.get("dashboard");
 
+    const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
+
     // Payroll is admin+ only (except employees viewing their own transactions)
     if (auth.role === "employee") {
       if (type === "transactions" && userId === auth.userId) {
@@ -72,11 +78,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (dashboard === "true") {
+      if (!HR_LEVEL_ROLES.has(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+      }
       const dashData = await getPayrollDashboard(tenantId);
       return NextResponse.json({ data: dashData });
     }
 
     if (type === "runs") {
+      if (!HR_LEVEL_ROLES.has(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+      }
       if (id) {
         const run = await getPayrollRunById(id);
         if (!run) {
@@ -102,22 +114,37 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ data: transactions });
       }
       if (id) {
+        if (!HR_LEVEL_ROLES.has(auth.role)) {
+          return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+        }
         let transactions = await getPayrollTransactions(id);
         if (threeMonthWindow) transactions = withinLastThreeMonths(transactions);
         return NextResponse.json({ data: transactions });
       }
+      if (!HR_LEVEL_ROLES.has(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+      }
     }
 
     if (type === "components") {
+      if (!HR_LEVEL_ROLES.has(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+      }
       const components = await getSalaryComponents(tenantId);
       return NextResponse.json({ data: components });
     }
 
     if (type === "pay-groups") {
+      if (!HR_LEVEL_ROLES.has(auth.role)) {
+        return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+      }
       const groups = await getPayGroups(tenantId);
       return NextResponse.json({ data: groups });
     }
 
+    if (!HR_LEVEL_ROLES.has(auth.role)) {
+      return NextResponse.json({ error: "Forbidden: HR-level access required" }, { status: 403 });
+    }
     const payGroups = await getPayGroups(tenantId);
     return NextResponse.json({ data: payGroups });
   } catch (error: any) {
@@ -128,7 +155,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const tenantId = "default";
@@ -153,9 +180,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: result }, { status: 201 });
     }
 
-    if (type === "pay-group") {
+    if (type === "pay-group" || action === "create_pay_group") {
       result = await createPayGroup(tenantId, body);
-    } else if (type === "component") {
+    } else if (type === "component" || action === "create_component") {
       result = await createSalaryComponent(tenantId, body);
     } else {
       return NextResponse.json({ error: "Invalid type. Use: pay-group, component" }, { status: 400 });
@@ -173,7 +200,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requireAdmin();
+    const auth = await requireHrLevel();
     if (isErrorResponse(auth)) return auth;
 
     const { searchParams } = new URL(request.url);
@@ -245,7 +272,9 @@ export async function PATCH(request: NextRequest) {
 
       return NextResponse.json({ data: tx });
     }
-    if (type === "component") {
+    if (type === "run") {
+      result = await updatePayrollRun(id, body);
+    } else if (type === "component") {
       result = await updateSalaryComponent(id, body);
     } else if (type === "pay-group") {
       result = await updatePayGroup(id, body);
@@ -263,6 +292,41 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or empty JSON payload" }, { status: 400 });
     }
     console.error("PATCH /api/hrm/v2/payroll error:", error);
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const auth = await requireHrLevel();
+    if (isErrorResponse(auth)) return auth;
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const type = searchParams.get("type");
+
+    if (!id) {
+      return NextResponse.json({ error: "id parameter required" }, { status: 400 });
+    }
+
+    let success = false;
+    if (type === "run") {
+      success = await deletePayrollRun(id);
+    } else if (type === "component") {
+      success = await deleteSalaryComponent(id);
+    } else if (type === "pay-group") {
+      success = await deletePayGroup(id);
+    } else {
+      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    }
+
+    if (!success) {
+      return NextResponse.json({ error: "Record not found or deletion failed" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: "Record deleted successfully" });
+  } catch (error: any) {
+    console.error("DELETE /api/hrm/v2/payroll error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }

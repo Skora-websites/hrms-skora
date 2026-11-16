@@ -36,7 +36,25 @@ export default function EmployeePayslipsPage() {
     setLoading(false);
   };
 
-  const handleDownloadPayslip = (p: Payslip) => {
+  const handleDownloadPayslip = async (p: Payslip) => {
+    try {
+      const res = await fetch(`/api/hrm/v2/payroll/payslip-pdf?id=${p.id}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Payslip-${p.month}-${p.year}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch {
+      // Fallback to text statement below if PDF generation fails
+    }
+
     const lines = [
       `=====================================================`,
       `              OFFICIAL SALARY SLIP                   `,

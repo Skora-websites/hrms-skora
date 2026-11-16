@@ -15,6 +15,10 @@ import {
   ArrowLeft,
   ArrowRight,
   TrendingUp,
+  Plus,
+  Trash2,
+  CalendarCheck,
+  Layers,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -58,7 +62,105 @@ export default function HrAdminAttendancePage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDept, setFilterDept] = useState("all");
-  const [activeView, setActiveView] = useState<"roster" | "punched" | "calendar">("roster");
+  const [activeView, setActiveView] = useState<"roster" | "punched" | "calendar" | "rota">("roster");
+  const [shifts, setShifts] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [showShiftModal, setShowShiftModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [newShift, setNewShift] = useState({
+    name: "",
+    startTime: "10:00",
+    endTime: "19:00",
+    gracePeriod: 15,
+    halfDayMark: "14:30",
+    flexibleDuration: false,
+    color: "#3B82F6",
+  });
+  const [newAssignment, setNewAssignment] = useState({
+    userId: "",
+    shiftId: "",
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: "",
+  });
+
+  const loadShiftsAndRota = useCallback(async () => {
+    try {
+      const [shiftRes, assignRes] = await Promise.all([
+        fetch("/api/hrm/v2/shifts"),
+        fetch("/api/hrm/v2/shifts?type=assignments"),
+      ]);
+      if (shiftRes.ok) {
+        const d = await shiftRes.json();
+        setShifts(Array.isArray(d.data) ? d.data : []);
+      }
+      if (assignRes.ok) {
+        const d = await assignRes.json();
+        setAssignments(Array.isArray(d.data) ? d.data : []);
+      }
+    } catch (err) {
+      console.error("Failed to load shift rota:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadShiftsAndRota();
+  }, [loadShiftsAndRota]);
+
+  const handleCreateShift = async () => {
+    if (!newShift.name || !newShift.startTime || !newShift.endTime) return;
+    try {
+      const res = await fetch("/api/hrm/v2/shifts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newShift),
+      });
+      if (res.ok) {
+        setShowShiftModal(false);
+        setNewShift({
+          name: "",
+          startTime: "10:00",
+          endTime: "19:00",
+          gracePeriod: 15,
+          halfDayMark: "14:30",
+          flexibleDuration: false,
+          color: "#3B82F6",
+        });
+        loadShiftsAndRota();
+      }
+    } catch {}
+  };
+
+  const handleAssignShift = async () => {
+    if (!newAssignment.userId || !newAssignment.shiftId) return;
+    const selectedEmp = employees.find((e) => (e.id || e._id) === newAssignment.userId);
+    const selectedShift = shifts.find((s) => (s.id || s._id) === newAssignment.shiftId);
+    try {
+      const res = await fetch("/api/hrm/v2/shifts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "assign",
+          userId: newAssignment.userId,
+          userName: selectedEmp?.displayName || selectedEmp?.name || "Employee",
+          shiftId: newAssignment.shiftId,
+          shiftName: selectedShift?.name || "Shift",
+          startDate: newAssignment.startDate,
+          endDate: newAssignment.endDate || undefined,
+        }),
+      });
+      if (res.ok) {
+        setShowAssignModal(false);
+        loadShiftsAndRota();
+      }
+    } catch {}
+  };
+
+  const handleDeleteAssignment = async (id: string) => {
+    try {
+      const res = await fetch(`/api/hrm/v2/shifts?id=${id}&type=assignment`, { method: "DELETE" });
+      if (res.ok) loadShiftsAndRota();
+    } catch {}
+  };
 
   // Date keys are IST calendar days — the server buckets attendance by IST too.
   const todayStr = useMemo(
@@ -272,7 +374,7 @@ export default function HrAdminAttendancePage() {
               onClick={() => setQuickDate(todayStr)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 isToday
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  ? "bg-primary text-white"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -286,7 +388,7 @@ export default function HrAdminAttendancePage() {
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 selectedDate === (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().split("T")[0]; })()
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  ? "bg-primary text-white"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -300,7 +402,7 @@ export default function HrAdminAttendancePage() {
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 selectedDate === (() => { const a = new Date(); a.setDate(a.getDate() - 2); return a.toISOString().split("T")[0]; })()
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  ? "bg-primary text-white"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -413,7 +515,7 @@ export default function HrAdminAttendancePage() {
               onClick={() => setActiveView("roster")}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeView === "roster"
-                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -423,7 +525,7 @@ export default function HrAdminAttendancePage() {
               onClick={() => setActiveView("punched")}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeView === "punched"
-                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -433,11 +535,24 @@ export default function HrAdminAttendancePage() {
               onClick={() => setActiveView("calendar")}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeView === "calendar"
-                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white shadow-sm"
+                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <CalendarDays className="h-3.5 w-3.5" /> Month Calendar
+            </button>
+            <button
+              onClick={() => {
+                setActiveView("rota");
+                loadShiftsAndRota();
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeView === "rota"
+                  ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Clock className="h-3.5 w-3.5" /> Shift Rota ({assignments.length})
             </button>
           </div>
 
@@ -628,7 +743,7 @@ export default function HrAdminAttendancePage() {
                       }}
                       className={`h-20 p-2 rounded-xl border flex flex-col justify-between text-left transition-all ${
                         isSelected
-                          ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/30"
+                          ? "border-primary bg-primary/10 ring-2 ring-primary/30"
                           : isPastOrToday
                           ? "border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 hover:border-primary/50 text-slate-900 dark:text-white"
                           : "border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 text-slate-400 opacity-60"
@@ -656,7 +771,304 @@ export default function HrAdminAttendancePage() {
           </div>
 
         )}
+
+        {/* ═══ SHIFT ROTA & SCHEDULING VIEW ═══ */}
+        {activeView === "rota" && (
+          <div className="space-y-6">
+            {/* Shifts Overview Cards */}
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-base flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" /> Configured Shifts ({shifts.length})
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Operating work shifts, grace periods, and half-day thresholds</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowShiftModal(true)}
+                    className="bg-primary text-white gap-2 font-bold text-xs"
+                  >
+                    <Plus className="h-4 w-4" /> Add Shift
+                  </Button>
+                  <Button
+                    onClick={() => setShowAssignModal(true)}
+                    variant="outline"
+                    className="gap-2 font-bold text-xs border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <Users className="h-4 w-4" /> Assign Shift
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {shifts.map((s) => (
+                  <div
+                    key={s.id || s._id}
+                    className="p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/20"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm">{s.name}</span>
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: s.color || "#3B82F6" }}
+                      />
+                    </div>
+                    <p className="text-xs font-mono font-semibold text-primary mb-1">
+                      {s.startTime} – {s.endTime}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Grace: {s.gracePeriod || 15}m | Half-Day: {s.halfDayMark || "14:30"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Shift Rota Assignments Table */}
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-base flex items-center gap-2">
+                    <CalendarCheck className="h-5 w-5 text-primary" /> Active Shift Rota Assignments ({assignments.length})
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Workforce schedule assignments and forward-looking shift rotations</p>
+                </div>
+                <Button
+                  onClick={() => setShowAssignModal(true)}
+                  className="bg-primary text-white gap-2 font-bold text-xs"
+                >
+                  <Plus className="h-4 w-4" /> Assign Employee
+                </Button>
+              </div>
+
+              {assignments.length === 0 ? (
+                <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+                  <Clock className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                  <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No custom shift assignments</p>
+                  <p className="text-slate-500 mb-4">All employees currently follow the General Shift (10:00 AM – 7:00 PM). Assign employees to morning, evening, or night shifts.</p>
+                  <Button onClick={() => setShowAssignModal(true)} className="bg-primary text-white font-bold text-xs">
+                    <Plus className="h-4 w-4 mr-1.5" /> Assign First Shift
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                      <tr>
+                        <th className="pb-3 pr-4">Employee</th>
+                        <th className="pb-3 pr-4">Assigned Shift</th>
+                        <th className="pb-3 pr-4">Shift Timings</th>
+                        <th className="pb-3 pr-4">Start Date</th>
+                        <th className="pb-3 pr-4">End Date</th>
+                        <th className="pb-3 pr-4">Status</th>
+                        <th className="pb-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                      {assignments.map((a: any) => {
+                        const shiftObj = shifts.find((s) => (s.id || s._id) === a.shiftId);
+                        return (
+                          <tr key={a.id || a._id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                            <td className="py-3.5 pr-4 font-bold text-slate-900 dark:text-white">
+                              {a.userName || "Employee"}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                                {a.shiftName || shiftObj?.name || "Shift"}
+                              </span>
+                            </td>
+                            <td className="py-3.5 pr-4 font-mono text-slate-600 dark:text-slate-300">
+                              {shiftObj ? `${shiftObj.startTime} – ${shiftObj.endTime}` : "—"}
+                            </td>
+                            <td className="py-3.5 pr-4 text-slate-500">
+                              {a.startDate ? new Date(a.startDate).toLocaleDateString() : "—"}
+                            </td>
+                            <td className="py-3.5 pr-4 text-slate-500">
+                              {a.endDate ? new Date(a.endDate).toLocaleDateString() : "Permanent / Ongoing"}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                {a.status || "active"}
+                              </span>
+                            </td>
+                            <td className="py-3.5 text-right">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteAssignment(a.id || a._id)}
+                                className="h-7 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* ═══ ADD SHIFT MODAL ═══ */}
+      {showShiftModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" /> Create Work Shift
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold mb-1">Shift Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Early Morning Shift"
+                  value={newShift.name}
+                  onChange={(e) => setNewShift({ ...newShift, name: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Start Time (HH:mm) *</label>
+                  <input
+                    type="time"
+                    value={newShift.startTime}
+                    onChange={(e) => setNewShift({ ...newShift, startTime: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">End Time (HH:mm) *</label>
+                  <input
+                    type="time"
+                    value={newShift.endTime}
+                    onChange={(e) => setNewShift({ ...newShift, endTime: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Grace Period (Minutes)</label>
+                  <input
+                    type="number"
+                    value={newShift.gracePeriod}
+                    onChange={(e) => setNewShift({ ...newShift, gracePeriod: parseInt(e.target.value) || 15 })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Half-Day Threshold</label>
+                  <input
+                    type="time"
+                    value={newShift.halfDayMark}
+                    onChange={(e) => setNewShift({ ...newShift, halfDayMark: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="w-1/2 text-xs"
+                onClick={() => setShowShiftModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="w-1/2 bg-primary text-white text-xs font-bold"
+                onClick={handleCreateShift}
+              >
+                Save Shift
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ASSIGN SHIFT MODAL ═══ */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" /> Assign Employee to Shift
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold mb-1">Select Employee *</label>
+                <select
+                  value={newAssignment.userId}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, userId: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                >
+                  <option value="">-- Choose Employee --</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id || emp._id} value={emp.id || emp._id}>
+                      {emp.displayName || emp.name || emp.email} ({emp.department || "General"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Select Shift *</label>
+                <select
+                  value={newAssignment.shiftId}
+                  onChange={(e) => setNewAssignment({ ...newAssignment, shiftId: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                >
+                  <option value="">-- Choose Shift --</option>
+                  {shifts.map((s) => (
+                    <option key={s.id || s._id} value={s.id || s._id}>
+                      {s.name} ({s.startTime} - {s.endTime})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={newAssignment.startDate}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, startDate: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">End Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={newAssignment.endDate}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, endDate: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="w-1/2 text-xs"
+                onClick={() => setShowAssignModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="w-1/2 bg-primary text-white text-xs font-bold"
+                onClick={handleAssignShift}
+              >
+                Confirm Assignment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

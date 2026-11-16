@@ -19,9 +19,8 @@ const { spawn, execSync } = require("child_process");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const net = require("net");
 
-const PORT = process.env.TEST_PORT || "3000";
-const BASE_URL = process.env.TEST_BASE_URL || `http://localhost:${PORT}`;
 const WATCH = process.argv.includes("--watch");
 
 // ── Minimal .env loader (no dotenv dependency) ─────────────
@@ -35,9 +34,10 @@ for (const file of [".env.local", ".env"]) {
   }
 }
 
-if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes("<")) {
+const isMySQL = process.env.SESSION_BACKEND === "mysql" || Boolean(process.env.MYSQL_HOST);
+if (!isMySQL && (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes("<"))) {
   console.error(
-    "[test-with-server] MONGODB_URI is not set. Add it to .env.local (or export it) first."
+    "[test-with-server] Database configuration missing. Provide MYSQL_HOST / MYSQL_DATABASE or MONGODB_URI in .env.local first."
   );
   process.exit(1);
 }
@@ -72,72 +72,97 @@ function waitForHealth(url, timeoutMs = 90_000, intervalMs = 1_000) {
   });
 }
 
+function isPortAvailable(port) {
+  return new Promise((resolve) => {
+    const tester = net
+      .createServer()
+      .once("error", () => resolve(false))
+      .once("listening", () => {
+        tester.once("close", () => resolve(true)).close();
+      })
+      .listen(port);
+  });
+}
+
+async function resolvePort() {
+  if (process.env.TEST_PORT) return parseInt(process.env.TEST_PORT, 10);
+  for (const candidate of [3000, 3005, 3010, 3015, 3020]) {
+    if (await isPortAvailable(candidate)) return candidate;
+  }
+  return 3005;
+}
+
 // ── Build if needed (skip with SKIP_BUILD=1 for quick loops) ──
 if (!process.env.SKIP_BUILD && !fs.existsSync(path.join(root, ".next", "BUILD_ID"))) {
   console.log("[test-with-server] Building production bundle (SKIP_BUILD=1 to skip)…");
   execSync("npx next build", { stdio: "inherit", cwd: root });
 }
 
-// ── Start production server ────────────────────────────────
-console.log(`[test-with-server] Starting production server on :${PORT}…`);
-const server = spawn(
-  process.platform === "win32" ? "npx.cmd" : "npx",
-  ["next", "start", "-p", PORT],
-  {
-    cwd: root,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env },
-    shell: process.platform === "win32", // Node ≥ 18.20/20.12: .cmd shims need shell
-  }
-);
+(async () => {
+  let server = null;
+  let exited = false;
+  const serverLog = [];
 
-const serverLog = [];
-server.stdout.on("data", (d) => {
-  serverLog.push(d.toString());
-  process.stdout.write(d);
-});
-server.stderr.on("data", (d) => {
-  serverLog.push(d.toString());
-  process.stderr.write(d);
-});
-
-let exited = false;
-server.on("exit", (code) => {
-  exited = true;
-  if (code && code !== 0) {
-    console.error(`[test-with-server] Server exited with code ${code}`);
-  }
-});
-
-// Kill the whole process tree on Ctrl+C / termination
-function killServer() {
-  if (exited) return;
-  exited = true;
-  if (process.platform === "win32") {
+  function killServer() {
+    if (!server || exited) return;
+    exited = true;
+    if (process.platform === "win32") {
+      try {
+        execSync(`taskkill /PID ${server.pid} /T /F`, { stdio: "ignore" });
+      } catch {
+        /* already gone */
+      }
+      return;
+    }
     try {
-      execSync(`taskkill /PID ${server.pid} /T /F`, { stdio: "ignore" });
+      process.kill(-server.pid, "SIGTERM");
     } catch {
       /* already gone */
     }
-    return;
   }
-  try {
-    process.kill(-server.pid, "SIGTERM");
-  } catch {
-    /* already gone */
-  }
-}
-process.on("SIGINT", () => {
-  killServer();
-  process.exit(130);
-});
-process.on("SIGTERM", () => {
-  killServer();
-  process.exit(143);
-});
 
-(async () => {
+  process.on("SIGINT", () => {
+    killServer();
+    process.exit(130);
+  });
+  process.on("SIGTERM", () => {
+    killServer();
+    process.exit(143);
+  });
+
   try {
+    const PORT = await resolvePort();
+    const BASE_URL = process.env.TEST_BASE_URL || `http://localhost:${PORT}`;
+
+    // ── Start production server ────────────────────────────────
+    console.log(`[test-with-server] Starting production server on :${PORT}…`);
+    server = spawn(
+      process.platform === "win32" ? "npx.cmd" : "npx",
+      ["next", "start", "-p", String(PORT)],
+      {
+        cwd: root,
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, PORT: String(PORT) },
+        shell: process.platform === "win32", // Node ≥ 18.20/20.12: .cmd shims need shell
+      }
+    );
+
+    server.stdout.on("data", (d) => {
+      serverLog.push(d.toString());
+      process.stdout.write(d);
+    });
+    server.stderr.on("data", (d) => {
+      serverLog.push(d.toString());
+      process.stderr.write(d);
+    });
+
+    server.on("exit", (code) => {
+      exited = true;
+      if (code && code !== 0) {
+        console.error(`[test-with-server] Server exited with code ${code}`);
+      }
+    });
+
     console.log(`[test-with-server] Waiting for ${BASE_URL}/api/health …`);
     await waitForHealth(`${BASE_URL}/api/health`);
     console.log("[test-with-server] Server is healthy ✓");

@@ -50,7 +50,10 @@ export default function PayrollPage() {
   const resetForm = useCallback(() => setForm(emptyForm), []);
 
   const handleRun = async () => {
-    const result = await mutation.createRecord("/api/hrm/v2/payroll/runs", form);
+    const result = await mutation.createRecord("/api/hrm/v2/payroll", {
+      action: "process",
+      ...form,
+    });
     if (result) {
       setShowRunDialog(false);
       resetForm();
@@ -61,8 +64,8 @@ export default function PayrollPage() {
   const handleEdit = async () => {
     if (!selectedPayroll) return;
     const result = await mutation.updateRecord(
-      `/api/hrm/v2/payroll/runs?id=${selectedPayroll.id}`,
-      { status: editStatus }
+      `/api/hrm/v2/payroll?id=${selectedPayroll.id}`,
+      { type: "run", status: editStatus }
     );
     if (result) {
       setShowEditDialog(false);
@@ -72,7 +75,7 @@ export default function PayrollPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const result = await mutation.deleteRecord(`/api/hrm/v2/payroll/runs?id=${id}`);
+    const result = await mutation.deleteRecord(`/api/hrm/v2/payroll?id=${id}&type=run`);
     if (result) refetch();
   };
 

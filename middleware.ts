@@ -157,20 +157,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ════════════════════════════════════════════════════════════
-  // 1. ADMIN PORTAL (unchanged)
+  // 1. LEGACY ADMIN PORTAL REDIRECT
   // ════════════════════════════════════════════════════════════
-  if (pathname === "/admin" || (pathname.startsWith("/admin/") && pathname !== "/admin/login")) {
-    const hasAdminSession = request.cookies.has("admin_session");
-    if (!hasAdminSession) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
-    }
-  }
-
-  if (pathname === "/admin/login") {
-    const hasAdminSession = request.cookies.has("admin_session");
-    if (hasAdminSession) {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    return NextResponse.redirect(new URL("/hrms/login", request.url));
   }
 
   // ════════════════════════════════════════════════════════════
