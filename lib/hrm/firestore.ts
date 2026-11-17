@@ -29,6 +29,7 @@ import type {
   Goal, PerformanceReview, PerformanceFeedback, Kpi,
   HRMTask, HRMTaskComment, TaskAuditLog,
   Ticket, TicketReply, TicketTimeline,
+  Expense, ExpenseCategory, SalaryAdvance, OvertimeRecord, Kudos, KudosLike,
 } from "@/types";
 
 
@@ -125,6 +126,14 @@ export const COLLECTIONS = {
   performanceReviews: "performance_reviews",
   performanceFeedback: "performance_feedback",
   kpis: "kpis",
+
+  // Enterprise Extensions
+  expenses: "expenses",
+  expenseCategories: "expense_categories",
+  salaryAdvances: "salary_advances",
+  overtimeRecords: "overtime_records",
+  kudos: "kudos",
+  kudosLikes: "kudos_likes",
 } as const;
 
 // ── Audit Log ────────────────────────────────────────
@@ -252,6 +261,14 @@ export const goalsService = createFirestoreService<Goal>(COLLECTIONS.goals);
 export const performanceReviewsService = createFirestoreService<PerformanceReview>(COLLECTIONS.performanceReviews);
 export const performanceFeedbackService = createFirestoreService<PerformanceFeedback>(COLLECTIONS.performanceFeedback);
 export const kpisService = createFirestoreService<Kpi>(COLLECTIONS.kpis);
+
+// ── Enterprise Extensions ──────────────────────────────
+export const expensesService = createFirestoreService<Expense>(COLLECTIONS.expenses);
+export const expenseCategoriesService = createFirestoreService<ExpenseCategory>(COLLECTIONS.expenseCategories);
+export const salaryAdvancesService = createFirestoreService<SalaryAdvance>(COLLECTIONS.salaryAdvances);
+export const overtimeRecordsService = createFirestoreService<OvertimeRecord>(COLLECTIONS.overtimeRecords);
+export const kudosService = createFirestoreService<Kudos>(COLLECTIONS.kudos);
+export const kudosLikesService = createFirestoreService<KudosLike>(COLLECTIONS.kudosLikes);
 
 // ── Re-export types for convenience ────────────────────
 export type {

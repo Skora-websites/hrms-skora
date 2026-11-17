@@ -8,28 +8,42 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, error, icon, ...props }, ref) => {
-    return (
-      <div className="relative w-full">
-        {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/70 dark:text-gray-400 pointer-events-none">
-            {icon}
-          </div>
-        )}
-        <input
-          type={type}
-          className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-dark dark:text-white placeholder:text-dark/70 dark:placeholder:text-gray-400 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:opacity-50 transition-all duration-200",
-            icon && "pl-10",
-            error && "border-danger focus:border-danger",
-            className
+    if (icon || error) {
+      return (
+        <div className="relative w-full">
+          {icon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex items-center justify-center">
+              {icon}
+            </div>
           )}
-          ref={ref}
-          {...props}
-        />
-        {error && (
-          <p className="mt-1 text-xs text-danger">{error}</p>
+          <input
+            type={type}
+            className={cn(
+              "flex h-9 w-full rounded-lg border border-border/80 bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-50",
+              icon && "pl-9",
+              error && "border-destructive focus:border-destructive focus:ring-destructive",
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+          {error && (
+            <p className="mt-1 text-xs text-destructive font-medium">{error}</p>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-lg border border-border/80 bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-50",
+          className
         )}
-      </div>
+        ref={ref}
+        {...props}
+      />
     );
   }
 );

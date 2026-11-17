@@ -161,6 +161,14 @@ export const COLLECTION_TABLE_MAP: Record<string, string> = {
   shifts: "shifts",
   shift_assignments: "shift_assignments",
   weekly_offs: "weekly_offs",
+  expenses: "expenses",
+  expense_categories: "expense_categories",
+  salary_advances: "salary_advances",
+  salary_advance: "salary_advances",
+  overtime_records: "overtime_records",
+  overtime: "overtime_records",
+  kudos: "kudos",
+  kudos_likes: "kudos_likes",
 };
 
 // Cache table columns

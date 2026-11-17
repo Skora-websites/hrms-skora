@@ -537,7 +537,9 @@ export interface LeaveBalance extends BaseEntity {
   userId: string;
   leavePlanId: string;
   leaveTypeId: string;
+  leaveTypeName?: string;
   totalAllocated: number;
+  allocated?: number;
   used: number;
   pending: number;
   remaining: number;
@@ -1308,3 +1310,111 @@ export interface AIChatMessage {
   metadata?: Record<string, unknown>;
   createdAt: Timestamp;
 }
+
+// ── Expense & Reimbursement ─────────────────────
+
+export interface Expense extends BaseEntity {
+  userId: string;
+  employeeName: string;
+  employeeEmail: string;
+  department?: string;
+  category: string;
+  amount: number;
+  currency: string;
+  expenseDate: string; // YYYY-MM-DD
+  merchant?: string;
+  description?: string;
+  receiptUrl?: string;
+  receiptName?: string;
+  status: "pending" | "approved" | "rejected" | "reimbursed";
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: Timestamp | null;
+  rejectionReason?: string;
+  reimbursedAt?: Timestamp | null;
+  payrollRunId?: string;
+}
+
+export interface ExpenseCategory extends BaseEntity {
+  name: string;
+  code: string;
+  monthlyCap: number;
+  requiresReceipt: boolean;
+  description?: string;
+  status: "active" | "inactive";
+}
+
+// ── Salary Advance & Earned Wage Access ─────────
+
+export interface SalaryAdvance extends BaseEntity {
+  userId: string;
+  employeeName: string;
+  employeeEmail: string;
+  department?: string;
+  requestedAmount: number;
+  maxEligibleAmount: number;
+  accruedWage: number;
+  reason: string;
+  status: "pending" | "approved" | "rejected" | "disbursed" | "deducted";
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: Timestamp | null;
+  rejectionReason?: string;
+  disbursedAt?: Timestamp | null;
+  deductedPayrollMonth?: string; // YYYY-MM
+}
+
+// ── Overtime & Comp-Off Records ─────────────────
+
+export interface OvertimeRecord extends BaseEntity {
+  userId: string;
+  employeeName: string;
+  employeeEmail: string;
+  department?: string;
+  date: string; // YYYY-MM-DD
+  shiftStartTime?: string;
+  shiftEndTime?: string;
+  actualCheckIn?: string;
+  actualCheckOut?: string;
+  shiftMinutes: number;
+  actualMinutes: number;
+  overtimeMinutes: number;
+  compensationType: "pay" | "comp_off";
+  hourlyRate: number;
+  overtimePay: number;
+  compOffDaysCredited: number;
+  status: "pending" | "approved" | "rejected" | "credited";
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: Timestamp | null;
+  rejectionReason?: string;
+}
+
+// ── Peer Kudos & Recognition Wall ───────────────
+
+export interface Kudos extends BaseEntity {
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  senderAvatar?: string;
+  receiverId: string;
+  receiverName: string;
+  receiverEmail: string;
+  receiverAvatar?: string;
+  department?: string;
+  points: number;
+  badge: string;
+  coreValue: string;
+  message: string;
+  likesCount: number;
+}
+
+export interface KudosLike {
+  id?: string;
+  tenantId: string;
+  kudosId: string;
+  userId: string;
+  userName: string;
+  createdAt?: Timestamp;
+}
+

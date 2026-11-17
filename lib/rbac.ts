@@ -251,6 +251,7 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/hrms/performance": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/reports": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/settings": ["super_admin", "hr_admin", "admin", "manager", "employee"],
+  "/hrms/ai": ["super_admin", "hr_admin", "admin", "manager", "employee"],
 };
 
 export function hasPermission(userRole: string, permissionKey: string, rolePermissions?: Record<string, string[]>): boolean {
