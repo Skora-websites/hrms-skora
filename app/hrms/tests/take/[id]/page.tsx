@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useTransition, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
   Clock,
@@ -16,6 +16,10 @@ import {
   Bookmark,
   Check,
   ArrowLeft,
+  Eye,
+  Info,
+  HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +30,8 @@ interface Question {
   text: string;
   topic: string;
   options?: Array<{ id: string; text: string }>;
+  correctOptions?: string[];
+  referenceAnswer?: string;
   answerMode?: "SINGLE" | "MULTIPLE";
   maxMarks: number;
 }
@@ -40,23 +46,21 @@ interface TestAttempt {
   answers: Record<string, { selectedOptions?: string[]; descriptiveText?: string }>;
 }
 
-export default function TestRunnerPage() {
+function TestRunnerContent() {
   const params = useParams();
   const testId = params.id as string;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (
-      user?.role === "manager" ||
-      user?.role === "admin" ||
-      user?.role === "super_admin" ||
-      user?.role === "hr_admin"
-    ) {
-      alert("Managers and administrators cannot take tests. Assessments are created and reviewed by managers, and attempted by team members.");
-      router.push("/hrms/tests");
-    }
-  }, [user, router]);
+  const isStaff =
+    user?.role === "manager" ||
+    user?.role === "admin" ||
+    user?.role === "super_admin" ||
+    user?.role === "hr_admin";
+
+  // Managers author & review assessments; they view in Preview Mode rather than real candidate attempts
+  const isPreview = isStaff;
 
   const [loading, setLoading] = useState(true);
   const [test, setTest] = useState<any>(null);
@@ -68,6 +72,12 @@ export default function TestRunnerPage() {
   const [descriptiveText, setDescriptiveText] = useState("");
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
 
+  // In-memory answers for preview mode
+  const [previewAnswers, setPreviewAnswers] = useState<
+    Record<string, { selectedOptions?: string[]; descriptiveText?: string }>
+  >({});
+  const [showAnswerKey, setShowAnswerKey] = useState(true);
+
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -77,11 +87,12 @@ export default function TestRunnerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<any>(null);
 
-  // Initialize or resume test attempt
+  // Initialize or resume test attempt (or load preview for staff)
   useEffect(() => {
     async function init() {
       try {
         setLoading(true);
+
         // 1. Fetch test details
         const testRes = await fetch(`/api/hrm/v2/tests/${testId}`);
         const testData = await testRes.json();
@@ -90,10 +101,19 @@ export default function TestRunnerPage() {
           router.push("/hrms/tests");
           return;
         }
-        setTest(testData.data);
-        setQuestions(testData.data.questions || []);
 
-        // 2. Start or resume attempt
+        setTest(testData.data);
+        const testQuestions: Question[] = testData.data.questions || [];
+        setQuestions(testQuestions);
+
+        // 2. In Preview Mode (Staff / Manager), do NOT create candidate attempt in MySQL
+        if (isPreview) {
+          setSecondsRemaining((testData.data.durationMinutes || 30) * 60);
+          setLoading(false);
+          return;
+        }
+
+        // 3. Candidate / Employee mode: Start or resume real attempt
         const attemptRes = await fetch("/api/hrm/v2/tests/attempts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -117,8 +137,8 @@ export default function TestRunnerPage() {
         setSecondsRemaining(diffSeconds);
 
         // Load existing answer for question 0 if available
-        if (testData.data.questions?.length > 0) {
-          const firstQ = testData.data.questions[0];
+        if (testQuestions.length > 0) {
+          const firstQ = testQuestions[0];
           const existingAns = att.answers?.[firstQ.id];
           if (existingAns) {
             setSelectedOptions(existingAns.selectedOptions || []);
@@ -132,7 +152,7 @@ export default function TestRunnerPage() {
       }
     }
     if (testId) init();
-  }, [testId, router]);
+  }, [testId, router, isPreview]);
 
   // Countdown Timer
   useEffect(() => {
@@ -141,18 +161,20 @@ export default function TestRunnerPage() {
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          handleSubmitTest(true); // Auto-submit on expiry
+          if (!isPreview) {
+            handleSubmitTest(true); // Auto-submit on expiry for candidates
+          }
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [secondsRemaining, submitted]);
+  }, [secondsRemaining, submitted, isPreview]);
 
-  // Anti-cheating: detect tab visibility loss
+  // Anti-cheating: detect tab visibility loss (candidates only)
   useEffect(() => {
-    if (!test?.proctoring || submitted) return;
+    if (isPreview || !test?.proctoring || submitted) return;
 
     const handleVisibilityChange = async () => {
       if (document.hidden && attempt) {
@@ -183,12 +205,24 @@ export default function TestRunnerPage() {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [test, attempt, submitted, router]);
+  }, [test, attempt, submitted, router, isPreview]);
 
   // Auto-save current answer
   const saveCurrentAnswer = async (qIndex = currentIndex) => {
-    if (!attempt || !questions[qIndex]) return;
+    if (!questions[qIndex]) return;
     const q = questions[qIndex];
+
+    if (isPreview) {
+      // In-memory save for preview
+      setPreviewAnswers((prev) => ({
+        ...prev,
+        [q.id]: { selectedOptions, descriptiveText },
+      }));
+      setLastSaved(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      return;
+    }
+
+    if (!attempt) return;
     setAutoSaving(true);
     try {
       await fetch(`/api/hrm/v2/tests/attempts/${attempt.id}/save`, {
@@ -215,6 +249,14 @@ export default function TestRunnerPage() {
 
     setCurrentIndex(targetIndex);
     const targetQ = questions[targetIndex];
+
+    if (isPreview) {
+      const saved = previewAnswers[targetQ.id];
+      setSelectedOptions(saved?.selectedOptions || []);
+      setDescriptiveText(saved?.descriptiveText || "");
+      return;
+    }
+
     const saved = attempt?.answers?.[targetQ.id];
     setSelectedOptions(saved?.selectedOptions || []);
     setDescriptiveText(saved?.descriptiveText || "");
@@ -242,8 +284,15 @@ export default function TestRunnerPage() {
     });
   };
 
-  // Submit test
+  // Submit test or Exit preview
   const handleSubmitTest = async (isAuto = false) => {
+    if (isPreview) {
+      if (confirm("Exit test preview mode and return to the Assessment workspace?")) {
+        router.push("/hrms/tests");
+      }
+      return;
+    }
+
     if (!attempt || submitting || submitted) return;
     if (!isAuto && !confirm("Are you sure you want to finalize and submit your test?")) return;
 
@@ -278,7 +327,9 @@ export default function TestRunnerPage() {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center space-y-3">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-          <p className="text-sm font-medium text-muted-foreground">Preparing proctored test environment...</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            {isPreview ? "Loading assessment preview..." : "Preparing proctored test environment..."}
+          </p>
         </div>
       </div>
     );
@@ -348,32 +399,64 @@ export default function TestRunnerPage() {
 
   const currentQ = questions[currentIndex];
 
+  const answeredCount = isPreview
+    ? Object.keys(previewAnswers).length
+    : Object.keys(attempt?.answers || {}).length;
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col select-none">
-      {/* Top Proctored Banner */}
+      {/* Top Proctored / Preview Banner */}
       <header className="h-14 border-b border-border/80 bg-card px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
           <Button
             size="sm"
             variant="ghost"
             onClick={async () => {
+              if (isPreview) {
+                router.push("/hrms/tests");
+                return;
+              }
               if (confirm("Return to HRMS? Your draft answers will be saved.")) {
                 await saveCurrentAnswer();
                 router.push("/hrms");
               }
             }}
-            className="rounded-xl h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1 border border-border/60"
+            className="rounded-xl h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 border border-border/60"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Return to HRMS</span>
+            <span className="hidden sm:inline">{isPreview ? "Exit to Portal" : "Return to HRMS"}</span>
           </Button>
+
           <span className="font-bold text-sm tracking-tight">{test?.title}</span>
+
           <Badge variant="outline" className="text-[10px] hidden sm:inline-flex">
             {test?.department} • {test?.category}
           </Badge>
+
+          {isPreview && (
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-[11px] font-semibold">
+              <Eye className="w-3.5 h-3.5" />
+              <span>Manager Preview Mode</span>
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Answer Key Toggle for Staff */}
+          {isPreview && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowAnswerKey(!showAnswerKey)}
+              className={`h-8 text-xs rounded-xl gap-1.5 font-medium ${
+                showAnswerKey ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" : ""
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden md:inline">{showAnswerKey ? "Hide Answer Key" : "Show Answer Key"}</span>
+            </Button>
+          )}
+
           {/* Auto-save indicator */}
           <div className="text-[11px] text-muted-foreground hidden md:flex items-center gap-1.5">
             {autoSaving ? (
@@ -394,25 +477,54 @@ export default function TestRunnerPage() {
                 ? "bg-rose-500/10 text-rose-600 border-rose-500/30 animate-pulse"
                 : "bg-muted text-foreground border-border/80"
             }`}
+            title={isPreview ? "Candidate Time Limit Simulator" : "Remaining Time"}
           >
             <Clock className="w-3.5 h-3.5" />
             <span>{formatTime(secondsRemaining)}</span>
           </div>
 
-          <Button
-            size="sm"
-            onClick={() => handleSubmitTest(false)}
-            disabled={submitting}
-            className="rounded-xl h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
-          >
-            {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-            Submit Test
-          </Button>
+          {isPreview ? (
+            <Button
+              size="sm"
+              onClick={() => handleSubmitTest(false)}
+              className="rounded-xl h-8 text-xs font-semibold bg-primary text-primary-foreground gap-1"
+            >
+              <span>Exit Preview</span>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => handleSubmitTest(false)}
+              disabled={submitting}
+              className="rounded-xl h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+            >
+              {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+              Submit Test
+            </Button>
+          )}
         </div>
       </header>
 
-      {/* Violation Alert Banner */}
-      {violationWarning && (
+      {/* Preview Info Notice Banner */}
+      {isPreview && (
+        <div className="bg-purple-500/10 border-b border-purple-500/20 px-4 py-2 flex items-center justify-between text-xs text-purple-700 dark:text-purple-300">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 shrink-0 text-purple-600" />
+            <span>
+              <strong>Assessment Preview Mode:</strong> You are inspecting this test as an author/reviewer. Responses are simulated in-memory and will not create test records or trigger anti-cheating lockouts.
+            </span>
+          </div>
+          <button
+            onClick={() => router.push("/hrms/tests")}
+            className="text-[11px] font-bold underline shrink-0 ml-4 hover:text-purple-900 dark:hover:text-purple-100"
+          >
+            Return to Assessments
+          </button>
+        </div>
+      )}
+
+      {/* Violation Alert Banner (Candidates only) */}
+      {!isPreview && violationWarning && (
         <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs text-amber-700 dark:text-amber-400">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -472,6 +584,8 @@ export default function TestRunnerPage() {
               <div className="grid grid-cols-1 gap-2.5">
                 {currentQ.options.map((opt) => {
                   const isSelected = selectedOptions.includes(opt.id);
+                  const isCorrectAnswer = currentQ.correctOptions?.includes(opt.id);
+
                   return (
                     <div
                       key={opt.id}
@@ -479,10 +593,19 @@ export default function TestRunnerPage() {
                       className={`p-4 rounded-xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
                         isSelected
                           ? "bg-primary/10 border-primary text-foreground font-semibold shadow-xs"
+                          : isPreview && showAnswerKey && isCorrectAnswer
+                          ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-semibold"
                           : "bg-card border-border/70 text-muted-foreground hover:border-border hover:text-foreground"
                       }`}
                     >
-                      <span>{opt.text}</span>
+                      <div className="flex items-center gap-2.5">
+                        <span>{opt.text}</span>
+                        {isPreview && showAnswerKey && isCorrectAnswer && (
+                          <Badge className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                            ✓ Correct Answer
+                          </Badge>
+                        )}
+                      </div>
                       <div
                         className={`w-4 h-4 rounded-${
                           currentQ.answerMode === "MULTIPLE" ? "md" : "full"
@@ -503,21 +626,36 @@ export default function TestRunnerPage() {
 
           {/* Descriptive Text Answer */}
           {currentQ?.type === "DESCRIPTIVE" && (
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground font-medium">
-                Type your comprehensive response below:
-              </label>
-              <textarea
-                value={descriptiveText}
-                onChange={(e) => setDescriptiveText(e.target.value)}
-                rows={8}
-                placeholder="Write your explanation here..."
-                className="w-full rounded-2xl bg-card border border-border/80 p-4 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed shadow-xs"
-              />
-              <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Auto-saves as you write</span>
-                <span>{descriptiveText.length} characters</span>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground font-medium">
+                  Type your comprehensive response below:
+                </label>
+                <textarea
+                  value={descriptiveText}
+                  onChange={(e) => setDescriptiveText(e.target.value)}
+                  rows={8}
+                  placeholder="Write your explanation here..."
+                  className="w-full rounded-2xl bg-card border border-border/80 p-4 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed shadow-xs"
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>{isPreview ? "Simulated input in preview" : "Auto-saves as you write"}</span>
+                  <span>{descriptiveText.length} characters</span>
+                </div>
               </div>
+
+              {/* Model / Reference Answer box for Staff */}
+              {isPreview && showAnswerKey && currentQ.referenceAnswer && (
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Model Reference Solution (For Evaluator):</span>
+                  </div>
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                    {currentQ.referenceAnswer}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -553,19 +691,22 @@ export default function TestRunnerPage() {
                 Question Palette
               </span>
               <span className="text-[11px] text-muted-foreground">
-                {Object.keys(attempt?.answers || {}).length} of {questions.length} answered
+                {answeredCount} of {questions.length} answered
               </span>
             </div>
 
             <div className="grid grid-cols-5 gap-2">
               {questions.map((q, idx) => {
                 const isCurrent = idx === currentIndex;
-                const isAnswered =
-                  (attempt?.answers?.[q.id]?.selectedOptions &&
-                    attempt.answers[q.id].selectedOptions!.length > 0) ||
-                  (attempt?.answers?.[q.id]?.descriptiveText &&
-                    attempt.answers[q.id].descriptiveText!.trim().length > 0) ||
-                  (idx === currentIndex && (selectedOptions.length > 0 || descriptiveText.trim().length > 0));
+                const isAnswered = isPreview
+                  ? (previewAnswers[q.id]?.selectedOptions && previewAnswers[q.id].selectedOptions!.length > 0) ||
+                    (previewAnswers[q.id]?.descriptiveText && previewAnswers[q.id].descriptiveText!.trim().length > 0) ||
+                    (idx === currentIndex && (selectedOptions.length > 0 || descriptiveText.trim().length > 0))
+                  : (attempt?.answers?.[q.id]?.selectedOptions &&
+                      attempt.answers[q.id].selectedOptions!.length > 0) ||
+                    (attempt?.answers?.[q.id]?.descriptiveText &&
+                      attempt.answers[q.id].descriptiveText!.trim().length > 0) ||
+                    (idx === currentIndex && (selectedOptions.length > 0 || descriptiveText.trim().length > 0));
                 const isFlagged = flaggedQuestions.has(idx);
 
                 return (
@@ -610,14 +751,30 @@ export default function TestRunnerPage() {
           <div className="pt-6 border-t border-border/80 text-[11px] text-muted-foreground space-y-1">
             <div className="flex items-center gap-1 text-foreground font-semibold">
               <ShieldAlert className="w-3.5 h-3.5 text-primary" />
-              <span>Proctored Session</span>
+              <span>{isPreview ? "Preview Simulation" : "Proctored Session"}</span>
             </div>
             <p className="text-[10px] leading-relaxed">
-              Window focus and tab switches are logged. Submitting will record your final responses.
+              {isPreview
+                ? "Simulating candidate test experience with zero database mutation."
+                : "Window focus and tab switches are logged. Submitting will record your final responses."}
             </p>
           </div>
         </aside>
       </div>
     </div>
+  );
+}
+
+export default function TestRunnerPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-background">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+        </div>
+      }
+    >
+      <TestRunnerContent />
+    </Suspense>
   );
 }

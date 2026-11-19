@@ -23,6 +23,9 @@ import {
   GraduationCap,
   ShieldCheck,
   ArrowLeft,
+  Eye,
+  Info,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +59,28 @@ export default function AssessmentPortalPage() {
   const [selectedEvaluation, setSelectedEvaluation] = useState<TestAttempt | null>(null);
   const [evalMarks, setEvalMarks] = useState<Record<string, number>>({});
   const [evalFeedback, setEvalFeedback] = useState<Record<string, string>>({});
+
+  // Preview state
+  const [previewTest, setPreviewTest] = useState<any | null>(null);
+  const [previewQuestions, setPreviewQuestions] = useState<TestQuestion[]>([]);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  const handleOpenPreviewModal = async (testItem: TestDefinition) => {
+    setPreviewTest(testItem);
+    setLoadingPreview(true);
+    try {
+      const res = await fetch(`/api/hrm/v2/tests/${testItem.id}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setPreviewTest(data.data);
+        setPreviewQuestions(data.data.questions || []);
+      }
+    } catch (err) {
+      console.error("Failed to load test preview", err);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
 
   // Form state for new test
   const [newTest, setNewTest] = useState({
@@ -423,19 +448,29 @@ export default function AssessmentPortalPage() {
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-border/60 flex items-center justify-between">
+                  <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-2 flex-wrap">
                     <div className="text-[11px] text-muted-foreground">
                       <span>{t.questionIds?.length || 0} Questions • </span>
                       <span>Pass: {t.passPercentage}%</span>
                     </div>
 
-                    <Button
-                      size="sm"
-                      onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
-                      className="rounded-xl h-8 text-xs font-semibold bg-primary text-primary-foreground gap-1"
-                    >
-                      <Play className="w-3 h-3 fill-current" /> Start Test
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenPreviewModal(t)}
+                        className="rounded-xl h-8 text-xs font-semibold gap-1"
+                      >
+                        <Info className="w-3 h-3" /> Overview
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
+                        className="rounded-xl h-8 text-xs font-semibold bg-primary text-primary-foreground gap-1"
+                      >
+                        <Play className="w-3 h-3 fill-current" /> Start Test
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -555,10 +590,21 @@ export default function AssessmentPortalPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
-                    className="h-8 text-xs rounded-xl"
+                    onClick={() => handleOpenPreviewModal(t)}
+                    className="h-8 text-xs rounded-xl gap-1.5 font-semibold"
                   >
-                    Preview
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Quick Preview</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
+                    className="h-8 text-xs rounded-xl gap-1.5 font-semibold bg-primary text-primary-foreground"
+                    title="Experience candidate interface in simulator preview mode"
+                  >
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>Interactive Preview</span>
                   </Button>
                 </div>
               </div>
@@ -1013,6 +1059,194 @@ export default function AssessmentPortalPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal: Test Preview */}
+      {previewTest && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-border/80 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto text-xs">
+            <div className="flex items-center justify-between border-b border-border/80 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">{previewTest.title}</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Badge variant="outline" className="text-[10px]">
+                      {previewTest.department || "General"}
+                    </Badge>
+                    <Badge variant="secondary" className="text-[10px] capitalize">
+                      {previewTest.status || "active"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewTest(null)}
+                className="text-muted-foreground hover:text-foreground text-sm font-bold p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Test Metadata Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 rounded-2xl bg-muted/40 border border-border/70 font-mono text-[11px]">
+              <div>
+                <span className="text-muted-foreground block text-[10px]">Duration</span>
+                <span className="font-bold text-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-muted-foreground" /> {previewTest.durationMinutes} mins
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-[10px]">Total Marks</span>
+                <span className="font-bold text-foreground">{previewTest.totalMarks || 0} Marks</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-[10px]">Pass Benchmark</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {previewTest.passPercentage}%
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-[10px]">Questions</span>
+                <span className="font-bold text-foreground">
+                  {previewQuestions.length || previewTest.questionIds?.length || 0} Questions
+                </span>
+              </div>
+            </div>
+
+            {previewTest.description && (
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                {previewTest.description}
+              </p>
+            )}
+
+            {/* Proctoring Rules Summary */}
+            <div className="p-3 rounded-xl bg-background border border-border/70 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <span className="font-semibold text-foreground flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                Anti-Cheating Rules:
+              </span>
+              <span className="text-muted-foreground">
+                Fullscreen: {previewTest.proctoring?.requireFullscreen ? "Mandatory" : "Optional"} • Max Tab Switches: {previewTest.proctoring?.maxViolationsAllowed || 3} • Auto-Submit on Expiry
+              </span>
+            </div>
+
+            {/* Questions List */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                  Test Questions Preview ({previewQuestions.length})
+                </span>
+                {isStaff && (
+                  <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30">
+                    Staff View with Answer Keys
+                  </Badge>
+                )}
+              </div>
+
+              {loadingPreview ? (
+                <div className="py-8 text-center space-y-2">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
+                  <span className="text-xs text-muted-foreground">Loading questions...</span>
+                </div>
+              ) : previewQuestions.length === 0 ? (
+                <div className="p-6 text-center border border-dashed rounded-2xl text-muted-foreground text-xs">
+                  No questions linked to this assessment yet.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                  {previewQuestions.map((q, idx) => (
+                    <div
+                      key={q.id || idx}
+                      className="p-3.5 rounded-2xl border border-border/80 bg-background space-y-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-muted-foreground">
+                            #{idx + 1}
+                          </span>
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] ${
+                              q.type === "MCQ"
+                                ? "bg-blue-500/10 text-blue-600"
+                                : "bg-purple-500/10 text-purple-600"
+                            }`}
+                          >
+                            {q.type}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px]">
+                            {q.topic}
+                          </Badge>
+                        </div>
+                        <span className="font-mono text-muted-foreground text-[11px]">
+                          {q.maxMarks} {q.maxMarks === 1 ? "Mark" : "Marks"}
+                        </span>
+                      </div>
+
+                      <p className="font-medium text-foreground whitespace-pre-wrap">{q.text}</p>
+
+                      {q.type === "MCQ" && q.options && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                          {q.options.map((opt) => {
+                            const isCorrect = q.correctOptions?.includes(opt.id);
+                            return (
+                              <div
+                                key={opt.id}
+                                className={`p-2 rounded-xl border flex items-center justify-between text-[11px] ${
+                                  isCorrect && isStaff
+                                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-semibold"
+                                    : "bg-muted/30 border-border/60 text-muted-foreground"
+                                }`}
+                              >
+                                <span>{opt.text}</span>
+                                {isCorrect && isStaff && (
+                                  <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0">
+                                    Correct
+                                  </Badge>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {q.type === "DESCRIPTIVE" && q.referenceAnswer && isStaff && (
+                        <div className="p-2.5 rounded-xl bg-muted/40 border border-border/60 text-[11px] text-muted-foreground space-y-0.5">
+                          <span className="font-bold text-foreground">Model Answer: </span>
+                          <p>{q.referenceAnswer}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-3 border-t border-border/80">
+              <Button
+                variant="outline"
+                onClick={() => setPreviewTest(null)}
+                className="w-full sm:w-auto rounded-xl h-9 text-xs"
+              >
+                Close Preview
+              </Button>
+
+              <Button
+                onClick={() => {
+                  setPreviewTest(null);
+                  router.push(`/hrms/tests/take/${previewTest.id}`);
+                }}
+                className="w-full sm:w-auto rounded-xl h-9 text-xs font-semibold bg-primary text-primary-foreground gap-1.5"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{isStaff ? "Launch Interactive Candidate Preview" : "Start Assessment"}</span>
+              </Button>
+            </div>
           </div>
         </div>
       )}
