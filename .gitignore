@@ -40,6 +40,9 @@ scripts/backup-cleanup.json
 !tsconfig.json
 !public/manifest.json
 
+# External sub-projects
+/ticket/
+
 # Markdown Documentation & AGENTS Rules (NEVER EXPOSE)
 *.md
 !README.md

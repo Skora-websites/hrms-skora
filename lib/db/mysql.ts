@@ -182,6 +182,12 @@ export const COLLECTION_TABLE_MAP: Record<string, string> = {
   internal_job_postings: "internal_job_postings",
   performance_360_reviews: "performance_360_reviews",
   custom_report_definitions: "custom_report_definitions",
+  ticket_comments: "ticket_comments",
+  ticket_transfers: "ticket_transfers",
+  ticket_categories: "ticket_categories",
+  ticket_routing_rules: "ticket_routing_rules",
+  ticket_read_states: "ticket_read_states",
+  cron_job_logs: "cron_job_logs",
 };
 
 // Cache table columns

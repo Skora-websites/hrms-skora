@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   Receipt,
@@ -12,6 +13,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertTriangle,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -297,6 +299,15 @@ export function DashboardQuickActions({
           <Sparkles className="w-4 h-4 text-purple-500" />
           <span>Send Kudos</span>
         </button>
+
+        {/* 6. Support Ticket */}
+        <Link
+          href="/hrms/tickets"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border/80 text-xs font-semibold text-foreground hover:bg-muted/60 active:scale-95 transition-all shadow-xs shrink-0"
+        >
+          <MessageSquare className="w-4 h-4 text-primary" />
+          <span>Raise Ticket</span>
+        </Link>
       </div>
 
       {/* ── Modal 1: Apply Leave ── */}
