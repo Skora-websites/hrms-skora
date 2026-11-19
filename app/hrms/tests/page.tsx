@@ -41,6 +41,23 @@ import type {
   CandidateProgressItem,
 } from "@/services/hrm/tests/types";
 
+const DEFAULT_DEPARTMENTS = [
+  "All Departments",
+  "Engineering",
+  "Software Development",
+  "Quality Assurance",
+  "IT Infrastructure",
+  "DevOps",
+  "Technical Support",
+  "Mobile Technology",
+  "HR & People Ops",
+  "Payroll & Finance",
+  "Operations",
+  "Marketing",
+  "Sales",
+  "General",
+];
+
 export default function AssessmentPortalPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -147,11 +164,13 @@ export default function AssessmentPortalPage() {
     }
   };
 
+  const [departmentList, setDepartmentList] = useState<string[]>(DEFAULT_DEPARTMENTS);
+
   // Form state for new test
   const [newTest, setNewTest] = useState({
     title: "",
     description: "",
-    department: "",
+    department: user?.department || "Engineering",
     targetType: "DEPARTMENT" as "DEPARTMENT" | "SPECIFIC_USERS",
     targetUserIds: [] as string[],
     startDate: "",
@@ -205,7 +224,25 @@ export default function AssessmentPortalPage() {
 
         const uRes = await fetch("/api/hrm/v2/tests/users");
         const uJson = await uRes.json();
-        if (uJson.success) setAvailableUsers(uJson.data || []);
+        const usersList: any[] = uJson.data || [];
+        if (uJson.success) setAvailableUsers(usersList);
+
+        try {
+          const orgDeptRes = await fetch("/api/hrm/v2/organizations?type=departments");
+          const orgDeptJson = await orgDeptRes.json();
+          const orgDepts: string[] = (orgDeptJson.data || [])
+            .map((d: any) => d.name || d.title || d.department)
+            .filter(Boolean);
+          const userDepts: string[] = usersList
+            .map((u: any) => u.department)
+            .filter(Boolean);
+          const combined = Array.from(
+            new Set(["All Departments", ...orgDepts, ...userDepts, ...DEFAULT_DEPARTMENTS])
+          );
+          setDepartmentList(combined);
+        } catch {
+          // fallback to DEFAULT_DEPARTMENTS
+        }
       }
     } catch (err) {
       console.error("Failed to load assessments data", err);
@@ -320,7 +357,7 @@ export default function AssessmentPortalPage() {
         setNewTest({
           title: "",
           description: "",
-          department: "",
+          department: user?.department || "Engineering",
           targetType: "DEPARTMENT",
           targetUserIds: [],
           startDate: "",
@@ -1021,14 +1058,20 @@ export default function AssessmentPortalPage() {
 
                 {newTest.targetType === "DEPARTMENT" ? (
                   <div className="space-y-1">
-                    <label className="text-[11px] text-muted-foreground">Target Department *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Engineering, Sales, or All"
-                      value={newTest.department}
+                    <label className="text-[11px] text-muted-foreground font-semibold">
+                      Target Department *
+                    </label>
+                    <select
+                      value={newTest.department || "All Departments"}
                       onChange={(e) => setNewTest({ ...newTest, department: e.target.value })}
-                      className="w-full h-8 px-2.5 rounded-xl bg-background border border-border/80 text-xs"
-                    />
+                      className="w-full h-8 px-2.5 rounded-xl bg-background border border-border/80 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                    >
+                      {departmentList.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 ) : (
                   <div className="space-y-1.5">

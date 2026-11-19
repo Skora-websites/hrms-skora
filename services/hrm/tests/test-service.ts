@@ -118,8 +118,11 @@ export async function getTests(
         { targetType: "DEPARTMENT", department: userDept },
         { targetType: "DEPARTMENT", department: "General" },
         { targetType: "DEPARTMENT", department: "All" },
+        { targetType: "DEPARTMENT", department: "All Departments" },
         { targetType: { $exists: false }, department: userDept },
         { targetType: { $exists: false }, department: "General" },
+        { targetType: { $exists: false }, department: "All" },
+        { targetType: { $exists: false }, department: "All Departments" },
         { targetType: { $exists: false }, assignedUserIds: caller.userId },
       ];
     }
@@ -342,7 +345,12 @@ export async function getTestCandidateProgress(
       ObjectId.isValid(id) ? new ObjectId(id) : id
     );
     usersQuery.$or = [{ _id: { $in: ids } }, { id: { $in: test.targetUserIds } }];
-  } else if (test.department && test.department !== "General" && test.department !== "All") {
+  } else if (
+    test.department &&
+    test.department !== "General" &&
+    test.department !== "All" &&
+    test.department !== "All Departments"
+  ) {
     usersQuery.department = test.department;
     usersQuery.role = "employee";
   } else {
