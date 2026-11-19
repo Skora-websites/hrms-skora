@@ -427,7 +427,7 @@ export default function HrAdminPayrollPage() {
     <AppShell title="Payroll Management">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4">
+        <div className="fixed top-5 right-5 z-50 motion-safe:animate-in motion-reduce:animate-none fade-in slide-in-from-top-4">
           <div
             className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold backdrop-blur-md ${
               toast.type === "success"
@@ -456,7 +456,7 @@ export default function HrAdminPayrollPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="gap-2 text-xs font-bold border-gray-200 dark:border-white/10"
+            className="gap-2 text-xs font-bold border-border"
             onClick={handleExportAll}
             disabled={payrollRuns.length === 0}
           >
@@ -472,10 +472,10 @@ export default function HrAdminPayrollPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-white/10 pb-3">
+      <div className="flex gap-2 mb-6 border-b border-border pb-3">
         <button
           onClick={() => setActiveTab("runs")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors duration-150 ${
             activeTab === "runs"
               ? "bg-primary text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
@@ -489,7 +489,7 @@ export default function HrAdminPayrollPage() {
             setActiveTab("components");
             loadComponents();
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors duration-150 ${
             activeTab === "components"
               ? "bg-primary text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
@@ -503,7 +503,7 @@ export default function HrAdminPayrollPage() {
             setActiveTab("pay_groups");
             loadPayGroups();
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-colors duration-150 ${
             activeTab === "pay_groups"
               ? "bg-primary text-white shadow-sm"
               : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
@@ -518,22 +518,22 @@ export default function HrAdminPayrollPage() {
         <>
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground backdrop-blur-md">
           <DollarSign className="h-5 w-5 text-primary mb-2" />
           <p className="text-2xl font-extrabold">₹{totalPayroll.toLocaleString()}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Total Payroll Disbursed</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground backdrop-blur-md">
           <Receipt className="h-5 w-5 text-blue-500 mb-2" />
           <p className="text-2xl font-extrabold">{totalRuns}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Payroll Runs Executed</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground backdrop-blur-md">
           <TrendingUp className="h-5 w-5 text-emerald-500 mb-2" />
           <p className="text-2xl font-extrabold">{latestRun ? latestRun.status.toUpperCase() : "READY"}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Latest Cycle Status</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 text-slate-900 dark:text-white backdrop-blur-md">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground backdrop-blur-md">
           <Users className="h-5 w-5 text-yellow-500 mb-2" />
           <p className="text-2xl font-extrabold">{latestRun?.totalEmployees ?? 0}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Active Employees on Payroll</p>
@@ -541,7 +541,7 @@ export default function HrAdminPayrollPage() {
       </div>
 
       {/* Payroll Runs Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" /> Payroll Cycle History ({payrollRuns.length})
         </h3>
@@ -550,7 +550,7 @@ export default function HrAdminPayrollPage() {
             <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading payroll runs...
           </div>
         ) : payrollRuns.length === 0 ? (
-          <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+          <div className="p-10 text-center border border-dashed border-border rounded-2xl text-slate-500 text-xs">
             <DollarSign className="h-8 w-8 mx-auto mb-2 text-slate-400" />
             <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No payroll runs yet</p>
             <p className="text-slate-500 mb-4">Click &quot;Run Payroll&quot; above to process payroll for all active employees.</p>
@@ -561,7 +561,7 @@ export default function HrAdminPayrollPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+              <thead className="border-b border-border text-slate-500 dark:text-slate-400 text-xs font-semibold">
                 <tr>
                   <th className="pb-3 pr-4">Pay Period</th>
                   <th className="pb-3 pr-4">Employees</th>
@@ -580,7 +580,7 @@ export default function HrAdminPayrollPage() {
                       <span className="font-semibold">
                         {run.periodStart ? new Date(run.periodStart).toLocaleDateString() : "N/A"}
                       </span>
-                      <span className="text-slate-400 mx-1">→</span>
+                      <span className="text-slate-400 mx-1">to</span>
                       <span className="font-semibold">
                         {run.periodEnd ? new Date(run.periodEnd).toLocaleDateString() : "N/A"}
                       </span>
@@ -647,7 +647,7 @@ export default function HrAdminPayrollPage() {
 
       {/* ═══ SALARY COMPONENTS TAB ═══ */}
       {activeTab === "components" && (
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-bold text-base flex items-center gap-2">
@@ -663,7 +663,7 @@ export default function HrAdminPayrollPage() {
             </Button>
           </div>
           {components.length === 0 ? (
-            <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+            <div className="p-10 text-center border border-dashed border-border rounded-2xl text-slate-500 text-xs">
               <Sliders className="h-8 w-8 mx-auto mb-2 text-slate-400" />
               <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No custom salary components yet</p>
               <p className="text-slate-500 mb-4">Default baseline components (Basic, HRA, Special Allowance, PF, PT, TDS) are applied during payroll calculation.</p>
@@ -674,7 +674,7 @@ export default function HrAdminPayrollPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                <thead className="border-b border-border text-slate-500 dark:text-slate-400 text-xs font-semibold">
                   <tr>
                     <th className="pb-3 pr-4">Component Name</th>
                     <th className="pb-3 pr-4">Code</th>
@@ -741,7 +741,7 @@ export default function HrAdminPayrollPage() {
 
       {/* ═══ PAY GROUPS TAB ═══ */}
       {activeTab === "pay_groups" && (
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-bold text-base flex items-center gap-2">
@@ -757,7 +757,7 @@ export default function HrAdminPayrollPage() {
             </Button>
           </div>
           {payGroups.length === 0 ? (
-            <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+            <div className="p-10 text-center border border-dashed border-border rounded-2xl text-slate-500 text-xs">
               <Layers className="h-8 w-8 mx-auto mb-2 text-slate-400" />
               <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No custom pay groups configured</p>
               <p className="text-slate-500 mb-4">All employees default to the Standard Monthly Pay Group, or create distinct pay groups.</p>
@@ -768,7 +768,7 @@ export default function HrAdminPayrollPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                <thead className="border-b border-border text-slate-500 dark:text-slate-400 text-xs font-semibold">
                   <tr>
                     <th className="pb-3 pr-4">Group Name</th>
                     <th className="pb-3 pr-4">Description</th>
@@ -814,7 +814,7 @@ export default function HrAdminPayrollPage() {
       {/* ═══ RUN PAYROLL MODAL ═══ */}
       {showRunModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Receipt className="h-5 w-5 text-primary" /> Run Monthly Payroll
             </h3>
@@ -832,7 +832,7 @@ export default function HrAdminPayrollPage() {
                   required
                   value={periodStart}
                   onChange={(e) => setPeriodStart(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary [color-scheme:light_dark]"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary [color-scheme:light_dark]"
                 />
               </div>
 
@@ -845,12 +845,12 @@ export default function HrAdminPayrollPage() {
                   required
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary [color-scheme:light_dark]"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm focus:outline-none focus:border-primary [color-scheme:light_dark]"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+            <div className="flex justify-end gap-2 pt-3 border-t border-border">
               <Button
                 variant="outline"
                 size="sm"
@@ -875,7 +875,7 @@ export default function HrAdminPayrollPage() {
       {/* ═══ ADD COMPONENT MODAL ═══ */}
       {showComponentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Sliders className="h-5 w-5 text-primary" /> Add Salary Component
             </h3>
@@ -890,7 +890,7 @@ export default function HrAdminPayrollPage() {
                   placeholder="e.g. Travel Allowance"
                   value={newComponent.name}
                   onChange={(e) => setNewComponent({ ...newComponent, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -901,7 +901,7 @@ export default function HrAdminPayrollPage() {
                     placeholder="e.g. TA"
                     value={newComponent.code}
                     onChange={(e) => setNewComponent({ ...newComponent, code: e.target.value.toUpperCase() })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs font-mono"
                   />
                 </div>
                 <div>
@@ -909,7 +909,7 @@ export default function HrAdminPayrollPage() {
                   <select
                     value={newComponent.type}
                     onChange={(e) => setNewComponent({ ...newComponent, type: e.target.value as any })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                   >
                     <option value="earning">Earning</option>
                     <option value="deduction">Deduction</option>
@@ -921,7 +921,7 @@ export default function HrAdminPayrollPage() {
                 <select
                   value={newComponent.calculationType}
                   onChange={(e) => setNewComponent({ ...newComponent, calculationType: e.target.value as any })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 >
                   <option value="fixed">Fixed Amount</option>
                   <option value="percentage_of_basic">Percentage of Basic Salary</option>
@@ -971,7 +971,7 @@ export default function HrAdminPayrollPage() {
       {/* ═══ ADD PAY GROUP MODAL ═══ */}
       {showPayGroupModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Layers className="h-5 w-5 text-primary" /> Create Pay Group
             </h3>
@@ -986,7 +986,7 @@ export default function HrAdminPayrollPage() {
                   placeholder="e.g. Standard Monthly Employees"
                   value={newPayGroup.name}
                   onChange={(e) => setNewPayGroup({ ...newPayGroup, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 />
               </div>
               <div>
@@ -996,7 +996,7 @@ export default function HrAdminPayrollPage() {
                   placeholder="e.g. Full-time engineering & corporate staff"
                   value={newPayGroup.description}
                   onChange={(e) => setNewPayGroup({ ...newPayGroup, description: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1005,7 +1005,7 @@ export default function HrAdminPayrollPage() {
                   <select
                     value={newPayGroup.frequency}
                     onChange={(e) => setNewPayGroup({ ...newPayGroup, frequency: e.target.value as any })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                   >
                     <option value="monthly">Monthly</option>
                     <option value="bi_weekly">Bi-Weekly</option>
@@ -1020,7 +1020,7 @@ export default function HrAdminPayrollPage() {
                     max={31}
                     value={newPayGroup.payDate}
                     onChange={(e) => setNewPayGroup({ ...newPayGroup, payDate: parseInt(e.target.value) || 28 })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                   />
                 </div>
               </div>
@@ -1047,8 +1047,8 @@ export default function HrAdminPayrollPage() {
       {/* ═══ ITEMISED RUN DETAILS MODAL ═══ */}
       {selectedRunForView && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-3xl w-full p-6 space-y-4 text-slate-900 dark:text-white max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-3xl w-full p-6 space-y-4 text-slate-900 dark:text-white max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="font-bold text-base flex items-center gap-2">
                   <Receipt className="h-5 w-5 text-primary" /> Employee Payroll Breakdown
@@ -1117,7 +1117,7 @@ export default function HrAdminPayrollPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-white/10">
+            <div className="flex items-center justify-between pt-3 border-t border-border">
               <span className="text-xs text-slate-500">
                 Total Employees: <strong>{runTransactions.length}</strong>
               </span>

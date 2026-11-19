@@ -160,7 +160,7 @@ export default function RecruitmentPage() {
               <Briefcase className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-dark dark:text-white truncate">{job.title}</p>
+              <p className="text-sm font-semibold text-foreground truncate">{job.title}</p>
             </div>
           </div>
         ),
@@ -202,7 +202,7 @@ export default function RecruitmentPage() {
         key: "applicants",
         header: "Applicants",
         sortable: true,
-        cell: (job: any) => <span className="text-sm font-semibold text-dark dark:text-white">{job.applicants}</span>,
+        cell: (job: any) => <span className="text-sm font-semibold text-foreground">{job.applicants}</span>,
         className: "text-center",
         headerClassName: "text-center",
       },
@@ -210,7 +210,7 @@ export default function RecruitmentPage() {
         key: "interviews",
         header: "Interviews",
         sortable: true,
-        cell: (job: any) => <span className="text-sm font-semibold text-dark dark:text-white">{job.interviews}</span>,
+        cell: (job: any) => <span className="text-sm font-semibold text-foreground">{job.interviews}</span>,
         className: "text-center",
         headerClassName: "text-center",
         hideOnTablet: true,
@@ -219,7 +219,7 @@ export default function RecruitmentPage() {
         key: "offers",
         header: "Offers",
         sortable: true,
-        cell: (job: any) => <span className="text-sm font-semibold text-dark dark:text-white">{job.offers}</span>,
+        cell: (job: any) => <span className="text-sm font-semibold text-foreground">{job.offers}</span>,
         className: "text-center",
         headerClassName: "text-center",
         hideOnTablet: true,
@@ -244,7 +244,7 @@ export default function RecruitmentPage() {
       <select
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
-        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:-[0_3px_9px_rgba(94,114,228,0.1)] focus:outline-none"
+        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-foreground appearance-none cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
         aria-label="Filter by status"
       >
         {STATUS_OPTIONS.map((s) => (
@@ -325,7 +325,7 @@ export default function RecruitmentPage() {
       {summaryLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-card rounded-xl border border-border p-4 animate-pulse">
+            <div key={i} className="bg-card rounded-xl border border-border p-4 motion-safe:animate-pulse motion-reduce:animate-none">
               <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
               <div className="h-8 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
             </div>
@@ -340,8 +340,8 @@ export default function RecruitmentPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Open Positions</p>
-                <p className="text-2xl font-bold text-dark dark:text-white mt-1">{stats.openPositions}</p>
+                <p className="text-xs font-semibold text-muted">Open Positions</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{stats.openPositions}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-gradient-primary/10 flex items-center justify-center">
                 <Briefcase className="h-5 w-5 text-primary" />
@@ -351,8 +351,8 @@ export default function RecruitmentPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Total Candidates</p>
-                <p className="text-2xl font-bold text-dark dark:text-white mt-1">{stats.totalCandidates}</p>
+                <p className="text-xs font-semibold text-muted">Total Candidates</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{stats.totalCandidates}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <Users className="h-5 w-5 text-blue-500" />
@@ -362,8 +362,8 @@ export default function RecruitmentPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Interviews</p>
-                <p className="text-2xl font-bold text-dark dark:text-white mt-1">{stats.interviewsScheduled}</p>
+                <p className="text-xs font-semibold text-muted">Interviews</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{stats.interviewsScheduled}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                 <CalendarCheck className="h-5 w-5 text-amber-500" />
@@ -373,8 +373,8 @@ export default function RecruitmentPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Offers Extended</p>
-                <p className="text-2xl font-bold text-dark dark:text-white mt-1">{stats.offersExtended}</p>
+                <p className="text-xs font-semibold text-muted">Offers Extended</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{stats.offersExtended}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
                 <FileCheck className="h-5 w-5 text-success" />

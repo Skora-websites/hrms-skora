@@ -216,7 +216,7 @@ export default function FeedbackPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <MessageSquare className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No feedback yet</p>
+          <p className="text-foreground font-semibold text-lg">No feedback yet</p>
           <p className="text-sm text-muted mt-1">
             {search
               ? "Try adjusting your search query."
@@ -248,7 +248,7 @@ export default function FeedbackPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-semibold text-dark dark:text-white">
+                        <h3 className="text-sm font-semibold text-foreground">
                           {fromName}
                         </h3>
                         {item.isAnonymous && (
@@ -269,10 +269,10 @@ export default function FeedbackPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-dark dark:text-white mt-2 leading-relaxed">{messageText}</p>
+                      <p className="text-sm text-foreground mt-2 leading-relaxed">{messageText}</p>
                       <div className="flex items-center gap-3 mt-3 flex-wrap">
                         <span className="text-xs text-muted flex items-center gap-1">
-                          <Users className="h-3 w-3" /> To: <strong className="text-dark dark:text-white">{toName}</strong>
+                          <Users className="h-3 w-3" /> To: <strong className="text-foreground">{toName}</strong>
                         </span>
                         {item.context && (
                           <span className="text-xs text-muted flex items-center gap-1">

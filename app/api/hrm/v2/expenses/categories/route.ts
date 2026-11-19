@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getExpenseCategories, createExpenseCategory } from "@/services/hrm/expenses";
+import {
+  getExpenseCategories,
+  createExpenseCategory,
+  updateExpenseCategory,
+} from "@/services/hrm/expenses";
 import { requireAuth, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
-import { withErrorHandler, badRequest } from "@/lib/api-handler";
+import { withErrorHandler, badRequest, notFound } from "@/lib/api-handler";
 
 export const GET = withErrorHandler(async () => {
   const auth = await requireAuth();
@@ -27,10 +31,32 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const created = await createExpenseCategory(tenantId, {
     name: name.trim(),
     code: code.trim(),
-    monthlyCap: monthlyCap ? Number(monthlyCap) : 0,
+    monthlyCap: monthlyCap !== undefined ? Number(monthlyCap) : 0,
     requiresReceipt: requiresReceipt !== undefined ? Boolean(requiresReceipt) : true,
     description: description?.trim(),
   });
 
   return NextResponse.json({ success: true, data: created }, { status: 201 });
+});
+
+export const PATCH = withErrorHandler(async (request: NextRequest) => {
+  const auth = await requireHrLevel();
+  if (isErrorResponse(auth)) return auth;
+
+  const body = await request.json().catch(() => null);
+  if (!body) return badRequest("Request body must be valid JSON");
+
+  const { id, name, monthlyCap, requiresReceipt, description, status } = body;
+  if (!id) return badRequest("Category ID is required");
+
+  const updated = await updateExpenseCategory(id, {
+    ...(name !== undefined ? { name: name.trim() } : {}),
+    ...(monthlyCap !== undefined ? { monthlyCap: Number(monthlyCap) } : {}),
+    ...(requiresReceipt !== undefined ? { requiresReceipt: Boolean(requiresReceipt) } : {}),
+    ...(description !== undefined ? { description: description.trim() } : {}),
+    ...(status !== undefined ? { status } : {}),
+  });
+
+  if (!updated) return notFound("Category not found");
+  return NextResponse.json({ success: true, data: updated, message: "Category policy updated" });
 });

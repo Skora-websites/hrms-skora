@@ -44,9 +44,9 @@ export function SummaryCards({ cards, loading, columns = 4 }: SummaryCardsProps)
     >
       {cards.map((card, i) => (
         <Card key={i}>
-          <CardContent className="p-3">
-            <p className="text-xs text-muted font-semibold">{card.label}</p>
-            <p className={cn("text-xl font-bold mt-1", card.colorClass || "text-dark dark:text-white")}>
+          <CardContent className="p-4 sm:p-5">
+            <p className="text-xs text-muted-foreground font-medium">{card.label}</p>
+            <p className={cn("text-2xl font-bold tracking-tight mt-1.5", card.colorClass || "text-foreground")}>
               {card.value}
             </p>
           </CardContent>

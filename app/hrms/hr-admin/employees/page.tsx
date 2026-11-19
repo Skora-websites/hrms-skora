@@ -299,9 +299,9 @@ export default function HrAdminEmployeesPage() {
             variant="outline"
             onClick={() => loadEmployees(false)}
             disabled={refreshing}
-            className="text-xs font-semibold gap-1.5 border-gray-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+            className="text-xs font-semibold gap-1.5 border-border text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "motion-safe:animate-spin motion-reduce:animate-none text-primary" : ""}`} />
             {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
 
@@ -316,7 +316,7 @@ export default function HrAdminEmployeesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-slate-500">TOTAL WORKFORCE</span>
             <Users className="h-4 w-4 text-primary" />
@@ -324,7 +324,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{employees.length}</p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">ACTIVE STATUS</span>
             <UserCheck className="h-4 w-4 text-emerald-500" />
@@ -332,7 +332,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{activeCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400">INACTIVE / ON LEAVE</span>
             <UserX className="h-4 w-4 text-yellow-500" />
@@ -340,7 +340,7 @@ export default function HrAdminEmployeesPage() {
           <p className="text-3xl font-black text-slate-900 dark:text-white">{inactiveCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">DEPARTMENTS</span>
             <Building2 className="h-4 w-4 text-indigo-500" />
@@ -358,14 +358,14 @@ export default function HrAdminEmployeesPage() {
             placeholder="Search by name, email, employee code, designation..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-card text-card-foreground focus:outline-none focus:border-primary"
           />
         </div>
 
         <select
           value={filterDept}
           onChange={(e) => setFilterDept(e.target.value)}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+          className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
         >
           <option value="all">All Departments ({departments.length})</option>
           {departments.map((d) => (
@@ -378,7 +378,7 @@ export default function HrAdminEmployeesPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+          className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
         >
           <option value="all">All Statuses</option>
           <option value="active">Active</option>
@@ -388,20 +388,20 @@ export default function HrAdminEmployeesPage() {
       </div>
 
       {/* Employee Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
         {loading ? (
           <div className="py-12 text-center text-slate-500 text-xs">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-primary mb-2" />
+            <RefreshCw className="h-6 w-6 motion-safe:animate-spin motion-reduce:animate-none mx-auto text-primary mb-2" />
             Loading real employee directory...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
             No employees match the current search filters.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+              <thead className="border-b border-border text-slate-500 dark:text-slate-400 text-xs font-semibold">
                 <tr>
                   <th className="pb-3 pr-4">Employee</th>
                   <th className="pb-3 pr-4">Code</th>
@@ -426,7 +426,7 @@ export default function HrAdminEmployeesPage() {
 
                     {/* Employee Code */}
                     <td className="py-3 pr-4 font-mono font-bold text-primary text-[11px]">
-                      {emp.employeeCode || "—"}
+                      {emp.employeeCode || "N/A"}
                     </td>
 
                     {/* Department */}
@@ -441,7 +441,7 @@ export default function HrAdminEmployeesPage() {
 
                     {/* Role */}
                     <td className="py-3 pr-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-gray-200 dark:border-white/10 uppercase">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-border capitalize">
                         <Shield className="h-2.5 w-2.5 text-primary" />
                         {emp.role}
                       </span>
@@ -493,9 +493,9 @@ export default function HrAdminEmployeesPage() {
 
       {/* ═══ ADD EMPLOYEE MODAL ═══ */}
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 motion-safe:animate-in motion-reduce:animate-none fade-in">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-3">
               <div>
                 <h3 className="font-bold text-lg">Add New Employee</h3>
                 <p className="text-xs text-slate-500">Creates user profile directly in live database</p>
@@ -519,7 +519,7 @@ export default function HrAdminEmployeesPage() {
                   value={newEmp.name}
                   onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}
                   required
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export default function HrAdminEmployeesPage() {
                   value={newEmp.email}
                   onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
                   required
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -545,7 +545,7 @@ export default function HrAdminEmployeesPage() {
                     placeholder="e.g. Engineering"
                     value={newEmp.department}
                     onChange={(e) => setNewEmp({ ...newEmp, department: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
 
@@ -556,7 +556,7 @@ export default function HrAdminEmployeesPage() {
                     placeholder="e.g. Lead Engineer"
                     value={newEmp.designation}
                     onChange={(e) => setNewEmp({ ...newEmp, designation: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -567,7 +567,7 @@ export default function HrAdminEmployeesPage() {
                   <select
                     value={newEmp.role}
                     onChange={(e) => setNewEmp({ ...newEmp, role: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
                   >
                     <option value="employee">Employee</option>
                     <option value="manager">Manager</option>
@@ -580,7 +580,7 @@ export default function HrAdminEmployeesPage() {
                   <select
                     value={newEmp.employmentType}
                     onChange={(e) => setNewEmp({ ...newEmp, employmentType: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
                   >
                     <option value="permanent">Permanent</option>
                     <option value="contract">Contract</option>
@@ -597,11 +597,11 @@ export default function HrAdminEmployeesPage() {
                   placeholder="+91 9876543210"
                   value={newEmp.phone}
                   onChange={(e) => setNewEmp({ ...newEmp, phone: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <Button type="button" variant="outline" onClick={() => setShowAdd(false)}>
                   Cancel
                 </Button>
@@ -616,9 +616,9 @@ export default function HrAdminEmployeesPage() {
 
       {/* ═══ EDIT EMPLOYEE MODAL ═══ */}
       {editEmp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 motion-safe:animate-in motion-reduce:animate-none fade-in">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-border pb-3">
               <div>
                 <h3 className="font-bold text-lg">Edit Employee Profile</h3>
                 <p className="text-xs text-slate-500">Editing: {editEmp.email}</p>
@@ -639,7 +639,7 @@ export default function HrAdminEmployeesPage() {
                   value={editData.name}
                   onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                   required
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -650,7 +650,7 @@ export default function HrAdminEmployeesPage() {
                     type="text"
                     value={editData.department}
                     onChange={(e) => setEditData({ ...editData, department: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ export default function HrAdminEmployeesPage() {
                     type="text"
                     value={editData.designation}
                     onChange={(e) => setEditData({ ...editData, designation: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -671,7 +671,7 @@ export default function HrAdminEmployeesPage() {
                   <select
                     value={editData.role}
                     onChange={(e) => setEditData({ ...editData, role: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
                   >
                     <option value="employee">Employee</option>
                     <option value="manager">Manager</option>
@@ -684,7 +684,7 @@ export default function HrAdminEmployeesPage() {
                   <select
                     value={editData.status}
                     onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -699,11 +699,11 @@ export default function HrAdminEmployeesPage() {
                   type="text"
                   value={editData.employeeCode}
                   onChange={(e) => setEditData({ ...editData, employeeCode: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <Button type="button" variant="outline" onClick={() => setEditEmp(null)}>
                   Cancel
                 </Button>
@@ -718,13 +718,13 @@ export default function HrAdminEmployeesPage() {
 
       {/* ═══ DELETE CONFIRMATION MODAL ═══ */}
       {deleteEmp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 motion-safe:animate-in motion-reduce:animate-none fade-in">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg text-red-600 dark:text-red-400">Delete Employee</h3>
             <p className="text-sm text-slate-600 dark:text-slate-300">
               Are you sure you want to permanently delete <strong>{deleteEmp.name}</strong> ({deleteEmp.email}) from the live database?
             </p>
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-white/10">
+            <div className="flex justify-end gap-2 pt-4 border-t border-border">
               <Button variant="outline" onClick={() => setDeleteEmp(null)}>
                 Cancel
               </Button>

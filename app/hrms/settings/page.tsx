@@ -85,14 +85,14 @@ export default function SettingsPage() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Settings & Preferences</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Configured for role: <strong className="text-primary uppercase">{user?.role || "Employee"}</strong>
+          Configured for role: <strong className="text-primary font-semibold capitalize">{user?.role || "Employee"}</strong>
         </p>
       </div>
 
       <div className="max-w-3xl space-y-6">
           {loading ? (
             <div className="flex items-center justify-center p-12 text-slate-500">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading settings...
+              <Loader2 className="h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none mr-2" /> Loading settings...
             </div>
           ) : (
         <form onSubmit={handleSave} className="space-y-6">
@@ -104,18 +104,18 @@ export default function SettingsPage() {
           )}
 
           {/* Theme & Display Configuration */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4">
-            <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground space-y-4">
+            <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
               <Sun className="h-5 w-5 text-primary" /> Appearance & Dual-Theme System
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Switch between High-Contrast Professional Light Mode and Dark Mode.
             </p>
 
-            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40 border border-border/70">
               <div>
-                <span className="font-semibold text-xs text-slate-900 dark:text-white block">Theme Mode</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="font-semibold text-xs text-foreground block">Theme Mode</span>
+                <span className="text-[11px] text-muted-foreground">
                   Select clean high-contrast light theme or dark theme
                 </span>
               </div>
@@ -125,42 +125,42 @@ export default function SettingsPage() {
 
           {/* Role-Specific: Office Timings & Policy (HR Admin & Superadmin ONLY) */}
           {isAdmin && (
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4">
-              <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
+            <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground space-y-4">
+              <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
                 <Clock className="h-5 w-5 text-primary" /> Company Office Hours & Geofence Policy
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Set standard company shift hours for automated Present / Late calculation.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Shift Start Time</label>
+                  <label className="block font-semibold text-foreground mb-1.5">Shift Start Time</label>
                   <input
                     type="time"
                     value={officeStartTime}
                     onChange={(e) => setOfficeStartTime(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border/80 bg-background/60 px-3.5 py-2 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-2xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Shift End Time</label>
+                  <label className="block font-semibold text-foreground mb-1.5">Shift End Time</label>
                   <input
                     type="time"
                     value={officeEndTime}
                     onChange={(e) => setOfficeEndTime(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border/80 bg-background/60 px-3.5 py-2 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-2xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Grace Period (Minutes)</label>
+                  <label className="block font-semibold text-foreground mb-1.5">Grace Period (Minutes)</label>
                   <input
                     type="number"
                     value={gracePeriodMins}
                     onChange={(e) => setGracePeriodMins(Number(e.target.value))}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border/80 bg-background/60 px-3.5 py-2 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-2xs"
                   />
                 </div>
               </div>
@@ -168,16 +168,16 @@ export default function SettingsPage() {
           )}
 
           {/* Notifications & Security Preferences */}
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4">
-            <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground space-y-4">
+            <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
               <Bell className="h-5 w-5 text-primary" /> Notifications & Security
             </h3>
 
             <div className="space-y-3 text-xs">
-              <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 cursor-pointer">
+              <label className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/70 cursor-pointer">
                 <div>
-                  <span className="font-semibold text-slate-900 dark:text-white block">Email Notifications</span>
-                  <span className="text-slate-500 dark:text-slate-400">Receive email alerts for leave approvals and task assignments</span>
+                  <span className="font-semibold text-foreground block">Email Notifications</span>
+                  <span className="text-muted-foreground">Receive email alerts for leave approvals and task assignments</span>
                 </div>
                 <input
                   type="checkbox"
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                 />
               </label>
 
-              <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 cursor-pointer">
+              <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/40 border border-border cursor-pointer">
                 <div>
                   <span className="font-semibold text-slate-900 dark:text-white block">Attendance Alerts</span>
                   <span className="text-slate-500 dark:text-slate-400">Get notified when attendance is punched or shift hours complete</span>

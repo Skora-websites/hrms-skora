@@ -64,7 +64,7 @@ export function ThemeConfigurator() {
                 <div className="flex items-center justify-between border-b border-border px-5 py-4">
                   <div className="flex items-center gap-3">
                     <Palette className="h-5 w-5 text-primary" />
-                    <h5 className="text-dark dark:text-white font-bold">
+                    <h5 className="text-foreground font-bold">
                       Theme Configurator
                     </h5>
                   </div>
@@ -81,7 +81,7 @@ export function ThemeConfigurator() {
                 <div className="flex-1 overflow-y-auto p-5 space-y-6">
                   {/* Theme Color */}
                   <div>
-                    <h6 className="text-dark dark:text-white font-semibold mb-3">
+                    <h6 className="text-foreground font-semibold mb-3">
                       Theme Color
                     </h6>
                     <div className="flex gap-2">
@@ -92,7 +92,7 @@ export function ThemeConfigurator() {
                             key={color.value}
                             onClick={() => updateConfig({ primaryColor: color.value })}
                             className={cn(
-                              "relative h-8 w-8 rounded-full transition-all duration-200 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                              "relative h-8 w-8 rounded-full transition-transform duration-150 motion-reduce:transition-none hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                               isActive
                                 ? "scale-110 ring-2 ring-offset-2 ring-[var(--color-primary)]"
                                 : ""
@@ -113,7 +113,7 @@ export function ThemeConfigurator() {
 
                   {/* Dark/Light Mode */}
                   <div>
-                    <h6 className="text-dark dark:text-white font-semibold mb-3">
+                    <h6 className="text-foreground font-semibold mb-3">
                       Light / Dark Mode
                     </h6>
                     <div className="flex items-center justify-between">
@@ -138,7 +138,7 @@ export function ThemeConfigurator() {
 
                   {/* Sidebar Mini */}
                   <div>
-                    <h6 className="text-dark dark:text-white font-semibold mb-3">
+                    <h6 className="text-foreground font-semibold mb-3">
                       <Sidebar className="h-4 w-4 inline mr-2" />
                       Sidebar Settings
                     </h6>
@@ -164,7 +164,7 @@ export function ThemeConfigurator() {
 
                   {/* Sidebar Background */}
                   <div>
-                    <h6 className="text-dark dark:text-white font-semibold mb-3">
+                    <h6 className="text-foreground font-semibold mb-3">
                       Sidebar Background
                     </h6>
                     <div className="flex gap-3">

@@ -127,7 +127,7 @@ export default function ExitPage() {
             <div className="h-8 w-8 rounded-full bg-gradient-danger flex items-center justify-center text-white text-xs font-bold">
               {exit.userId?.charAt(0) || "?"}
             </div>
-            <span className="text-sm font-medium text-dark dark:text-white">{exit.userId || "—"}</span>
+            <span className="text-sm font-medium text-foreground">{exit.userId || "—"}</span>
           </div>
         ),
       },
@@ -219,7 +219,7 @@ export default function ExitPage() {
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
-            <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>
           </div>
         ))}

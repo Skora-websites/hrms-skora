@@ -313,7 +313,7 @@ export async function seedDefaultRoles(tenantId: string): Promise<void> {
     await rolesService.create({
       ...definition,
       tenantId,
-      guardName: "mongodb",
+      guardName: "mysql",
       permissions: ROLE_PERMISSIONS[roleName] || [],
     } as any);
   }

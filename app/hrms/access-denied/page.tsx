@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export default function AccessDeniedPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
-      <div className="w-full max-w-md text-center animate-section-in">
+      <div className="w-full max-w-md text-center motion-safe:animate-section-in motion-reduce:animate-none">
         {/* Icon */}
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-danger mb-6">
           <ShieldAlert className="h-10 w-10 text-white" />
@@ -16,11 +16,11 @@ export default function AccessDeniedPage() {
         {/* Status code */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-danger/10 border border-danger/20 text-danger text-xs font-semibold mb-4">
           <Lock className="h-3 w-3" />
-          403 — ACCESS DENIED
+          403: Access Denied
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl font-bold text-dark dark:text-white tracking-tight mb-2">
+        <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">
           You don&apos;t have access
         </h1>
 
@@ -33,7 +33,7 @@ export default function AccessDeniedPage() {
         {/* Error hint */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <AlertTriangle className="h-3.5 w-3.5 text-warning" />
-          <span className="text-xs text-muted">
+          <span className="text-xs text-muted-foreground font-medium">
             Need a higher role level to access this resource
           </span>
         </div>
@@ -41,7 +41,7 @@ export default function AccessDeniedPage() {
         {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link href="/hrms">
-            <Button variant="primary" className="w-full sm:w-auto">
+            <Button variant="primary" className="w-full sm:w-auto focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">
               <Home className="h-4 w-4 mr-2" />
               Go to Dashboard
             </Button>
@@ -55,7 +55,7 @@ export default function AccessDeniedPage() {
         </div>
 
         {/* Footer hint */}
-        <p className="mt-8 text-xs text-muted/60">
+        <p className="mt-8 text-xs text-muted-foreground">
           Contact your Super Admin to request the necessary permissions
         </p>
       </div>

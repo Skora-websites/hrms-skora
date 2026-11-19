@@ -166,7 +166,7 @@ export default function SalaryAdvancePage() {
       <div className="space-y-6 max-w-7xl mx-auto">
         <PageHeader
           title="Earned Wage Access (EWA)"
-          subtitle="Access your earned salary before regular monthly payday with zero interest and seamless payroll auto-deduction"
+          subtitle="Access your earned salary before regular monthly payday with zero interest and automatic payroll deduction"
           action={
             <Button
               onClick={() => setModalOpen(true)}
@@ -231,7 +231,7 @@ export default function SalaryAdvancePage() {
               </div>
               <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  className="h-full bg-primary rounded-full"
                   style={{
                     width: `${Math.min(100, Math.round(((accrual?.daysWorked || 1) / (accrual?.daysInMonth || 30)) * 100))}%`,
                   }}
@@ -248,7 +248,7 @@ export default function SalaryAdvancePage() {
           <Card className="border border-border/70 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="bg-muted/40 border-b border-border/70 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <thead className="bg-muted/40 border-b border-border/70 text-xs font-semibold text-muted-foreground">
                   <tr>
                     <th className="py-3 px-4">Request Date</th>
                     <th className="py-3 px-4">Reason / Notes</th>
@@ -261,7 +261,7 @@ export default function SalaryAdvancePage() {
                   {loading ? (
                     <tr>
                       <td colSpan={5} className="text-center py-10 text-muted-foreground">
-                        Loading advance history...
+                        Loading advance history…
                       </td>
                     </tr>
                   ) : history.length === 0 ? (

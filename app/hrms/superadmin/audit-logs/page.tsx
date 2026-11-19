@@ -67,7 +67,7 @@ export default function SuperAdminAuditLogsPage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Audit Logs</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            System activity log — who did what, and when
+            System activity log: who did what and when
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -78,13 +78,13 @@ export default function SuperAdminAuditLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search logs..."
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus:border-primary"
             />
           </div>
           <select
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
-            className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus:border-primary"
           >
             <option value="all">All Actions</option>
             {actionTypes.map((a) => (
@@ -94,17 +94,17 @@ export default function SuperAdminAuditLogsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
         {loading ? (
           <div className="p-8 text-center text-slate-500 text-xs">Loading audit logs...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
             No audit logs found.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+              <thead className="border-b border-border text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="pb-3 font-semibold">Timestamp</th>
                   <th className="pb-3 font-semibold">User</th>
@@ -126,7 +126,7 @@ export default function SuperAdminAuditLogsPage() {
                     </td>
                     <td className="py-3 text-slate-600 dark:text-slate-300">{log.resource}</td>
                     <td className="py-3 text-slate-500 max-w-[200px] truncate">{log.details}</td>
-                    <td className="py-3 font-mono text-[10px] text-slate-400">{log.ip || "—"}</td>
+                    <td className="py-3 font-mono text-[10px] text-slate-400">{log.ip || "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

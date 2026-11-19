@@ -290,7 +290,7 @@ export default function HrAdminLeavePoliciesPage() {
 
       {/* Metrics Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Configured Policies</span>
             <CalendarDays className="h-4 w-4 text-primary" />
@@ -300,7 +300,7 @@ export default function HrAdminLeavePoliciesPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Paid Leave Types</span>
             <Shield className="h-4 w-4 text-emerald-500" />
@@ -310,7 +310,7 @@ export default function HrAdminLeavePoliciesPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-5 text-card-foreground">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Carry-Forward Enabled</span>
             <Clock className="h-4 w-4 text-purple-500" />
@@ -332,7 +332,7 @@ export default function HrAdminLeavePoliciesPage() {
           {leaveTypes.map((lt) => (
             <div
               key={lt.id || lt.code}
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white flex flex-col justify-between"
+              className="rounded-2xl border border-border bg-card p-5 text-card-foreground flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-3">
@@ -403,7 +403,7 @@ export default function HrAdminLeavePoliciesPage() {
       {/* ═══ ADD LEAVE TYPE MODAL ═══ */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground">
             <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-primary" /> Add New Leave Type
             </h3>
@@ -420,7 +420,7 @@ export default function HrAdminLeavePoliciesPage() {
                   placeholder="e.g. Compensatory Off (Comp-Off)"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -433,7 +433,7 @@ export default function HrAdminLeavePoliciesPage() {
                     placeholder="e.g. CO"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -445,7 +445,7 @@ export default function HrAdminLeavePoliciesPage() {
                     required
                     value={formData.maxBalance}
                     onChange={(e) => setFormData({ ...formData, maxBalance: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
                   />
                 </div>
               </div>
@@ -458,7 +458,7 @@ export default function HrAdminLeavePoliciesPage() {
                     placeholder="e.g. 1/month"
                     value={formData.accrualRate || ""}
                     onChange={(e) => setFormData({ ...formData, accrualRate: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -466,7 +466,7 @@ export default function HrAdminLeavePoliciesPage() {
                   <select
                     value={formData.color || "emerald"}
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   >
                     <option value="emerald">Emerald Green</option>
                     <option value="blue">Blue</option>
@@ -511,11 +511,11 @@ export default function HrAdminLeavePoliciesPage() {
                   placeholder="Optional policy guidelines..."
                   value={formData.description || ""}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"
@@ -541,7 +541,7 @@ export default function HrAdminLeavePoliciesPage() {
       {/* ═══ EDIT LEAVE TYPE MODAL ═══ */}
       {editingType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground">
             <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
               <Edit3 className="h-5 w-5 text-primary" /> Edit Leave Policy
             </h3>
@@ -557,7 +557,7 @@ export default function HrAdminLeavePoliciesPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -569,7 +569,7 @@ export default function HrAdminLeavePoliciesPage() {
                     required
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -581,7 +581,7 @@ export default function HrAdminLeavePoliciesPage() {
                     required
                     value={formData.maxBalance}
                     onChange={(e) => setFormData({ ...formData, maxBalance: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
                   />
                 </div>
               </div>
@@ -593,7 +593,7 @@ export default function HrAdminLeavePoliciesPage() {
                     type="text"
                     value={formData.accrualRate || ""}
                     onChange={(e) => setFormData({ ...formData, accrualRate: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -601,7 +601,7 @@ export default function HrAdminLeavePoliciesPage() {
                   <select
                     value={formData.color || "emerald"}
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                   >
                     <option value="emerald">Emerald Green</option>
                     <option value="blue">Blue</option>
@@ -645,11 +645,11 @@ export default function HrAdminLeavePoliciesPage() {
                   rows={2}
                   value={formData.description || ""}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"
@@ -675,14 +675,14 @@ export default function HrAdminLeavePoliciesPage() {
       {/* ═══ DELETE CONFIRMATION MODAL ═══ */}
       {deletingType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-card-foreground space-y-4">
             <h3 className="font-bold text-base text-red-600 dark:text-red-400 flex items-center gap-2">
               <Trash2 className="h-5 w-5" /> Delete Leave Policy
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300">
               Are you sure you want to delete policy <strong>{deletingType.name}</strong> ({deletingType.code})?
             </p>
-            <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+            <div className="flex justify-end gap-2 pt-3 border-t border-border">
               <Button
                 type="button"
                 variant="outline"

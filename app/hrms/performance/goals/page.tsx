@@ -193,7 +193,7 @@ export default function GoalsPage() {
       </ToastPortal>
 
       <PageHeader title="Goals" description="Manage and track employee goals and OKRs.">
-        <Button onClick={() => { setGoalForm(EMPTY_GOAL_FORM); setShowAddDialog(true); }}>
+        <Button className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" onClick={() => { setGoalForm(EMPTY_GOAL_FORM); setShowAddDialog(true); }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Goal
         </Button>
@@ -279,7 +279,7 @@ export default function GoalsPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Target className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No goals found</p>
+          <p className="text-foreground font-semibold text-lg">No goals found</p>
           <p className="text-sm text-muted mt-1">Try adjusting your search.</p>
         </div>
       ) : (
@@ -298,7 +298,7 @@ export default function GoalsPage() {
                     <Target className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-dark dark:text-white">{goal.title}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{goal.title}</h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
                         <Users className="h-3 w-3" />{nameOf(goal.userId)}
@@ -314,7 +314,7 @@ export default function GoalsPage() {
                     <div className="mt-3 flex items-center gap-2 max-w-xs">
                       <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${
+                          className={`h-full rounded-full ${
                             goal.progress >= 100 ? "bg-success" :
                             goal.progress >= 60 ? "bg-primary" :
                             goal.progress >= 30 ? "bg-warning" : "bg-danger"
@@ -322,7 +322,7 @@ export default function GoalsPage() {
                           style={{ width: `${goal.progress}%` }}
                         />
                       </div>
-                      <span className="text-xs font-semibold text-dark dark:text-white">{goal.progress}%</span>
+                      <span className="text-xs font-semibold text-foreground">{goal.progress}%</span>
                     </div>
                   </div>
                 </div>

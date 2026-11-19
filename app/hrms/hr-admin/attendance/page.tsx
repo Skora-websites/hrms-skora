@@ -333,7 +333,7 @@ export default function HrAdminAttendancePage() {
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Attendance Master</h2>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Live Real-Time
+              <span className="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse motion-reduce:animate-none" /> Live Real-Time
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -348,7 +348,7 @@ export default function HrAdminAttendancePage() {
             variant="outline"
             onClick={() => loadData(false)}
             disabled={refreshing}
-            className="text-xs font-semibold gap-1.5 border-gray-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+            className="text-xs font-semibold gap-1.5 border-border text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
             {refreshing ? "Updating..." : "Refresh"}
@@ -358,7 +358,7 @@ export default function HrAdminAttendancePage() {
           <Button
             onClick={handleExportCSV}
             variant="outline"
-            className="text-xs font-semibold gap-1.5 border-gray-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+            className="text-xs font-semibold gap-1.5 border-border text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
           >
             <Download className="h-3.5 w-3.5" /> Export Report
           </Button>
@@ -366,13 +366,13 @@ export default function HrAdminAttendancePage() {
       </div>
 
       {/* ═══ Interactive Date Navigator Bar ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 mb-6 backdrop-blur-md">
+      <div className="rounded-2xl border border-border bg-card p-4 mb-6 backdrop-blur-md">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Quick Date Presets */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setQuickDate(todayStr)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 ${
                 isToday
                   ? "bg-primary text-white"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -386,7 +386,7 @@ export default function HrAdminAttendancePage() {
                 y.setDate(y.getDate() - 1);
                 setQuickDate(y.toISOString().split("T")[0]);
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 ${
                 selectedDate === (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().split("T")[0]; })()
                   ? "bg-primary text-white"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -400,7 +400,7 @@ export default function HrAdminAttendancePage() {
                 a.setDate(a.getDate() - 2);
                 setQuickDate(a.toISOString().split("T")[0]);
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors duration-150 ${
                 selectedDate === (() => { const a = new Date(); a.setDate(a.getDate() - 2); return a.toISOString().split("T")[0]; })()
                   ? "bg-primary text-white"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -420,7 +420,7 @@ export default function HrAdminAttendancePage() {
               <ArrowLeft className="h-4 w-4" />
             </button>
 
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-black/40 border border-border rounded-xl px-3 py-1.5">
               <CalendarIcon className="h-4 w-4 text-primary shrink-0" />
               <input
                 type="date"
@@ -449,7 +449,7 @@ export default function HrAdminAttendancePage() {
       {/* ═══ Key Metric Stat Cards for Selected Date ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         {/* Present */}
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">PRESENT</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -461,7 +461,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Absent */}
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-red-600 dark:text-red-400">ABSENT</span>
             <XCircle className="h-4 w-4 text-red-500" />
@@ -473,7 +473,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Late Arrivals */}
-        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400">LATE ARRIVALS</span>
             <Clock className="h-4 w-4 text-yellow-500" />
@@ -483,7 +483,7 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Half Day */}
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">HALF DAY</span>
             <AlertTriangle className="h-4 w-4 text-blue-500" />
@@ -493,27 +493,27 @@ export default function HrAdminAttendancePage() {
         </div>
 
         {/* Attendance Rate */}
-        <div className="col-span-2 lg:col-span-1 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-[#0B0F19] p-4 backdrop-blur-md">
+        <div className="col-span-2 lg:col-span-1 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 dark:bg-card p-4 backdrop-blur-md">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">TURNOUT RATE</span>
             <TrendingUp className="h-4 w-4 text-indigo-500" />
           </div>
           <p className="text-3xl font-black text-slate-900 dark:text-white">{attendanceRate}%</p>
           <div className="w-full bg-gray-200 dark:bg-white/10 h-1.5 rounded-full mt-1.5 overflow-hidden">
-            <div className="bg-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: `${attendanceRate}%` }} />
+            <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${attendanceRate}%` }} />
           </div>
         </div>
       </div>
 
       {/* ═══ Main Table Card with View Switcher & Filters ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
         {/* Controls Bar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-white/10">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-border">
           {/* View Tabs */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-border">
             <button
               onClick={() => setActiveView("roster")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
                 activeView === "roster"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -523,7 +523,7 @@ export default function HrAdminAttendancePage() {
             </button>
             <button
               onClick={() => setActiveView("punched")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
                 activeView === "punched"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -533,7 +533,7 @@ export default function HrAdminAttendancePage() {
             </button>
             <button
               onClick={() => setActiveView("calendar")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
                 activeView === "calendar"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -546,7 +546,7 @@ export default function HrAdminAttendancePage() {
                 setActiveView("rota");
                 loadShiftsAndRota();
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
                 activeView === "rota"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -566,7 +566,7 @@ export default function HrAdminAttendancePage() {
                 placeholder="Search employee, code..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50 dark:bg-black/40 text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -574,7 +574,7 @@ export default function HrAdminAttendancePage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+              className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
             >
               <option value="all">All Statuses</option>
               <option value="PRESENT">Present (All)</option>
@@ -587,7 +587,7 @@ export default function HrAdminAttendancePage() {
             <select
               value={filterDept}
               onChange={(e) => setFilterDept(e.target.value)}
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+              className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
             >
               <option value="all">All Departments</option>
               {departments.map((d) => (
@@ -606,13 +606,13 @@ export default function HrAdminAttendancePage() {
                 Loading daily attendance roster...
               </div>
             ) : filteredRoster.length === 0 ? (
-              <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+              <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
                 No matching employee attendance records found for {selectedDate}.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                  <thead className="border-b border-border text-slate-500 dark:text-slate-400 text-xs font-semibold">
                     <tr>
                       <th className="pb-3 pr-4">Employee</th>
                       <th className="pb-3 pr-4">Code</th>
@@ -647,26 +647,26 @@ export default function HrAdminAttendancePage() {
                           </td>
 
                           {/* Punch In */}
-                          <td className="py-3 pr-4 font-mono">
+                          <td className="py-3 pr-4">
                             {r.punchInTime ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-semibold">
                                 {new Date(r.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                               </span>
                             ) : (
-                              <span className="text-slate-400">—</span>
+                              <span className="text-slate-400">N/A</span>
                             )}
                           </td>
 
                           {/* Punch Out */}
-                          <td className="py-3 pr-4 font-mono">
+                          <td className="py-3 pr-4">
                             {r.punchOutTime ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                              <span className="text-emerald-600 dark:text-emerald-400 font-mono font-semibold">
                                 {new Date(r.punchOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                               </span>
                             ) : r.punchInTime ? (
                               <span className="text-yellow-500 font-bold text-[10px]">Active Shift</span>
                             ) : (
-                              <span className="text-slate-400">—</span>
+                              <span className="text-slate-400">N/A</span>
                             )}
                           </td>
 
@@ -712,14 +712,14 @@ export default function HrAdminAttendancePage() {
         {/* ═══ View 3: Month Calendar Matrix ═══ */}
         {activeView === "calendar" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/10">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-border">
               <h4 className="font-bold text-sm text-slate-900 dark:text-white">
                 Monthly Overview — Click any date to load that day&apos;s attendance
               </h4>
               <span className="text-xs text-primary font-bold">Selected: {selectedDate}</span>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 pb-2 border-b border-gray-100 dark:border-white/10">
+            <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 pb-2 border-b border-gray-100 dark:border-border">
               <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
             </div>
 
@@ -741,11 +741,11 @@ export default function HrAdminAttendancePage() {
                         setSelectedDate(dStr);
                         setActiveView("roster");
                       }}
-                      className={`h-20 p-2 rounded-xl border flex flex-col justify-between text-left transition-all ${
+                      className={`h-20 p-2 rounded-xl border flex flex-col justify-between text-left transition-[border-color,background-color] duration-150 ${
                         isSelected
                           ? "border-primary bg-primary/10 ring-2 ring-primary/30"
                           : isPastOrToday
-                          ? "border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 hover:border-primary/50 text-slate-900 dark:text-white"
+                          ? "border-border bg-slate-50 dark:bg-black/20 hover:border-primary/50 text-slate-900 dark:text-white"
                           : "border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 text-slate-400 opacity-60"
                       }`}
                     >
@@ -760,7 +760,7 @@ export default function HrAdminAttendancePage() {
                         {dStr === selectedDate ? (
                           <span className="text-slate-500 block">{presentCount} Punches</span>
                         ) : (
-                          <span className="text-slate-400 block">—</span>
+                          <span className="text-slate-400 block">N/A</span>
                         )}
                       </div>
                     </button>
@@ -776,7 +776,7 @@ export default function HrAdminAttendancePage() {
         {activeView === "rota" && (
           <div className="space-y-6">
             {/* Shifts Overview Cards */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+            <div className="rounded-2xl border border-border bg-background p-6 text-card-foreground">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-bold text-base flex items-center gap-2">
@@ -805,17 +805,17 @@ export default function HrAdminAttendancePage() {
                 {shifts.map((s) => (
                   <div
                     key={s.id || s._id}
-                    className="p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/20"
+                    className="p-4 rounded-xl border border-border bg-slate-50 dark:bg-black/20"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-sm">{s.name}</span>
                       <span
                         className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: s.color || "#3B82F6" }}
+                        style={{ backgroundColor: s.color || "var(--primary)" }}
                       />
                     </div>
                     <p className="text-xs font-mono font-semibold text-primary mb-1">
-                      {s.startTime} – {s.endTime}
+                      {s.startTime} to {s.endTime}
                     </p>
                     <p className="text-[11px] text-slate-500">
                       Grace: {s.gracePeriod || 15}m | Half-Day: {s.halfDayMark || "14:30"}
@@ -826,7 +826,7 @@ export default function HrAdminAttendancePage() {
             </div>
 
             {/* Shift Rota Assignments Table */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+            <div className="rounded-2xl border border-border bg-background p-6 text-card-foreground">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-bold text-base flex items-center gap-2">
@@ -843,10 +843,10 @@ export default function HrAdminAttendancePage() {
               </div>
 
               {assignments.length === 0 ? (
-                <div className="p-10 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-2xl text-slate-500 text-xs">
+                <div className="p-10 text-center border border-dashed border-border rounded-2xl text-slate-500 text-xs">
                   <Clock className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                   <p className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">No custom shift assignments</p>
-                  <p className="text-slate-500 mb-4">All employees currently follow the General Shift (10:00 AM – 7:00 PM). Assign employees to morning, evening, or night shifts.</p>
+                  <p className="text-slate-500 mb-4">All employees currently follow the General Shift (10:00 AM to 7:00 PM). Assign employees to morning, evening, or night shifts.</p>
                   <Button onClick={() => setShowAssignModal(true)} className="bg-primary text-white font-bold text-xs">
                     <Plus className="h-4 w-4 mr-1.5" /> Assign First Shift
                   </Button>
@@ -854,7 +854,7 @@ export default function HrAdminAttendancePage() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                    <thead className="border-b border-border text-slate-500 dark:text-slate-400 text-xs font-semibold">
                       <tr>
                         <th className="pb-3 pr-4">Employee</th>
                         <th className="pb-3 pr-4">Assigned Shift</th>
@@ -917,7 +917,7 @@ export default function HrAdminAttendancePage() {
       {/* ═══ ADD SHIFT MODAL ═══ */}
       {showShiftModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" /> Create Work Shift
             </h3>
@@ -929,7 +929,7 @@ export default function HrAdminAttendancePage() {
                   placeholder="e.g. Early Morning Shift"
                   value={newShift.name}
                   onChange={(e) => setNewShift({ ...newShift, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -939,7 +939,7 @@ export default function HrAdminAttendancePage() {
                     type="time"
                     value={newShift.startTime}
                     onChange={(e) => setNewShift({ ...newShift, startTime: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs font-mono"
                   />
                 </div>
                 <div>
@@ -948,7 +948,7 @@ export default function HrAdminAttendancePage() {
                     type="time"
                     value={newShift.endTime}
                     onChange={(e) => setNewShift({ ...newShift, endTime: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs font-mono"
                   />
                 </div>
               </div>
@@ -959,7 +959,7 @@ export default function HrAdminAttendancePage() {
                     type="number"
                     value={newShift.gracePeriod}
                     onChange={(e) => setNewShift({ ...newShift, gracePeriod: parseInt(e.target.value) || 15 })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                   />
                 </div>
                 <div>
@@ -968,7 +968,7 @@ export default function HrAdminAttendancePage() {
                     type="time"
                     value={newShift.halfDayMark}
                     onChange={(e) => setNewShift({ ...newShift, halfDayMark: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-mono"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs font-mono"
                   />
                 </div>
               </div>
@@ -995,7 +995,7 @@ export default function HrAdminAttendancePage() {
       {/* ═══ ASSIGN SHIFT MODAL ═══ */}
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
+          <div className="bg-card border border-border text-card-foreground rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" /> Assign Employee to Shift
             </h3>
@@ -1005,7 +1005,7 @@ export default function HrAdminAttendancePage() {
                 <select
                   value={newAssignment.userId}
                   onChange={(e) => setNewAssignment({ ...newAssignment, userId: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 >
                   <option value="">-- Choose Employee --</option>
                   {employees.map((emp) => (
@@ -1020,7 +1020,7 @@ export default function HrAdminAttendancePage() {
                 <select
                   value={newAssignment.shiftId}
                   onChange={(e) => setNewAssignment({ ...newAssignment, shiftId: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                 >
                   <option value="">-- Choose Shift --</option>
                   {shifts.map((s) => (
@@ -1037,7 +1037,7 @@ export default function HrAdminAttendancePage() {
                     type="date"
                     value={newAssignment.startDate}
                     onChange={(e) => setNewAssignment({ ...newAssignment, startDate: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                   />
                 </div>
                 <div>
@@ -1046,7 +1046,7 @@ export default function HrAdminAttendancePage() {
                     type="date"
                     value={newAssignment.endDate}
                     onChange={(e) => setNewAssignment({ ...newAssignment, endDate: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-xs"
                   />
                 </div>
               </div>

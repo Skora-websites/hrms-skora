@@ -171,37 +171,37 @@ export default function LeavesPage() {
 
       {/* Leave Balances Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Casual Leave (CL)</span>
+        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs text-card-foreground">
+          <span className="text-xs text-muted-foreground font-medium">Casual Leave (CL)</span>
           <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">12 Days</p>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Annual quota</span>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Annual quota</span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Sick Leave (SL)</span>
-          <p className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">12 Days</p>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Annual quota</span>
+        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs text-card-foreground">
+          <span className="text-xs text-muted-foreground font-medium">Sick Leave (SL)</span>
+          <p className="text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-2">12 Days</p>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Annual quota</span>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md text-slate-900 dark:text-white">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Annual Leave (AL)</span>
-          <p className="text-3xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">24 Days</p>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Annual quota</span>
+        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs text-card-foreground">
+          <span className="text-xs text-muted-foreground font-medium">Annual Leave (AL)</span>
+          <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-2">24 Days</p>
+          <span className="text-[11px] text-muted-foreground mt-1 block">Annual quota</span>
         </div>
       </div>
 
       {/* Leave Requests Table / Feed */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
-        <h3 className="font-bold text-slate-900 dark:text-white text-base mb-4 flex items-center gap-2">
+      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+        <h3 className="font-bold text-foreground text-base mb-4 flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" /> Submitted Leave Requests ({leaves.length})
         </h3>
 
         {loading ? (
-          <div className="py-10 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+          <div className="py-10 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading leave requests...
           </div>
         ) : leaves.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 text-xs">
+          <div className="p-8 text-center border border-dashed border-border/80 rounded-xl text-muted-foreground text-xs">
             No leave requests submitted yet. Click &quot;Apply for Leave&quot; above to submit your first request.
           </div>
         ) : (
@@ -252,7 +252,7 @@ export default function LeavesPage() {
       {/* ═══ APPLY FOR LEAVE MODAL ═══ */}
       {showApplyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
+          <div className="w-full max-w-md rounded-2xl border border-border/80 bg-card p-6 text-foreground shadow-2xl space-y-4">
             <h3 className="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-primary" /> Apply for Time Off
             </h3>
@@ -272,7 +272,7 @@ export default function LeavesPage() {
                 <select
                   value={selectedLeaveTypeId}
                   onChange={(e) => setSelectedLeaveTypeId(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
                 >
                   {leaveTypes.map((t) => (
                     <option key={t.id || t._id || t.code} value={t.id || t._id || t.code}>
@@ -290,7 +290,7 @@ export default function LeavesPage() {
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none [color-scheme:light_dark]"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none [color-scheme:light_dark]"
                   />
                 </div>
 
@@ -301,7 +301,7 @@ export default function LeavesPage() {
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none [color-scheme:light_dark]"
+                    className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none [color-scheme:light_dark]"
                   />
                 </div>
               </div>
@@ -314,11 +314,11 @@ export default function LeavesPage() {
                   placeholder="Reason for your time-off request..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <Button type="button" variant="outline" onClick={() => setShowApplyModal(false)}>
                   Cancel
                 </Button>

@@ -105,24 +105,24 @@ export function ActivityFeed({ activities = [], loading }: ActivityFeedProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-semibold text-dark dark:text-white truncate">
+                          <p className="text-sm font-semibold text-foreground truncate">
                             {activity.title}
                           </p>
-                          <span className="text-xxs text-muted whitespace-nowrap">
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {getRelativeTime(activity.createdAt)}
                           </span>
                         </div>
-                        <p className="text-xs text-muted mt-0.5 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                           {activity.description}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           {activity.user && (
-                            <span className="text-xxs text-muted">
+                            <span className="text-xs text-muted-foreground font-medium">
                               {activity.user}
                             </span>
                           )}
                           {(activity.user && activity.relatedTo) && (
-                            <span className="text-muted/30">·</span>
+                            <span className="text-muted-foreground/30 font-light">/</span>
                           )}
                           {activity.relatedTo && (
                             <Badge variant="subtle" size="sm">

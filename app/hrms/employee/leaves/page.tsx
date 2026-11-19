@@ -180,7 +180,7 @@ export default function EmployeeLeavesPage() {
     <AppShell title="Leave Requests">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4">
+        <div className="fixed top-5 right-5 z-50 motion-safe:animate-in motion-reduce:animate-none fade-in slide-in-from-top-4">
           <div
             className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-semibold backdrop-blur-md ${
               toast.type === "success"
@@ -216,12 +216,12 @@ export default function EmployeeLeavesPage() {
       </div>
 
       {/* Pending */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 mb-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <Clock className="h-5 w-5 text-yellow-500" /> Pending ({pending.length})
         </h3>
         {pending.length === 0 ? (
-          <div className="p-6 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 text-xs">
+          <div className="p-6 text-center border border-dashed border-border rounded-xl text-slate-500 text-xs">
             No pending leave requests
           </div>
         ) : (
@@ -245,12 +245,12 @@ export default function EmployeeLeavesPage() {
       </div>
 
       {/* Regularizations */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 mb-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 mb-6 text-slate-900 dark:text-white">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5 text-blue-500" /> Regularization Requests ({regularizations.length})
         </h3>
         {regularizations.length === 0 ? (
-          <div className="p-6 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 text-xs">
+          <div className="p-6 text-center border border-dashed border-border rounded-xl text-slate-500 text-xs">
             No regularization requests submitted
           </div>
         ) : (
@@ -269,12 +269,12 @@ export default function EmployeeLeavesPage() {
       </div>
 
       {/* Processed */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Processed ({processed.length})
         </h3>
         {processed.length === 0 ? (
-          <div className="p-6 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 text-xs">
+          <div className="p-6 text-center border border-dashed border-border rounded-xl text-slate-500 text-xs">
             No processed leave requests yet
           </div>
         ) : (
@@ -295,16 +295,16 @@ export default function EmployeeLeavesPage() {
       {/* ═══ Apply Leave Modal ═══ */}
       {showApplyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground">
             <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
               <CalendarDays className="h-5 w-5 text-primary" /> Apply for Leave
             </h3>
             <form onSubmit={handleApplyLeave} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold mb-1">Leave Type</label>
-                <select value={leaveTypeId} onChange={(e) => setLeaveTypeId(e.target.value)} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none">
+                <select value={leaveTypeId} onChange={(e) => setLeaveTypeId(e.target.value)} className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none">
                   {leaveTypes.length === 0 ? (
-                    <option value="">No leave types configured — contact HR</option>
+                    <option value="">No leave types configured, contact HR</option>
                   ) : (
                     leaveTypes.map((t) => (
                       <option key={t.id} value={t.id}>{t.name}</option>
@@ -316,11 +316,11 @@ export default function EmployeeLeavesPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1">From Date</label>
-                  <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} required className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+                  <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} required className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div>
                   <label className="block font-semibold mb-1">To Date</label>
-                  <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} required className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+                  <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} required className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
               </div>
 
@@ -348,10 +348,10 @@ export default function EmployeeLeavesPage() {
 
               <div>
                 <label className="block font-semibold mb-1">Reason</label>
-                <textarea value={reason} onChange={(e) => setReason(e.target.value)} required rows={3} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" placeholder="Reason for leave..." />
+                <textarea value={reason} onChange={(e) => setReason(e.target.value)} required rows={3} className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" placeholder="Reason for leave..." />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
                 <Button type="button" variant="outline" onClick={() => { setShowApplyModal(false); resetLeaveForm(); }}>Cancel</Button>
                 <Button type="submit" disabled={submitting} className="bg-primary text-white font-bold gap-1">
                   {submitting ? "Submitting…" : "Submit Request"}
@@ -365,20 +365,20 @@ export default function EmployeeLeavesPage() {
       {/* ═══ Regularization Modal ═══ */}
       {showRegModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground">
             <h3 className="font-bold text-lg flex items-center gap-2 mb-4">
               <FileText className="h-5 w-5 text-blue-500" /> Attendance Regularization
             </h3>
             <form onSubmit={handleApplyRegularization} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold mb-1">Date</label>
-                <input type="date" value={regDate} onChange={(e) => setRegDate(e.target.value)} required className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+                <input type="date" value={regDate} onChange={(e) => setRegDate(e.target.value)} required className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block font-semibold mb-1">Reason</label>
-                <textarea value={regReason} onChange={(e) => setRegReason(e.target.value)} required rows={3} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" placeholder="Reason for regularization (late arrival, missed punch, etc.)..." />
+                <textarea value={regReason} onChange={(e) => setRegReason(e.target.value)} required rows={3} className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none" placeholder="Reason for regularization (late arrival, missed punch, etc.)..." />
               </div>
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
                 <Button type="button" variant="outline" onClick={() => setShowRegModal(false)}>Cancel</Button>
                 <Button type="submit" className="bg-primary text-white font-bold gap-1">Submit</Button>
               </div>

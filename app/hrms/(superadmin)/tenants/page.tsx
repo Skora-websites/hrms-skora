@@ -97,17 +97,17 @@ export default function SuperadminTenantsPage() {
       </div>
 
       {/* Tenant List Table */}
-      <div className="rounded-2xl border border-white/10 bg-[#0B0F19]/90 p-6 backdrop-blur-md">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs text-card-foreground">
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-sm">Loading tenants...</div>
+          <div className="p-8 text-center text-slate-400 text-sm">Loading tenants…</div>
         ) : tenants.length === 0 ? (
-          <div className="p-12 text-center border border-dashed border-white/10 rounded-xl text-slate-400">
+          <div className="p-12 text-center border border-dashed border-border rounded-xl text-slate-400">
             No tenant companies created yet. Click "Add New Tenant Company" to create one.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-white/10 text-slate-400">
+              <thead className="border-b border-border text-slate-400">
                 <tr>
                   <th className="pb-3 font-semibold">Tenant Name</th>
                   <th className="pb-3 font-semibold">Domain</th>
@@ -117,15 +117,15 @@ export default function SuperadminTenantsPage() {
                   <th className="pb-3 font-semibold">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300">
+              <tbody className="divide-y divide-border/60 text-slate-300">
                 {tenants.map((t) => (
                   <tr key={t._id}>
-                    <td className="py-3 font-semibold text-white flex items-center gap-2">
+                    <td className="py-3 font-semibold text-foreground flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-primary" />
                       {t.name}
                     </td>
-                    <td className="py-3 text-slate-400">{t.domain || "—"}</td>
-                    <td className="py-3 uppercase text-primary font-mono font-bold">{t.subscriptionTier}</td>
+                    <td className="py-3 text-slate-400">{t.domain || "N/A"}</td>
+                    <td className="py-3 text-primary font-mono font-bold capitalize">{t.subscriptionTier}</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         {t.modulesEnabled?.payroll && (
@@ -159,7 +159,7 @@ export default function SuperadminTenantsPage() {
       {/* Modal for creating new tenant */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B0F19] p-6 space-y-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 space-y-4 text-card-foreground shadow-2xl">
             <h3 className="font-bold text-white text-lg flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" /> Register New Tenant Company
             </h3>

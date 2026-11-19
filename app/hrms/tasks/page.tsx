@@ -153,7 +153,7 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-h3 text-dark dark:text-white font-bold tracking-tighter">
+          <h2 className="text-h3 text-foreground font-bold tracking-tighter">
             Task Management
           </h2>
           <p className="mt-1 text-sm text-muted">
@@ -252,7 +252,7 @@ export default function TasksPage() {
         </div>
         <div className="flex gap-2">
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             value={statusFilter || ""}
             onChange={(e) => setStatusFilter(e.target.value || null)}
           >
@@ -263,7 +263,7 @@ export default function TasksPage() {
             <option value="on_hold">On Hold</option>
           </select>
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             value={priorityFilter || ""}
             onChange={(e) => setPriorityFilter(e.target.value || null)}
           >
@@ -279,7 +279,7 @@ export default function TasksPage() {
       {/* Tasks List */}
       {tasksLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted" />
+          <Loader2 className="h-8 w-8 motion-safe:animate-spin motion-reduce:animate-none text-muted" />
         </div>
       ) : filteredTasks.length === 0 ? (
         <EmptyState
@@ -306,7 +306,7 @@ export default function TasksPage() {
             return (
               <div
                 key={task.id}
-                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/20 transition-all duration-200"
+                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-[border-color,box-shadow] duration-150"
               >
                 <div className="flex items-start gap-4">
                   {/* Status icon */}
@@ -327,7 +327,7 @@ export default function TasksPage() {
                       task.status === "completed" ? "text-success" :
                       task.status === "in_progress" ? "text-info" :
                       task.status === "on_hold" ? "text-warning" :
-                      "text-muted/40"
+                      "text-muted-foreground/60"
                     )} />
                   </button>
 
@@ -336,13 +336,13 @@ export default function TasksPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h4 className={cn(
-                          "font-semibold text-dark dark:text-white",
-                          task.status === "completed" && "line-through text-muted"
+                          "font-semibold text-foreground",
+                          task.status === "completed" && "line-through text-muted-foreground/70"
                         )}>
                           {task.title}
                         </h4>
                         {task.description && (
-                          <p className="text-sm text-muted mt-0.5 line-clamp-2">{task.description}</p>
+                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{task.description}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -389,7 +389,7 @@ export default function TasksPage() {
                     <div className="mt-2 h-1.5 w-full max-w-[200px] rounded-full bg-muted/30 overflow-hidden">
                       <div
                         className={cn(
-                          "h-full rounded-full transition-all duration-500",
+                          "h-full rounded-full",
                           task.progress === 100 ? "bg-success" :
                           task.progress >= 50 ? "bg-info" :
                           "bg-warning"

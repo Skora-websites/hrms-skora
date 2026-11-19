@@ -126,7 +126,7 @@ export default function MyDocumentsPage() {
               className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
                 active
                   ? "bg-primary text-white border-primary"
-                  : "bg-white dark:bg-black/40 text-slate-600 dark:text-slate-300 border-gray-200 dark:border-white/10 hover:border-primary/40"
+                  : "bg-white dark:bg-black/40 text-slate-600 dark:text-slate-300 border-border hover:border-primary/40"
               }`}
             >
               {meta ? <meta.icon className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
@@ -174,7 +174,7 @@ export default function MyDocumentsPage() {
                   {list.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-card"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`h-10 w-10 rounded-xl ${meta.bg} ${meta.color} flex items-center justify-center shrink-0`}>

@@ -138,7 +138,7 @@ export default function ManagerSettingsPage() {
                 <select
                   value={autoAssignStrategy}
                   onChange={(e) => setAutoAssignStrategy(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 >
                   <option value="round_robin">Round Robin (Cyclic)</option>
                   <option value="least_loaded">Least Loaded</option>
@@ -163,7 +163,7 @@ export default function ManagerSettingsPage() {
               <select
                 value={defaultView}
                 onChange={(e) => setDefaultView(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-white dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
               >
                 <option value="overview">Overview</option>
                 <option value="approvals">Approvals</option>
@@ -188,7 +188,7 @@ export default function ManagerSettingsPage() {
 
 function SettingsSection({ title, icon, description, children }: { title: string; icon: React.ReactNode; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
       <h3 className="font-bold text-base flex items-center gap-2 mb-1">{icon} {title}</h3>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">{description}</p>
       {children}

@@ -209,6 +209,55 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    key: "workflow",
+    label: "Workflow & Automation",
+    children: [
+      { key: "workflow.view", label: "View Workflow Rules", group: "Workflow & Automation" },
+      { key: "workflow.manage", label: "Manage Workflow Rules", group: "Workflow & Automation" },
+    ],
+  },
+  {
+    key: "shifts",
+    label: "Shifts & Rostering",
+    children: [
+      { key: "shifts.view", label: "View Shift Roster", group: "Shifts & Rostering" },
+      { key: "shifts.manage", label: "Manage Shifts & Rostering", group: "Shifts & Rostering" },
+      { key: "shifts.swap", label: "Request Shift Swap", group: "Shifts & Rostering" },
+    ],
+  },
+  {
+    key: "settlement",
+    label: "Exit & Settlement",
+    children: [
+      { key: "settlement.view", label: "View Full & Final Settlement", group: "Exit & Settlement" },
+      { key: "settlement.process", label: "Process Settlement Payouts", group: "Exit & Settlement" },
+    ],
+  },
+  {
+    key: "letters",
+    label: "Document Letters",
+    children: [
+      { key: "letters.view", label: "View Letters & Templates", group: "Document Letters" },
+      { key: "letters.generate", label: "Generate & Issue Letters", group: "Document Letters" },
+    ],
+  },
+  {
+    key: "statutory",
+    label: "Statutory Payroll Compliance",
+    children: [
+      { key: "statutory.view", label: "View Statutory Configurations", group: "Statutory Payroll Compliance" },
+      { key: "statutory.manage", label: "Manage PF, ESI, PT & TDS Rules", group: "Statutory Payroll Compliance" },
+    ],
+  },
+  {
+    key: "workforce",
+    label: "Workforce Planning",
+    children: [
+      { key: "workforce.view", label: "View Workforce Headcount", group: "Workforce Planning" },
+      { key: "workforce.manage", label: "Manage Headcount & Positions", group: "Workforce Planning" },
+    ],
+  },
+  {
     key: "role_management",
     label: "Role Management",
     children: [
@@ -365,7 +414,7 @@ export async function updateRolePermissions(
       tenantId,
       name: roleName,
       displayName: ROLE_LABELS[roleName as Role] || roleName,
-      guardName: "mongodb",
+      guardName: "mysql",
       isSystem: true,
       permissions,
     } as any);
@@ -409,7 +458,7 @@ export async function createCustomRole(
     tenantId,
     name: input.name,
     displayName: input.displayName,
-    guardName: "mongodb",
+    guardName: "mysql",
     description: input.description || "",
     isSystem: false,
     permissions: input.permissions,

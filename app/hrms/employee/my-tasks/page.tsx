@@ -113,16 +113,16 @@ export default function EmployeeMyTasksPage() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Tasks</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {total} assigned &middot; {active} in flight &middot; {done} completed &middot; use the arrows to move tasks
+          {total} assigned, {active} in flight, {done} completed. Use the arrows to move tasks
         </p>
       </div>
 
       {loading ? (
         <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm flex items-center justify-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading tasks...
+          <Loader2 className="h-4 w-4 motion-safe:animate-spin motion-reduce:animate-none" /> Loading tasks…
         </div>
       ) : total === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-10 text-center">
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
           <ClipboardList className="h-10 w-10 mx-auto mb-3 text-slate-300" />
           <p className="font-semibold text-slate-900 dark:text-white text-sm">No tasks assigned yet</p>
           <p className="text-xs text-slate-500 mt-1">
@@ -136,9 +136,9 @@ export default function EmployeeMyTasksPage() {
             return (
               <div
                 key={col.key}
-                className="flex flex-col rounded-2xl border border-gray-200 dark:border-white/10 bg-slate-100/70 dark:bg-[#070B14]/80 p-4 min-h-[300px] text-slate-900 dark:text-white"
+                className="flex flex-col rounded-2xl border border-border bg-slate-100/70 dark:bg-muted/20 p-4 min-h-[300px] text-slate-900 dark:text-white"
               >
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-white/10">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
                   <span className={`font-bold text-sm ${col.style}`}>{col.label}</span>
                   <span className="rounded-full bg-white dark:bg-white/10 border border-gray-200 dark:border-transparent px-2 py-0.5 text-xs text-slate-700 dark:text-slate-300 font-mono font-bold">
                     {colTasks.length}
@@ -146,7 +146,7 @@ export default function EmployeeMyTasksPage() {
                 </div>
                 <div className="flex-1 space-y-3">
                   {colTasks.length === 0 ? (
-                    <div className="flex items-center justify-center h-24 border border-dashed border-gray-300 dark:border-white/10 rounded-xl text-xs text-slate-500">
+                    <div className="flex items-center justify-center h-24 border border-dashed border-gray-300 dark:border-border rounded-xl text-xs text-slate-500">
                       Nothing here
                     </div>
                   ) : (
@@ -156,7 +156,7 @@ export default function EmployeeMyTasksPage() {
                       return (
                         <div
                           key={taskId}
-                          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-3 hover:border-primary/40 transition-all"
+                          className="rounded-xl border border-border bg-card p-3 hover:border-primary/40 transition-[border-color,box-shadow] duration-150"
                         >
                           <div className="flex items-center justify-between gap-2 mb-2">
                             <span
@@ -188,7 +188,7 @@ export default function EmployeeMyTasksPage() {
                           {canMoveTasks && (
                             movingId === taskId ? (
                               <div className="flex justify-center py-1">
-                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                <Loader2 className="h-4 w-4 motion-safe:animate-spin motion-reduce:animate-none text-primary" />
                               </div>
                             ) : (
                               <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100 dark:border-white/5">
@@ -197,9 +197,9 @@ export default function EmployeeMyTasksPage() {
                                     key={ns.key}
                                     type="button"
                                     onClick={() => moveTask(task, ns.key)}
-                                    className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary hover:bg-primary/20 transition-colors"
+                                    className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-colors duration-150"
                                   >
-                                    → {ns.label}
+                                    Move to {ns.label}
                                   </button>
                                 ))}
                               </div>
@@ -224,7 +224,7 @@ export default function EmployeeMyTasksPage() {
 
 function EmployeePersonalTaskCreator({ onCreated }: { onCreated: () => void }) {
   return (
-    <div className="mt-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+    <div className="mt-8 rounded-2xl border border-border bg-card p-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
       <span>
         Need a personal to-do outside your assigned tasks? Use the{" "}
         <a href="/hrms/tasks" className="text-primary font-semibold hover:underline">

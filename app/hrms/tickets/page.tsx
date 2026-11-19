@@ -171,7 +171,7 @@ export default function TicketsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-h3 text-dark dark:text-white font-bold tracking-tighter">
+          <h2 className="text-h3 text-foreground font-bold tracking-tighter">
             Ticket System
           </h2>
           <p className="mt-1 text-sm text-muted">
@@ -264,7 +264,7 @@ export default function TicketsPage() {
         </div>
         <div className="flex gap-2">
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             value={statusFilter || ""}
             onChange={(e) => setStatusFilter(e.target.value || null)}
           >
@@ -275,7 +275,7 @@ export default function TicketsPage() {
             <option value="closed">Closed</option>
           </select>
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             value={categoryFilter || ""}
             onChange={(e) => setCategoryFilter(e.target.value || null)}
           >
@@ -292,7 +292,7 @@ export default function TicketsPage() {
       {/* Tickets List */}
       {ticketsLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted" />
+          <Loader2 className="h-8 w-8 motion-safe:animate-spin motion-reduce:animate-none text-muted" />
         </div>
       ) : filteredTickets.length === 0 ? (
         <EmptyState
@@ -318,7 +318,7 @@ export default function TicketsPage() {
             return (
               <div
                 key={ticket.id}
-                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/20 transition-all duration-200"
+                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-[border-color,box-shadow] duration-150"
               >
                 <div className="flex items-start gap-4">
                   {/* Category icon */}
@@ -330,7 +330,7 @@ export default function TicketsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h4 className="font-semibold text-dark dark:text-white">
+                        <h4 className="font-semibold text-foreground">
                           {ticket.subject}
                         </h4>
                         {ticket.description && (

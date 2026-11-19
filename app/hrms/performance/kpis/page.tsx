@@ -243,7 +243,7 @@ export default function KpisPage() {
         title="KPI Tracking"
         description="Monitor key performance indicators and metrics across the organization."
       >
-        <Button onClick={() => setShowAddDialog(true)}>
+        <Button className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" onClick={() => setShowAddDialog(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add KPI
         </Button>
@@ -263,7 +263,7 @@ export default function KpisPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <BarChart3 className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No KPIs found</p>
+          <p className="text-foreground font-semibold text-lg">No KPIs found</p>
           <p className="text-sm text-muted mt-1">Track key metrics by clicking "Add KPI".</p>
         </div>
       ) : (
@@ -285,7 +285,7 @@ export default function KpisPage() {
                       <BarChart3 className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-dark dark:text-white">{displayName}</h3>
+                      <h3 className="text-sm font-semibold text-foreground">{displayName}</h3>
                       <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                         <span className="text-xs text-muted flex items-center gap-1">
                           <Users className="h-3 w-3" />{nameOf(kpi.userId)}
@@ -306,7 +306,7 @@ export default function KpisPage() {
                       <div className="mt-3 flex items-center gap-2 max-w-xs">
                         <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${
+                            className={`h-full rounded-full ${
                               progress >= 100 ? "bg-success" :
                               progress >= 70 ? "bg-primary" :
                               progress >= 40 ? "bg-warning" : "bg-danger"
@@ -314,7 +314,7 @@ export default function KpisPage() {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="text-xs font-semibold text-dark dark:text-white">
+                        <span className="text-xs font-semibold text-foreground">
                           {formatValue(kpi.actual, kpi.unit)}
                           <span className="text-muted font-normal"> / {formatValue(kpi.target, kpi.unit)}</span>
                         </span>

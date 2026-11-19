@@ -162,7 +162,7 @@ export default function ManagerMyTeamPage() {
             {managerDept ? `${managerDept} Team` : "Direct Reports"}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Real-time AUX status · Effective hours · Punch times · Auto-refreshes every 10s
+            Real-time AUX status, effective hours, punch times, auto-refreshes every 10s
           </p>
         </div>
         <button
@@ -193,7 +193,7 @@ export default function ManagerMyTeamPage() {
 
       {/* Filter & Search */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-border">
           {(
             [
               ["all", "All"],
@@ -209,7 +209,7 @@ export default function ManagerMyTeamPage() {
               key={k}
               onClick={() => setLiveFilter(k)}
               className={
-                "px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap " +
+                "px-2 py-1 rounded-lg text-[10px] font-bold transition-colors duration-150 whitespace-nowrap " +
                 (liveFilter === k
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900")
@@ -226,7 +226,7 @@ export default function ManagerMyTeamPage() {
             placeholder="Search team..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48 pl-7 pr-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            className="w-48 pl-7 pr-3 py-1.5 rounded-xl border border-border bg-slate-50 dark:bg-black/40 text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-primary"
           />
         </div>
       </div>
@@ -237,12 +237,12 @@ export default function ManagerMyTeamPage() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 backdrop-blur-md animate-pulse h-56"
+              className="rounded-2xl border border-border bg-card p-5 motion-safe:animate-pulse motion-reduce:animate-none h-56"
             />
           ))}
         </div>
       ) : filteredMembers.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-12 text-center">
+        <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <p className="text-slate-900 dark:text-white font-semibold text-lg">No team members found</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -311,12 +311,12 @@ export default function ManagerMyTeamPage() {
                   setShowModal(true);
                 }}
                 className={
-                  "rounded-2xl border p-5 backdrop-blur-md transition-all cursor-pointer " +
+                  "rounded-2xl border p-5 transition-[box-shadow,border-color] duration-150 cursor-pointer " +
                   (isOnline
-                    ? "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] hover:border-primary/60 hover:shadow-md"
+                    ? "border-border bg-card hover:border-primary/60 hover:shadow-md"
                     : isPunchedOut
-                    ? "border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0B0F19]/70 opacity-70 hover:opacity-100 hover:border-slate-400"
-                    : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] hover:border-gray-400")
+                    ? "border-border bg-gray-50 dark:bg-card/70 opacity-70 hover:opacity-100 hover:border-slate-400"
+                    : "border-border bg-card hover:border-gray-400")
                 }
               >
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -328,10 +328,10 @@ export default function ManagerMyTeamPage() {
                       </span>
                       {/* Live indicator dot */}
                       {isOnline && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0B0F19] bg-emerald-500" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-card bg-emerald-500" />
                       )}
                       {isPunchedOut && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0B0F19] bg-slate-400" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-card bg-slate-400" />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -471,11 +471,11 @@ export default function ManagerMyTeamPage() {
       {showModal && selectedEmployee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)}>
           <div
-            className="bg-white dark:bg-[#0B0F19] rounded-2xl border border-gray-200 dark:border-white/10 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
+            className="bg-card rounded-2xl border border-border w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-white/10">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">
                   {selectedEmployee.name.charAt(0).toUpperCase()}
@@ -545,12 +545,12 @@ export default function ManagerMyTeamPage() {
 
               {/* Punch Times */}
               <div className="bg-slate-50 dark:bg-black/30 rounded-xl p-4 border border-gray-100 dark:border-white/5">
-                <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-3">Punch Timeline</h4>
+                <h4 className="text-xs font-semibold text-slate-500 mb-3">Punch Timeline</h4>
                 <div className="flex items-center gap-4">
                   <div className="flex-1">
                     <p className="text-[10px] text-slate-500 mb-1">Punch In</p>
                     <p className="text-sm font-bold text-slate-900 dark:text-white font-mono">
-                      {selectedEmployee.punchInTime ? new Date(selectedEmployee.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                      {selectedEmployee.punchInTime ? new Date(selectedEmployee.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A"}
                     </p>
                     <p className="text-[9px] text-slate-400">
                       {selectedEmployee.punchInTime ? new Date(selectedEmployee.punchInTime).toLocaleDateString() : ""}
@@ -583,10 +583,10 @@ export default function ManagerMyTeamPage() {
               {/* AUX Timeline */}
               {selectedEmployee.status === "punched_in" && (
                 <div className="bg-slate-50 dark:bg-black/30 rounded-xl p-4 border border-gray-100 dark:border-white/5">
-                  <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-3">Current AUX State</h4>
+                  <h4 className="text-xs font-semibold text-slate-500 mb-3">Current AUX State</h4>
                   <div className="flex items-center gap-3">
                     <div className={"w-3 h-3 rounded-full " + (
-                      selectedEmployee.auxState === "active" ? "bg-emerald-500 animate-pulse" :
+                      selectedEmployee.auxState === "active" ? "bg-emerald-500 motion-safe:animate-pulse motion-reduce:animate-none" :
                       selectedEmployee.auxState === "on_break" ? "bg-amber-500" :
                       selectedEmployee.auxState === "meeting" ? "bg-purple-500" : "bg-slate-400"
                     )} />
@@ -630,7 +630,7 @@ function SummaryStat({
       ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
       : color === "purple"
       ? "bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400"
-      : "bg-slate-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-slate-600 dark:text-slate-400";
+      : "bg-slate-50 dark:bg-white/5 border-border text-slate-600 dark:text-slate-400";
 
   return (
     <div className={"text-center p-3 rounded-xl border " + cls}>

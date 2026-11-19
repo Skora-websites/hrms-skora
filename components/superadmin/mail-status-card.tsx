@@ -93,8 +93,8 @@ export function MailStatusCard() {
   const t = status?.transport;
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19]/90 p-6 backdrop-blur-md">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
+    <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-border">
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-primary" />
           <div>
@@ -107,15 +107,15 @@ export function MailStatusCard() {
         <button
           type="button"
           onClick={load}
-          className="self-start inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-primary transition-colors"
+          className="self-start inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-primary transition-colors duration-150"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "motion-safe:animate-spin motion-reduce:animate-none" : ""}`} /> Refresh
         </button>
       </div>
 
       {loading && !status ? (
         <div className="flex items-center gap-2 text-xs text-slate-500 py-4">
-          <Loader2 className="h-4 w-4 animate-spin" /> Checking mail configuration…
+          <Loader2 className="h-4 w-4 motion-safe:animate-spin motion-reduce:animate-none" /> Checking mail configuration…
         </div>
       ) : !status?.configured || !t ? (
         <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 font-semibold">
@@ -125,20 +125,20 @@ export function MailStatusCard() {
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
-              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Provider</span>
-              <span className="inline-flex items-center gap-1 font-bold text-slate-900 dark:text-white">
+            <div className="p-3 rounded-xl bg-muted/40 border border-border">
+              <span className="block text-xs font-medium text-muted-foreground mb-1">Provider</span>
+              <span className="inline-flex items-center gap-1 font-bold text-foreground">
                 {t.provider === "smtp" ? <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> : <Mail className="h-3.5 w-3.5 text-blue-500" />}
                 {t.provider.toUpperCase()}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
-              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Server</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-white break-all">{t.host || "resend-api"}</span>
+            <div className="p-3 rounded-xl bg-muted/40 border border-border">
+              <span className="block text-xs font-medium text-muted-foreground mb-1">Server</span>
+              <span className="font-mono font-bold text-foreground break-all">{t.host || "resend-api"}</span>
             </div>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
-              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">From</span>
-              <span className="font-semibold text-slate-900 dark:text-white break-all">{t.from}</span>
+            <div className="p-3 rounded-xl bg-muted/40 border border-border">
+              <span className="block text-xs font-medium text-muted-foreground mb-1">From</span>
+              <span className="font-semibold text-foreground break-all">{t.from}</span>
             </div>
           </div>
 
@@ -173,7 +173,7 @@ export function MailStatusCard() {
               value={to}
               onChange={(e) => setTo(e.target.value)}
               placeholder="Send to (blank = your own email)"
-              className="flex-1 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+              className="flex-1 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
             />
             <button
               type="button"

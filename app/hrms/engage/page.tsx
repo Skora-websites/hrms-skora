@@ -99,12 +99,12 @@ export default function EngagePage() {
           <div className="flex-1">
             <textarea
               placeholder="What's on your mind?"
-              className="w-full bg-transparent border-0 outline-none resize-none text-sm text-dark dark:text-white placeholder:text-muted/60 min-h-[80px]"
+              className="w-full bg-transparent border-0 outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground min-h-[80px]"
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
             />
             <div className="flex items-center justify-between pt-3 border-t border-border mt-2">
-              <Button variant="ghost" size="sm" className="text-muted"><Image className="h-4 w-4 mr-1" />Photo</Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Image className="h-4 w-4 mr-1" />Photo</Button>
               <Button size="sm" disabled={!newPost.trim()} onClick={handleCreatePost} loading={mutation.loading}>
                 <Send className="h-4 w-4 mr-1" />Post
               </Button>
@@ -127,9 +127,9 @@ export default function EngagePage() {
           ))}
         </div>
       ) : error ? (
-        <div className="bg-card rounded-xl border border-border p-12 text-center"><MessageSquare className="h-12 w-12 text-danger mx-auto mb-4" /><p className="text-dark dark:text-white font-semibold">Failed to load feed</p><p className="text-sm text-muted mt-1">{error}</p></div>
+        <div className="bg-card rounded-xl border border-border p-12 text-center"><MessageSquare className="h-12 w-12 text-danger mx-auto mb-4" /><p className="text-foreground font-semibold">Failed to load feed</p><p className="text-sm text-muted mt-1">{error}</p></div>
       ) : filtered.length === 0 ? (
-        <div className="bg-card rounded-xl border border-border p-12 text-center"><MessageSquare className="h-12 w-12 text-muted mx-auto mb-4" /><p className="text-dark dark:text-white font-semibold">{search ? "No posts match your search" : "No posts yet"}</p><p className="text-sm text-muted mt-1">{search ? "Try adjusting your search." : "Be the first to share something with your team!"}</p></div>
+        <div className="bg-card rounded-xl border border-border p-12 text-center"><MessageSquare className="h-12 w-12 text-muted mx-auto mb-4" /><p className="text-foreground font-semibold">{search ? "No posts match your search" : "No posts yet"}</p><p className="text-sm text-muted mt-1">{search ? "Try adjusting your search." : "Be the first to share something with your team!"}</p></div>
       ) : (
         <div className="space-y-4">
           {filtered.map((post) => (
@@ -139,7 +139,7 @@ export default function EngagePage() {
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm font-bold">{post.userId?.charAt(0) || "?"}</div>
                     <div>
-                      <p className="text-sm font-semibold text-dark dark:text-white">{post.userId || "Unknown"}</p>
+                      <p className="text-sm font-semibold text-foreground">{post.userId || "Unknown"}</p>
                       <p className="text-xs text-muted">{post.createdAt ? getTimeAgo(post.createdAt as any) : "—"}</p>
                     </div>
                   </div>
@@ -152,7 +152,7 @@ export default function EngagePage() {
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm text-dark dark:text-white whitespace-pre-wrap">{post.content}</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{post.content}</p>
                 <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border">
                   <button className="flex items-center gap-1.5 text-xs text-muted hover:text-primary transition-colors">
                     <ThumbsUp className="h-4 w-4" /><span>{post.likes || 0}</span>

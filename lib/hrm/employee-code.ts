@@ -1,5 +1,5 @@
 import "server-only";
-import { getDb } from "@/lib/db/mongo-helper";
+import { getDb } from "@/lib/db/mysql";
 
 /**
  * Generate the next employee code in the form EMP-<year>-<4-digit sequence>.

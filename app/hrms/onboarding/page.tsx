@@ -113,21 +113,21 @@ export default function OnboardingPage() {
       </div>
 
       {/* Onboarding Applications Table */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+        <h3 className="font-bold text-base mb-4 flex items-center gap-2 text-foreground">
           <UserCheck className="h-5 w-5 text-primary" /> Registered Applications &amp; Document Approvals
         </h3>
 
         {loading ? (
           <div className="p-8 text-center text-slate-500 text-xs">Loading applications...</div>
         ) : applications.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
             No pending onboarding applications.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+              <thead className="border-b border-border text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="pb-3 font-semibold">Candidate</th>
                   <th className="pb-3 font-semibold">Role &amp; Dept</th>

@@ -28,6 +28,9 @@ import {
   Loader2,
   AlertTriangle,
   ChevronDown,
+  Download,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 
 import { useServerTable } from "@/hooks/use-server-table";
@@ -166,7 +169,7 @@ function useEmployeeColumns(
                 {fullName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-dark dark:text-white truncate">{fullName}</p>
+                <p className="text-sm font-semibold text-foreground truncate">{fullName}</p>
                 <p className="text-xs text-muted truncate flex items-center gap-1">
                   <Mail className="h-3 w-3 shrink-0" />
                   {emp.email || "—"}
@@ -206,7 +209,7 @@ function useEmployeeColumns(
         header: "Role",
         sortable: true,
         cell: (emp: any) => (
-          <span className="text-sm capitalize text-dark dark:text-white font-medium">
+          <span className="text-sm capitalize text-foreground font-medium">
             {emp.role?.replace("_", " ") || "—"}
           </span>
         ),
@@ -322,6 +325,100 @@ export default function EmployeesPage() {
     setDeleteConfirmName("");
     setEmergencyExpanded(false);
   }, []);
+
+  // ── CSV Bulk Import & Export State ──────────────────────
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importCsvText, setImportCsvText] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleExportCSV = useCallback(() => {
+    if (!employees || employees.length === 0) {
+      toast.error("No employees to export", "The current employee list is empty.");
+      return;
+    }
+    const headers = ["Employee Code", "Display Name", "Email", "Department", "Designation", "Role", "Status", "Joining Date", "Phone"];
+    const rows = employees.map((e: any) => [
+      `"${e.employeeCode || ""}"`,
+      `"${(e.displayName || e.name || "").replace(/"/g, '""')}"`,
+      `"${e.email || ""}"`,
+      `"${e.departmentName || e.department || ""}"`,
+      `"${e.designationName || e.designation || ""}"`,
+      `"${e.role || "employee"}"`,
+      `"${e.status || "active"}"`,
+      `"${e.joiningDate || ""}"`,
+      `"${e.phone || ""}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `employees-export-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Export Complete", `Exported ${employees.length} employee records.`);
+  }, [employees, toast]);
+
+  const handleBulkImport = async () => {
+    if (!importCsvText.trim()) {
+      toast.error("Missing CSV Content", "Please paste CSV rows or upload a file.");
+      return;
+    }
+    setIsImporting(true);
+    try {
+      const lines = importCsvText.trim().split("\n");
+      if (lines.length < 2) {
+        toast.error("Invalid CSV", "CSV must contain a header row and at least 1 data row.");
+        setIsImporting(false);
+        return;
+      }
+      const headerLine = lines[0].toLowerCase();
+      const headers = headerLine.split(",").map((h) => h.trim().replace(/^["']|["']$/g, ""));
+
+      const parsedEmployees = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const vals = line.split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
+        const row: Record<string, string> = {};
+        headers.forEach((h, idx) => {
+          row[h] = vals[idx] || "";
+        });
+        parsedEmployees.push({
+          email: row.email,
+          displayName: row["display name"] || row.name || `${row["first name"] || ""} ${row["last name"] || ""}`.trim(),
+          firstName: row["first name"] || row.name?.split(" ")[0] || "Employee",
+          lastName: row["last name"] || row.name?.split(" ").slice(1).join(" ") || "",
+          department: row.department || "General",
+          designation: row.designation || "Staff",
+          phone: row.phone || "",
+          role: row.role || "employee",
+          status: row.status || "active",
+          joiningDate: row["joining date"] || row.joiningdate || "",
+        });
+      }
+
+      const res = await fetch("/api/hrm/v2/employees/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employees: parsedEmployees }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Import Successful", data.message || `Imported ${data.data?.imported || 0} employees.`);
+        setShowImportDialog(false);
+        setImportCsvText("");
+        fetchEmployees();
+      } else {
+        toast.error("Import Failed", data.error || "Failed to process bulk import.");
+      }
+    } catch (err: any) {
+      toast.error("Import Error", err.message || "Failed to parse CSV.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   // ── Auto-generate displayName ──────────────────────────
   const updateNameField = useCallback(
@@ -502,7 +599,7 @@ export default function EmployeesPage() {
       <select
         value={statusFilter}
         onChange={(e) => { setStatusFilter(e.target.value); }}
-        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:-[0_3px_9px_rgba(94,114,228,0.1)] focus:outline-none"
+        className="h-9 rounded-md border border-input bg-background px-3 py-2 pr-8 text-sm text-foreground appearance-none cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none"
         aria-label="Filter by status"
       >
         {EMPLOYEE_STATUSES.map((s) => (
@@ -547,7 +644,7 @@ export default function EmployeesPage() {
         title="Employees"
         description="Manage your workforce — view, add, and manage employee records."
       >
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="icon" onClick={async () => {
             setIsRefreshing(true);
             await fetchEmployees();
@@ -555,8 +652,16 @@ export default function EmployeesPage() {
           }} title={isRefreshing ? "Refreshing..." : "Refresh data"} disabled={isRefreshing}>
             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
           </Button>
-          <Button onClick={openAddDialog}>
-            <UserPlus className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="mr-1.5 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button size="sm" onClick={openAddDialog}>
+            <UserPlus className="mr-1.5 h-4 w-4" />
             Add Employee
           </Button>
         </div>
@@ -566,7 +671,7 @@ export default function EmployeesPage() {
       {summaryLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card rounded-xl border border-border p-4 animate-pulse">
+            <div key={i} className="bg-card rounded-xl border border-border p-4 motion-safe:animate-pulse motion-reduce:animate-none">
               <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
               <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
             </div>
@@ -581,8 +686,8 @@ export default function EmployeesPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Total Employees</p>
-                <p className="text-2xl font-bold text-dark dark:text-white mt-1">
+                <p className="text-xs font-semibold text-muted">Total Employees</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {employees?.length || 0}
                 </p>
               </div>
@@ -594,7 +699,7 @@ export default function EmployeesPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Active</p>
+                <p className="text-xs font-semibold text-muted">Active</p>
                 <p className="text-2xl font-bold text-success mt-1">{activeCount}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -605,7 +710,7 @@ export default function EmployeesPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">On Probation</p>
+                <p className="text-xs font-semibold text-muted">On Probation</p>
                 <p className="text-2xl font-bold text-warning mt-1">{probationCount}</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
@@ -767,7 +872,7 @@ export default function EmployeesPage() {
 
           {/* Confirmation input */}
           <div className="mt-4">
-            <label className="block text-sm font-semibold text-dark dark:text-white mb-1.5">
+            <label className="block text-sm font-semibold text-foreground mb-1.5">
               Type <strong>{selectedEmployee?.displayName || "the employee name"}</strong> to confirm
             </label>
             <div className="relative">
@@ -775,7 +880,7 @@ export default function EmployeesPage() {
                 value={deleteConfirmName}
                 onChange={(e) => setDeleteConfirmName(e.target.value)}
                 placeholder="Type the employee name..."
-                className="border-danger/40 focus:border-danger focus:-[0_3px_9px_rgba(245,54,92,0.15)]"
+                className="border-danger/40 focus:border-danger focus:ring-1 focus:ring-destructive/20"
               />
             </div>
           </div>
@@ -797,6 +902,67 @@ export default function EmployeesPage() {
             </p>
           )}
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Import CSV Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white">
+                <FileSpreadsheet className="h-6 w-6" />
+              </div>
+              <div>
+                <DialogTitle>Bulk Import Employees (CSV)</DialogTitle>
+                <DialogDescription>
+                  Upload or paste CSV rows with headers: <code>email, first name, last name, department, designation, phone, role</code>
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 my-2">
+            <div>
+              <label className="text-xs font-semibold text-muted block mb-1">Upload CSV File</label>
+              <Input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                      setImportCsvText(String(evt.target?.result || ""));
+                    };
+                    reader.readAsText(file);
+                  }
+                }}
+                className="cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted block mb-1">Or Paste CSV Content</label>
+              <textarea
+                value={importCsvText}
+                onChange={(e) => setImportCsvText(e.target.value)}
+                placeholder={"email,first name,last name,department,designation,phone,role\nalice@company.com,Alice,Sharma,Engineering,Full Stack Engineer,9876543210,employee"}
+                rows={6}
+                className="w-full text-xs font-mono p-3 rounded-lg border border-border bg-background focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+            <Button variant="ghost" onClick={() => setShowImportDialog(false)} disabled={isImporting}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkImport} disabled={isImporting || !importCsvText.trim()}>
+              {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+              {isImporting ? "Importing to Database..." : "Import Employees"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </AppShell>

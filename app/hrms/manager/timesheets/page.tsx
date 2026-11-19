@@ -78,7 +78,7 @@ export default function ManagerTimesheetsPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
           />
           {approved.length > 0 && (
             <Button onClick={handleLockAll} className="bg-primary text-white font-bold text-xs gap-1">
@@ -90,27 +90,27 @@ export default function ManagerTimesheetsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 text-center text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-4 text-center text-slate-900 dark:text-white">
           <p className="text-2xl font-extrabold text-yellow-600 dark:text-yellow-400">{pending.length}</p>
           <p className="text-[11px] text-slate-500">Pending Review</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 text-center text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-4 text-center text-slate-900 dark:text-white">
           <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{approved.length}</p>
           <p className="text-[11px] text-slate-500">Approved</p>
         </div>
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 text-center text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-border bg-card p-4 text-center text-slate-900 dark:text-white">
           <p className="text-2xl font-extrabold text-primary">{locked.length}</p>
           <p className="text-[11px] text-slate-500">Locked (Payroll Ready)</p>
         </div>
       </div>
 
       {/* Pending Timesheets */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white mb-6">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground mb-6">
         <h3 className="font-bold text-base mb-4 flex items-center gap-2">
           <Clock className="h-5 w-5 text-yellow-500" /> Pending Review ({pending.length})
         </h3>
         {pending.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs flex items-center justify-center gap-1.5">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs flex items-center justify-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             <span>All timesheets reviewed for this date!</span>
           </div>
@@ -159,7 +159,7 @@ export default function ManagerTimesheetsPage() {
 
       {/* Approved → Locked */}
       {approved.length > 0 && (
-        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-card p-6 backdrop-blur-md text-slate-900 dark:text-white">
           <h3 className="font-bold text-base mb-3 flex items-center gap-2">
             <Lock className="h-5 w-5 text-emerald-500" /> Approved & Ready to Lock ({approved.length})
           </h3>
@@ -170,7 +170,7 @@ export default function ManagerTimesheetsPage() {
             {approved.map((t) => (
               <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 text-xs">
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {t.userName} — {t.taskTitle}
+                  {t.userName}: {t.taskTitle}
                 </span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{t.hours}h</span>
               </div>

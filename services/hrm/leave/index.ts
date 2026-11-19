@@ -1,4 +1,6 @@
 import "server-only";
+export { calculateSandwichLeave } from "./sandwich";
+export type { SandwichLeaveCalculationParams, SandwichLeaveResult, DayLeaveDetail } from "./sandwich";
 import {
   leavePlansService,
   leaveTypesService,

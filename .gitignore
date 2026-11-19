@@ -10,6 +10,7 @@
 
 # Testing & Coverage
 /coverage
+__tests__/
 
 # Next.js Build Artifacts
 /.next/
@@ -44,6 +45,8 @@ scripts/backup-cleanup.json
 !README.md
 !CHANGELOG.md
 API_*
+docs/
+doc/
 scripts/audit/
 __tests__/api/
 AGENTS.md

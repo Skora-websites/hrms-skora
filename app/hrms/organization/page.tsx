@@ -27,14 +27,18 @@ import {
   LayoutGrid,
   Pencil,
   Trash2,
+  Network,
+  List,
 } from "lucide-react";
 import { useOrganizations, useDepartments, useDesignations } from "@/hooks/hrm/use-organization";
 import { useMutation } from "@/hooks/use-mutation";
+import { OrgChartTree } from "@/components/organization/org-chart-tree";
 
 const emptyDeptForm = { name: "", code: "", organizationId: "", headUserId: "", status: "active" };
 const emptyDesigForm = { name: "", grade: "", level: "1", organizationId: "" };
 
 export default function OrganizationPage() {
+  const [activeTab, setActiveTab] = useState<"structure" | "chart">("structure");
   const [search, setSearch] = useState("");
   const { data: departments, loading, error, refetch } = useDepartments();
   const { data: designations, refetch: refetchDesigs } = useDesignations();
@@ -113,41 +117,71 @@ export default function OrganizationPage() {
     <AppShell title="Organization">
       <PageHeader
         title="Organization"
-        description="Manage departments, designations, business units, and locations."
+        description="Manage departments, designations, business units, and organizational hierarchy."
       >
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { resetDeptForm(); setShowAddDept(true); }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Department
-          </Button>
-          <Button onClick={() => { resetDesigForm(); setShowAddDesig(true); }}>
-            <Building2 className="mr-2 h-4 w-4" />
-            Add Designation
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-card border border-border rounded-lg p-0.5">
+            <Button
+              variant={activeTab === "structure" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 text-xs font-medium"
+              onClick={() => setActiveTab("structure")}
+            >
+              <List className="mr-1.5 h-3.5 w-3.5" />
+              Departments & Designations
+            </Button>
+            <Button
+              variant={activeTab === "chart" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 text-xs font-medium"
+              onClick={() => setActiveTab("chart")}
+            >
+              <Network className="mr-1.5 h-3.5 w-3.5" />
+              Interactive Org Chart
+            </Button>
+          </div>
+
+          {activeTab === "structure" && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => { resetDeptForm(); setShowAddDept(true); }}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Department
+              </Button>
+              <Button size="sm" onClick={() => { resetDesigForm(); setShowAddDesig(true); }}>
+                <Building2 className="mr-1.5 h-4 w-4" />
+                Add Designation
+              </Button>
+            </>
+          )}
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {[
-          { label: "Departments", value: safeDepts.length || "—", icon: Briefcase, color: "text-primary" },
-          { label: "Designations", value: safeDesigs.length || "—", icon: Users, color: "text-info" },
-          { label: "Locations", value: "—", icon: MapPin, color: "text-success" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
-            <div className="flex items-center justify-between mb-2">
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
-              <LayoutGrid className="h-4 w-4 text-muted" />
-            </div>
-            <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
-            <p className="text-xs text-muted mt-1">{stat.label}</p>
+      {activeTab === "chart" ? (
+        <OrgChartTree />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {[
+              { label: "Departments", value: safeDepts.length || "—", icon: Briefcase, color: "text-primary" },
+              { label: "Designations", value: safeDesigs.length || "—", icon: Users, color: "text-info" },
+              { label: "Locations", value: "—", icon: MapPin, color: "text-success" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  <LayoutGrid className="h-4 w-4 text-muted" />
+                </div>
+                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted mt-1">{stat.label}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
       {/* Departments */}
       <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <h3 className="text-sm font-bold text-dark dark:text-white">Departments</h3>
+          <h3 className="text-sm font-bold text-foreground">Departments</h3>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <Input
@@ -167,7 +201,7 @@ export default function OrganizationPage() {
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-lg bg-gradient-info flex items-center justify-center text-white"><Briefcase className="h-4 w-4" /></div>
                   <div>
-                    <p className="text-sm font-medium text-dark dark:text-white">{dept.name}</p>
+                    <p className="text-sm font-medium text-foreground">{dept.name}</p>
                     <p className="text-xs text-muted">{dept.headUserId ? `Head: ${dept.headUserId}` : dept.code || "—"}</p>
                   </div>
                 </div>
@@ -187,7 +221,7 @@ export default function OrganizationPage() {
       {/* Designations + Locations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-bold text-dark dark:text-white">Designations</h3></div>
+          <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-bold text-foreground">Designations</h3></div>
           {safeDesigs.length > 0 ? (
             <div className="divide-y divide-border">
               {safeDesigs.map((des) => (
@@ -195,7 +229,7 @@ export default function OrganizationPage() {
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-lg bg-gradient-warning flex items-center justify-center text-white"><Users className="h-4 w-4" /></div>
                     <div>
-                      <p className="text-sm font-medium text-dark dark:text-white">{des.name}</p>
+                      <p className="text-sm font-medium text-foreground">{des.name}</p>
                       <p className="text-xs text-muted">{des.grade ? `Grade ${des.grade}` : `Level ${des.level || "—"}`}</p>
                     </div>
                   </div>
@@ -212,10 +246,12 @@ export default function OrganizationPage() {
         </div>
 
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-bold text-dark dark:text-white">Locations</h3></div>
+          <div className="px-4 py-3 border-b border-border"><h3 className="text-sm font-bold text-foreground">Locations</h3></div>
           <div className="p-6 text-center"><MapPin className="h-8 w-8 text-muted mx-auto mb-2" /><p className="text-sm text-muted">No locations configured.</p></div>
         </div>
       </div>
+    </>
+  )}
 
       {/* Add/Edit Department Dialog */}
       <Dialog open={showAddDept} onOpenChange={setShowAddDept}>

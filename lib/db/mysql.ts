@@ -157,7 +157,6 @@ export const COLLECTION_TABLE_MAP: Record<string, string> = {
   email_delivery_log: "email_delivery_logs",
   counters: "counters",
   escalations: "escalations",
-  ai_chat_messages: "ai_chat_messages",
   shifts: "shifts",
   shift_assignments: "shift_assignments",
   weekly_offs: "weekly_offs",
@@ -169,6 +168,20 @@ export const COLLECTION_TABLE_MAP: Record<string, string> = {
   overtime: "overtime_records",
   kudos: "kudos",
   kudos_likes: "kudos_likes",
+  workflow_rules: "workflow_rules",
+  workflow_execution_logs: "workflow_execution_logs",
+  roles_permissions_matrix: "roles_permissions_matrix",
+  shift_swap_requests: "shift_swap_requests",
+  exit_settlements: "exit_settlements",
+  document_letter_templates: "document_letter_templates",
+  generated_employee_letters: "generated_employee_letters",
+  statutory_config: "statutory_config",
+  employee_tax_declarations: "employee_tax_declarations",
+  payroll_disbursement_batches: "payroll_disbursement_batches",
+  department_headcount_plans: "department_headcount_plans",
+  internal_job_postings: "internal_job_postings",
+  performance_360_reviews: "performance_360_reviews",
+  custom_report_definitions: "custom_report_definitions",
 };
 
 // Cache table columns
@@ -192,14 +205,50 @@ async function getTableColumns(tableName: string): Promise<Set<string>> {
   }
 }
 
+const HIGH_FREQUENCY_SCHEMAS: Record<string, string> = {
+  attendance: `
+    \`userId\` varchar(64) DEFAULT NULL,
+    \`date\` varchar(32) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT NULL,
+    KEY \`ix_attendance_user_date\` (\`tenantId\`, \`userId\`, \`date\`),
+    KEY \`ix_attendance_date_status\` (\`tenantId\`, \`date\`, \`status\`),
+  `,
+  users: `
+    \`email\` varchar(255) DEFAULT NULL,
+    \`role\` varchar(64) DEFAULT NULL,
+    KEY \`ix_users_tenant_email\` (\`tenantId\`, \`email\`),
+  `,
+  sessions: `
+    \`token\` varchar(255) DEFAULT NULL,
+    \`userId\` varchar(64) DEFAULT NULL,
+    KEY \`ix_sessions_token\` (\`token\`),
+  `,
+  payroll_transactions: `
+    \`payrollRunId\` varchar(64) DEFAULT NULL,
+    \`userId\` varchar(64) DEFAULT NULL,
+    \`periodMonth\` varchar(32) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT NULL,
+    KEY \`ix_paytx_tenant_month\` (\`tenantId\`, \`periodMonth\`),
+  `,
+  leave_requests: `
+    \`userId\` varchar(64) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT NULL,
+    \`startDate\` varchar(32) DEFAULT NULL,
+    \`endDate\` varchar(32) DEFAULT NULL,
+    KEY \`ix_leave_user_status\` (\`tenantId\`, \`userId\`, \`status\`),
+  `,
+};
+
 async function ensureTableExists(tableName: string): Promise<Set<string>> {
   const pool = getMySQLPool();
+  const extraCols = HIGH_FREQUENCY_SCHEMAS[tableName] || "";
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS \`${tableName}\` (
         \`id\` bigint(20) NOT NULL AUTO_INCREMENT,
         \`legacyId\` char(24) DEFAULT NULL,
         \`tenantId\` varchar(64) NOT NULL DEFAULT 'default',
+        ${extraCols}
         \`createdAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
         \`updatedAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
         \`deletedAt\` datetime(3) DEFAULT NULL,
@@ -500,6 +549,25 @@ export class MySQLCollection<T = any> {
     return new MySQLCursor<TResult>(this.tableName, filter);
   }
 
+  async findOneForUpdate<TResult = T>(
+    filter: Record<string, any> = {},
+    conn?: mysql.PoolConnection
+  ): Promise<TResult | null> {
+    const pool = getMySQLPool();
+    const connection = conn || (await pool.getConnection());
+    const shouldRelease = !conn;
+    try {
+      const columns = await getTableColumns(this.tableName);
+      const { sql: whereSql, params } = parseFilter(this.tableName, columns, filter);
+      const query = `SELECT * FROM \`${this.tableName}\` WHERE ${whereSql} LIMIT 1 FOR UPDATE`;
+      const [rows] = await connection.query<RowDataPacket[]>(query, params);
+      if (!rows || rows.length === 0) return null;
+      return rowToDoc<TResult>(rows[0]);
+    } finally {
+      if (shouldRelease) connection.release();
+    }
+  }
+
   async insertOne(doc: any): Promise<{ acknowledged: boolean; insertedId: string }> {
     const pool = getMySQLPool();
     const columns = await getTableColumns(this.tableName);
@@ -779,6 +847,28 @@ export async function getDb(): Promise<MySQLDatabase> {
     dbInstance = new MySQLDatabase();
   }
   return dbInstance;
+}
+
+/**
+ * Execute an operation within a managed MySQL InnoDB ACID transaction.
+ * Automatically handles BEGIN, COMMIT, and ROLLBACK on error.
+ */
+export async function withTransaction<T>(
+  callback: (conn: mysql.PoolConnection) => Promise<T>
+): Promise<T> {
+  const pool = getMySQLPool();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const result = await callback(conn);
+    await conn.commit();
+    return result;
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function getMongoClient(): Promise<{ db: (name?: string) => MySQLDatabase; close: () => Promise<void> }> {

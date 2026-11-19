@@ -95,7 +95,7 @@ export default function DocumentsPage() {
               <Icon className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-dark dark:text-white">{doc.title}</p>
+              <p className="text-sm font-medium text-foreground">{doc.title}</p>
               <p className="text-xs text-muted">{doc.categoryId || "General"}</p>
             </div>
           </div>
@@ -106,8 +106,8 @@ export default function DocumentsPage() {
       key: "fileType",
       header: "Type",
       cell: (doc: any) => {
-        const ext = doc.fileType?.split("/").pop()?.split("+")[0] || doc.fileType || "—";
-        return <span className="text-xs font-mono text-muted uppercase">{ext}</span>;
+        const ext = doc.fileType?.split("/").pop()?.split("+")[0] || doc.fileType || "N/A";
+        return <span className="text-xs font-mono text-muted">{ext}</span>;
       },
     },
     {
@@ -115,13 +115,13 @@ export default function DocumentsPage() {
       header: "Size",
       sortable: true,
       cell: (doc: any) => (
-        <span className="text-sm text-muted">{doc.fileSize > 0 ? `${(doc.fileSize / 1024).toFixed(0)} KB` : "—"}</span>
+        <span className="text-sm text-muted">{doc.fileSize > 0 ? `${(doc.fileSize / 1024).toFixed(0)} KB` : "N/A"}</span>
       ),
     },
     {
       key: "userId",
       header: "User",
-      cell: (doc: any) => <span className="text-sm text-muted">{doc.userId || "—"}</span>,
+      cell: (doc: any) => <span className="text-sm text-muted">{doc.userId || "N/A"}</span>,
     },
     {
       key: "status",
@@ -138,7 +138,7 @@ export default function DocumentsPage() {
       header: "Created",
       sortable: true,
       cell: (doc: any) => (
-        <span className="text-xs text-muted">{doc.createdAt ? formatDate(doc.createdAt as any) : "—"}</span>
+        <span className="text-xs text-muted">{doc.createdAt ? formatDate(doc.createdAt as any) : "N/A"}</span>
       ),
     },
   ];
@@ -152,22 +152,22 @@ export default function DocumentsPage() {
     <AppShell title="Documents">
       <PageHeader title="Documents" description="Manage employee documents, contracts, and company files.">
         <div className="flex gap-2">
-          <Button variant="outline"><Download className="mr-2 h-4 w-4" />Export All</Button>
-          <Button onClick={() => { resetForm(); setShowUpload(true); }}><Upload className="mr-2 h-4 w-4" />Upload</Button>
+          <Button variant="outline" className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"><Download className="mr-2 h-4 w-4" />Export All</Button>
+          <Button className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" onClick={() => { resetForm(); setShowUpload(true); }}><Upload className="mr-2 h-4 w-4" />Upload</Button>
         </div>
       </PageHeader>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Total Documents", value: safeDocs.length || "—", icon: FileText, color: "text-primary" },
+          { label: "Total Documents", value: safeDocs.length || 0, icon: FileText, color: "text-primary" },
           { label: "Active", value: safeDocs.filter((d: any) => d.status === "active").length, icon: File, color: "text-info" },
           { label: "Verified", value: safeDocs.filter((d: any) => d.isVerified).length, icon: Folder, color: "text-warning" },
           { label: "Expired", value: safeDocs.filter((d: any) => d.status === "expired").length, icon: Upload, color: "text-success" },
         ].map((stat: any) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
-            <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>
           </div>
         ))}

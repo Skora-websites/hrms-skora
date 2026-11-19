@@ -122,7 +122,7 @@ export default function JobsPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Briefcase className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No jobs found</p>
+          <p className="text-foreground font-semibold text-lg">No jobs found</p>
           <p className="text-sm text-muted mt-1">Try adjusting your search.</p>
         </div>
       ) : (
@@ -141,7 +141,7 @@ export default function JobsPage() {
                     <Briefcase className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-dark dark:text-white">{job.title}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{job.title}</h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
                         <Users className="h-3 w-3" />{job.department}
@@ -159,7 +159,7 @@ export default function JobsPage() {
                   <Badge variant={statusBadge[job.status] || "info"} size="sm">
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                   </Badge>
-                  <span className="text-xs font-semibold text-dark dark:text-white bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
+                  <span className="text-xs font-semibold text-foreground bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
                     {job.applicants} applicants
                   </span>
                   <Button variant="ghost" size="icon-sm" onClick={() => router.push(`/hrms/recruitment?job=${job.id}`)} aria-label={`View ${job.title}`}>

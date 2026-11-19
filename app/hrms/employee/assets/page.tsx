@@ -168,7 +168,7 @@ export default function EmployeeAssetsPage() {
             <Package className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-dark dark:text-white">{assets.length}</p>
+            <p className="text-2xl font-bold text-foreground">{assets.length}</p>
             <p className="text-xs text-muted">Assigned Equipment</p>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function EmployeeAssetsPage() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-dark dark:text-white">
+            <p className="text-2xl font-bold text-foreground">
               {assets.filter((a) => a.condition === "new" || a.condition === "good").length}
             </p>
             <p className="text-xs text-muted">In Good Standing</p>
@@ -190,7 +190,7 @@ export default function EmployeeAssetsPage() {
             <Wrench className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-dark dark:text-white">
+            <p className="text-2xl font-bold text-foreground">
               {assets.filter((a) => a.status === "under_maintenance").length}
             </p>
             <p className="text-xs text-muted">Under Maintenance</p>
@@ -217,7 +217,7 @@ export default function EmployeeAssetsPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Package className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No assets assigned</p>
+          <p className="text-foreground font-semibold text-lg">No assets assigned</p>
           <p className="text-sm text-muted mt-1">
             {search
               ? "No assets match your search."
@@ -243,7 +243,7 @@ export default function EmployeeAssetsPage() {
                         {getAssetIcon(asset.categoryId, asset.name)}
                       </div>
                       <div>
-                        <h3 className="text-base font-semibold text-dark dark:text-white">{asset.name}</h3>
+                        <h3 className="text-base font-semibold text-foreground">{asset.name}</h3>
                         {asset.assetCode && (
                           <span className="text-xs font-mono text-muted">{asset.assetCode}</span>
                         )}
@@ -258,19 +258,19 @@ export default function EmployeeAssetsPage() {
                     {asset.serialNumber && (
                       <div className="flex justify-between">
                         <span>Serial Number:</span>
-                        <span className="font-mono text-dark dark:text-white font-medium">{asset.serialNumber}</span>
+                        <span className="font-mono text-foreground font-medium">{asset.serialNumber}</span>
                       </div>
                     )}
                     {asset.categoryId && (
                       <div className="flex justify-between">
                         <span>Category:</span>
-                        <span className="capitalize text-dark dark:text-white font-medium">{asset.categoryId}</span>
+                        <span className="capitalize text-foreground font-medium">{asset.categoryId}</span>
                       </div>
                     )}
                     {asset.purchaseDate && (
                       <div className="flex justify-between">
                         <span>Issued / Acquired:</span>
-                        <span className="text-dark dark:text-white font-medium">{formatDate(asset.purchaseDate as any)}</span>
+                        <span className="text-foreground font-medium">{formatDate(asset.purchaseDate as any)}</span>
                       </div>
                     )}
                   </div>
@@ -310,7 +310,7 @@ export default function EmployeeAssetsPage() {
             <form onSubmit={(e) => { e.preventDefault(); handleReportIssue(); }}>
               <div className="space-y-4">
                 <div className="p-3 bg-muted/20 rounded-lg text-xs space-y-1">
-                  <p className="font-semibold text-dark dark:text-white">{selectedAsset.name}</p>
+                  <p className="font-semibold text-foreground">{selectedAsset.name}</p>
                   <p className="text-muted">Serial: {selectedAsset.serialNumber || "N/A"}</p>
                 </div>
 

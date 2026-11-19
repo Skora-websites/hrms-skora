@@ -97,7 +97,7 @@ export default function HolidaysPage() {
           <div className="h-9 w-9 rounded-lg bg-gradient-warning/10 flex items-center justify-center">
             <Sun className="h-5 w-5 text-warning" />
           </div>
-          <span className="text-sm font-semibold text-dark dark:text-white">{holiday.name}</span>
+          <span className="text-sm font-semibold text-foreground">{holiday.name}</span>
         </div>
       ),
     },
@@ -106,7 +106,7 @@ export default function HolidaysPage() {
       header: "Date",
       sortable: true,
       cell: (holiday: any) => (
-        <span className="text-sm text-muted">{holiday.date ? formatDate(holiday.date as any) : "—"}</span>
+        <span className="text-sm text-muted">{holiday.date ? formatDate(holiday.date as any) : "N/A"}</span>
       ),
     },
     {
@@ -145,12 +145,12 @@ export default function HolidaysPage() {
         description="Manage company holidays, regional observances, and holiday plans."
       >
         {canManage ? (
-          <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
+          <Button className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" onClick={() => { resetForm(); setShowAddDialog(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Add Holiday
           </Button>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Read-only — holiday management is HR/CEO only</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Read-only: holiday management is HR/CEO only</span>
         )}
       </PageHeader>
 
@@ -163,7 +163,7 @@ export default function HolidaysPage() {
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
-            <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>
           </div>
         ))}

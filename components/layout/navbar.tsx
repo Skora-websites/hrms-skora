@@ -192,13 +192,13 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.href} className="flex items-center gap-2">
             {index > 0 && (
-              <span className="text-muted/50">/</span>
+              <span className="text-muted-foreground/60">/</span>
             )}
             <span
               className={cn(
                 index === breadcrumbs.length - 1
-                  ? "text-muted font-semibold"
-                  : "text-muted/60 hover:text-muted transition-colors"
+                  ? "text-foreground font-semibold"
+                  : "text-muted-foreground hover:text-foreground transition-colors"
               )}
             >
               {crumb.label}
@@ -209,7 +209,7 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
 
       {/* Title for mobile */}
       {isMobile && title && (
-        <h6 className="text-dark dark:text-white font-semibold truncate">
+        <h6 className="text-foreground font-semibold truncate">
           {title}
         </h6>
       )}
@@ -220,11 +220,14 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
       {/* Search */}
       {!isMobile && (
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search..."
-            className="w-64 pl-9 h-9 text-sm bg-gray-50 dark:bg-gray-800/50 border-0 focus:w-80 transition-all duration-300"
+            placeholder="Search SKORA HRMS..."
+            className="w-64 pl-9 pr-9 h-9 text-xs rounded-xl bg-muted/40 border border-border/80 focus:bg-background focus:border-primary transition-colors duration-150"
           />
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border border-border/80 bg-background/80 px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-80">
+            <span>⌘</span>K
+          </kbd>
         </div>
       )}
 
@@ -252,7 +255,7 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
               <Badge
                 variant="danger"
                 size="sm"
-                className="absolute -right-1 -top-1 h-4 min-w-[16px] px-1 flex items-center justify-center text-xxs"
+                className="absolute -right-1 -top-1 h-4 min-w-[16px] px-1 flex items-center justify-center text-[11px]"
               >
                 {unreadCount > 99 ? "99+" : unreadCount}
               </Badge>
@@ -274,11 +277,11 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
           <DropdownMenuSeparator />
           {notifLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted">
-              <Bell className="h-8 w-8 mx-auto mb-2 text-muted/30" />
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
               <p>No notifications yet</p>
             </div>
           ) : (
@@ -315,14 +318,14 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
                         notif.referenceType === "project" ? "text-emerald-500" :
                         notif.type === "task" ? "text-info" :
                         notif.type === "ticket" ? "text-primary" :
-                        "text-muted"
+                        "text-muted-foreground"
                       )} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className={cn(
                           "text-sm truncate",
-                          !notif.isRead ? "font-semibold text-dark dark:text-white" : "text-dark dark:text-white"
+                          !notif.isRead ? "font-semibold text-foreground" : "text-foreground"
                         )}>
                           {notif.title}
                         </p>
@@ -330,8 +333,8 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
                           <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
                         )}
                       </div>
-                      <p className="text-xs text-muted truncate mt-0.5">{notif.body}</p>
-                      <p className="text-xxs text-muted/60 mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{notif.body}</p>
+                      <p className="text-xs text-muted-foreground/80 mt-0.5">
                         {getTimeAgo(notif.createdAt)}
                       </p>
                     </div>
@@ -362,12 +365,12 @@ export function Navbar({ onMenuClick, title }: NavbarProps) {
             {!isMobile && (
               <>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-dark dark:text-white leading-tight">
+                  <p className="text-sm font-semibold text-foreground leading-tight">
                     {displayName}
                   </p>
-                  <p className="text-xxs text-muted capitalize">{user?.role || "User"}</p>
+                  <p className="text-xs text-muted-foreground capitalize font-medium">{user?.role || "User"}</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </>
             )}
           </Button>

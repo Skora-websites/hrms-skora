@@ -145,8 +145,8 @@ export default function HrAdminSettingsPage() {
               </div>
             ))}
             <div className="flex gap-2">
-              <input type="text" placeholder="Holiday name" value={newHoliday.name} onChange={(e) => setNewHoliday({ ...newHoliday, name: e.target.value })} className="flex-1 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs focus:outline-none focus:border-primary" />
-              <input type="date" value={newHoliday.date} onChange={(e) => setNewHoliday({ ...newHoliday, date: e.target.value })} className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs focus:outline-none focus:border-primary" />
+              <input type="text" placeholder="Holiday name" value={newHoliday.name} onChange={(e) => setNewHoliday({ ...newHoliday, name: e.target.value })} className="flex-1 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs focus:outline-none focus:border-primary" />
+              <input type="date" value={newHoliday.date} onChange={(e) => setNewHoliday({ ...newHoliday, date: e.target.value })} className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs focus:outline-none focus:border-primary" />
               <Button type="button" size="sm" onClick={addHoliday} className="bg-primary text-white font-bold text-xs">
                 <Plus className="h-3.5 w-3.5" />
               </Button>
@@ -172,7 +172,7 @@ export default function HrAdminSettingsPage() {
             {carryForward && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Max carry-forward days:</span>
-                <input type="number" value={carryForwardLimit} onChange={(e) => setCarryForwardLimit(Number(e.target.value))} className="w-20 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-2 py-1 text-xs text-center focus:outline-none focus:border-primary" />
+                <input type="number" value={carryForwardLimit} onChange={(e) => setCarryForwardLimit(Number(e.target.value))} className="w-20 rounded-xl border border-border bg-white dark:bg-black/40 px-2 py-1 text-xs text-center focus:outline-none focus:border-primary" />
               </div>
             )}
           </div>
@@ -184,16 +184,16 @@ export default function HrAdminSettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5">
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">PF Contribution (%)</label>
-                <input type="number" step="0.01" value={pfPercent} onChange={(e) => setPfPercent(Number(e.target.value))} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
+                <input type="number" step="0.01" value={pfPercent} onChange={(e) => setPfPercent(Number(e.target.value))} className="w-full rounded-xl border border-border bg-white dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
               </div>
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5">
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">ESI Contribution (%)</label>
-                <input type="number" step="0.01" value={esiPercent} onChange={(e) => setEsiPercent(Number(e.target.value))} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
+                <input type="number" step="0.01" value={esiPercent} onChange={(e) => setEsiPercent(Number(e.target.value))} className="w-full rounded-xl border border-border bg-white dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
               </div>
             </div>
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5">
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Professional Tax (₹/month)</label>
-              <input type="number" value={professionalTax} onChange={(e) => setProfessionalTax(Number(e.target.value))} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
+              <input type="number" value={professionalTax} onChange={(e) => setProfessionalTax(Number(e.target.value))} className="w-full rounded-xl border border-border bg-white dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary" />
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5">
               <div>
@@ -222,7 +222,7 @@ export default function HrAdminSettingsPage() {
 
 function SettingsSection({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
       <h3 className="font-bold text-base flex items-center gap-2 mb-4">{icon} {title}</h3>
       {children}
     </div>
@@ -234,7 +234,7 @@ function AccrualInput({ label, value, onChange }: { label: string; value: number
     <div className="p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5">
       <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{label}</label>
       <div className="flex items-center gap-1">
-        <input type="number" step="0.5" value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-16 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-2 py-1 text-xs text-center focus:outline-none focus:border-primary" />
+        <input type="number" step="0.5" value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-16 rounded-xl border border-border bg-white dark:bg-black/40 px-2 py-1 text-xs text-center focus:outline-none focus:border-primary" />
         <span className="text-[10px] text-slate-500">/ month</span>
       </div>
     </div>

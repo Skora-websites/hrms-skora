@@ -164,7 +164,7 @@ export default function HrAdminOvertimePage() {
         <Card className="border border-border/70 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-muted/40 border-b border-border/70 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <thead className="bg-muted/40 border-b border-border/70 text-xs font-semibold text-muted-foreground">
                 <tr>
                   <th className="py-3 px-4">Employee</th>
                   <th className="py-3 px-4">Date</th>
@@ -246,7 +246,7 @@ export default function HrAdminOvertimePage() {
                           </div>
                         )}
                         {r.status !== "pending" && (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">N/A</span>
                         )}
                       </td>
                     </tr>

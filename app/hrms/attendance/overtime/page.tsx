@@ -216,7 +216,7 @@ export default function OvertimePage() {
         <Card className="border border-border/70 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-muted/40 border-b border-border/70 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <thead className="bg-muted/40 border-b border-border/70 text-xs font-semibold text-muted-foreground">
                 <tr>
                   <th className="py-3 px-4">Date</th>
                   <th className="py-3 px-4">Shift Schedule</th>
@@ -231,7 +231,7 @@ export default function OvertimePage() {
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="text-center py-10 text-muted-foreground">
-                      Loading overtime records...
+                      Loading overtime records…
                     </td>
                   </tr>
                 ) : records.length === 0 ? (
@@ -373,7 +373,7 @@ export default function OvertimePage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div
                     onClick={() => setFormData({ ...formData, compensationType: "comp_off" })}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors duration-150 ${
                       formData.compensationType === "comp_off"
                         ? "border-primary bg-primary/5 text-primary"
                         : "border-border/70 hover:bg-muted/40"
@@ -389,7 +389,7 @@ export default function OvertimePage() {
 
                   <div
                     onClick={() => setFormData({ ...formData, compensationType: "pay" })}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors duration-150 ${
                       formData.compensationType === "pay"
                         ? "border-primary bg-primary/5 text-primary"
                         : "border-border/70 hover:bg-muted/40"

@@ -12,10 +12,10 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        success: "bg-white dark:bg-gray-800 border-success/20 text-dark dark:text-white",
-        error: "bg-white dark:bg-gray-800 border-danger/20 text-dark dark:text-white",
-        warning: "bg-white dark:bg-gray-800 border-warning/20 text-dark dark:text-white",
-        info: "bg-white dark:bg-gray-800 border-info/20 text-dark dark:text-white",
+        success: "bg-white dark:bg-gray-800 border-success/20 text-foreground",
+        error: "bg-white dark:bg-gray-800 border-danger/20 text-foreground",
+        warning: "bg-white dark:bg-gray-800 border-warning/20 text-foreground",
+        info: "bg-white dark:bg-gray-800 border-info/20 text-foreground",
       },
     },
     defaultVariants: {
@@ -77,13 +77,13 @@ function Toast({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold">{message}</p>
         {description && (
-          <p className="text-xs text-dark/70 dark:text-gray-400 mt-0.5">{description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         )}
       </div>
       {onClose && (
         <button
           onClick={onClose}
-          className="shrink-0 rounded-md p-1 text-dark/50 dark:text-gray-500 hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-dark dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <X className="h-3.5 w-3.5" />
         </button>

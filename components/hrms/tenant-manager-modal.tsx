@@ -80,7 +80,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl flex items-center space-x-1.5 transition-all"
+        className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 rounded-xl flex items-center space-x-1.5 transition-colors duration-150"
       >
         <Plus className="w-3.5 h-3.5" />
         <span>Create Organization & HR Admin</span>
@@ -88,8 +88,8 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-xl w-full p-6 space-y-6 text-slate-900 dark:text-white my-8">
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-4">
+          <div className="bg-card border border-border/80 rounded-2xl max-w-xl w-full p-6 space-y-6 text-foreground shadow-2xl my-8">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center space-x-3">
                 <div className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
                   <Building2 className="w-5 h-5" />
@@ -118,7 +118,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                   <span>{success}</span>
                 </div>
                 {resetLink && (
-                  <div className="mt-2 p-2 bg-slate-50 dark:bg-black/40 rounded-lg border border-gray-200 dark:border-white/10">
+                  <div className="mt-2 p-2 bg-slate-50 dark:bg-black/40 rounded-lg border border-border">
                     <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5 text-primary" />
                       <span>Password Reset Link (share with HR Admin):</span>
@@ -132,7 +132,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div className="space-y-3 bg-slate-50 dark:bg-black/30 p-4 rounded-xl border border-gray-200 dark:border-white/5">
-                <h3 className="text-xs font-bold text-primary uppercase tracking-wider">1. Organization Details</h3>
+                <h3 className="text-xs font-bold text-primary">1. Organization Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-600 dark:text-slate-400 mb-1 font-medium">Company Name</label>
@@ -142,7 +142,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-black/40 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                     />
                   </div>
                   <div>
@@ -152,7 +152,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                       placeholder="e.g. acme.com"
                       value={formData.domain}
                       onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                      className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-black/40 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
@@ -165,7 +165,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                       step="any"
                       value={formData.latitude}
                       onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                      className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-black/40 border border-border rounded-lg px-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-primary"
                     />
                   </div>
                   <div>
@@ -175,14 +175,14 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                       step="any"
                       value={formData.longitude}
                       onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                      className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-black/40 border border-border rounded-lg px-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3 bg-slate-50 dark:bg-black/30 p-4 rounded-xl border border-gray-200 dark:border-white/5">
-                <h3 className="text-xs font-bold text-primary uppercase tracking-wider">2. Assigned HR Administrator</h3>
+                <h3 className="text-xs font-bold text-primary">2. Assigned HR Administrator</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-600 dark:text-slate-400 mb-1 font-medium"><User className="h-3 w-3 inline mr-1" />HR Admin Full Name</label>
@@ -191,7 +191,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                       placeholder="e.g. Sarah Connor"
                       value={formData.hrAdminName}
                       onChange={(e) => setFormData({ ...formData, hrAdminName: e.target.value })}
-                      className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-black/40 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                     />
                   </div>
                   <div>
@@ -202,7 +202,7 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                       value={formData.hrAdminEmail}
                       onChange={(e) => setFormData({ ...formData, hrAdminEmail: e.target.value })}
                       required
-                      className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                      className="w-full bg-white dark:bg-black/40 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
@@ -212,23 +212,23 @@ export function TenantManagerModal({ onCreated }: TenantManagerModalProps) {
                 </p>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-white/10">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-white/5 text-xs font-semibold transition-colors"
+                  className="px-4 py-2.5 rounded-xl border border-border text-slate-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-white/5 text-xs font-semibold transition-colors duration-150"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors duration-150 flex items-center gap-2 disabled:opacity-50"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Creating...
+                      <Loader2 className="h-3.5 w-3.5 motion-safe:animate-spin motion-reduce:animate-none" />
+                      Creating…
                     </>
                   ) : (
                     'Save & Provision Tenant'

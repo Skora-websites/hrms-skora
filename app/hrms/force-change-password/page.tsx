@@ -117,7 +117,7 @@ export default function ForceChangePasswordPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        <div className="motion-safe:animate-spin motion-reduce:animate-none h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function ForceChangePasswordPage() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900 p-4">
-        <div className="w-full max-w-md text-center space-y-6 animate-section-in">
+        <div className="w-full max-w-md text-center space-y-6 motion-safe:animate-section-in motion-reduce:animate-none">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/20">
             <CheckCircle2 className="h-10 w-10 text-emerald-400" />
           </div>
@@ -248,7 +248,7 @@ export default function ForceChangePasswordPage() {
 
           {/* Requirements */}
           <div className="rounded-xl bg-white/5 border border-white/5 p-3 space-y-1.5">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Requirements</p>
+            <p className="text-xs font-semibold text-slate-400">Requirements</p>
             {[
               { met: newPassword.length >= 8, label: "At least 8 characters" },
               { met: /[a-zA-Z]/.test(newPassword), label: "At least one letter" },
@@ -270,11 +270,11 @@ export default function ForceChangePasswordPage() {
           <button
             type="submit"
             disabled={saving || !newPassword || !confirmPassword}
-            className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {saving ? (
               <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                <div className="motion-safe:animate-spin motion-reduce:animate-none h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                 Updating...
               </>
             ) : (

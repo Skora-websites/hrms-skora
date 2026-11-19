@@ -84,7 +84,7 @@ export default function CandidatesPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Users className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No candidates found</p>
+          <p className="text-foreground font-semibold text-lg">No candidates found</p>
           <p className="text-sm text-muted mt-1">Try adjusting your search.</p>
         </div>
       ) : (
@@ -103,7 +103,7 @@ export default function CandidatesPage() {
                     {candidate.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-dark dark:text-white">{candidate.name}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{candidate.name}</h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
                         <Mail className="h-3 w-3" />{candidate.email}

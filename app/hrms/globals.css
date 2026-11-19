@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+/* Hallmark · built: the project · redesign: full · HRMS enterprise portal · scope: app */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ── Tailwind v4 Dark Mode Variant ────────────────────────
@@ -12,44 +13,44 @@
    color and gradient endpoints. JS sets these on <html>
    whenever the user picks a new theme color.               */
 :root {
-  --gradient-primary-start: #5e72e4;
-  --gradient-primary-end: #825ee4;
-  --gradient-info-start: #1171ef;
-  --gradient-info-end: #11cdef;
-  --gradient-success-start: #2dce89;
-  --gradient-success-end: #2dcecc;
-  --gradient-warning-start: #fb6340;
-  --gradient-warning-end: #fbb140;
-  --gradient-danger-start: #f5365c;
-  --gradient-danger-end: #f56036;
-  --gradient-dark-start: #212229;
-  --gradient-dark-end: #212529;
+  --gradient-primary-start: #1e40af;
+  --gradient-primary-end: #2563eb;
+  --gradient-info-start: #0284c7;
+  --gradient-info-end: #0ea5e9;
+  --gradient-success-start: #059669;
+  --gradient-success-end: #10b981;
+  --gradient-warning-start: #d97706;
+  --gradient-warning-end: #f59e0b;
+  --gradient-danger-start: #dc2626;
+  --gradient-danger-end: #ef4444;
+  --gradient-dark-start: #0f172a;
+  --gradient-dark-end: #1e293b;
 }
 
 /* Custom theme tokens */
 @theme {
-  --font-sans: 'Open Sans', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Brand colors */
-  --color-primary: #5e72e4;
-  --color-primary-50: #f0f1fe;
-  --color-primary-100: #dde0fc;
-  --color-primary-200: #c2c6fa;
-  --color-primary-300: #9da3f6;
-  --color-primary-400: #757bf0;
-  --color-primary-500: #5e72e4;
-  --color-primary-600: #4350d8;
-  --color-primary-700: #383ec6;
-  --color-primary-800: #2f34a0;
-  --color-primary-900: #2a2f7f;
+  --color-primary: #2563eb;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
 
-  --color-secondary: #8392ab;
-  --color-success: #2dce89;
-  --color-info: #11cdef;
-  --color-warning: #fb6340;
-  --color-danger: #f5365c;
-  --color-dark: #344767;
-  --color-light: #e9ecef;
+  --color-secondary: #64748b;
+  --color-success: #10b981;
+  --color-info: #0ea5e9;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-dark: #0f172a;
+  --color-light: #f1f5f9;
   --color-muted: #67748e;
 
   /* Gray scale */
@@ -64,50 +65,38 @@
   --color-gray-900: #212529;
 
   /* Border radius */
-  --radius-xs: 0.125rem;
-  --radius-sm: 0.25rem;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-3xl: 2rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
   --radius-pill: 50rem;
 
-  /* Font sizes */
-  --font-size-xxs: 0.65rem;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lead: 1.25rem;
-  --font-size-h6: 1rem;
-  --font-size-h5: 1.25rem;
-  --font-size-h4: 1.5rem;
-  --font-size-h3: 1.875rem;
-  --font-size-h2: 2.25rem;
-  --font-size-h1: 3rem;
-
-  /* Shadows: flat, clean design with no under-shadows */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-default: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-2xl: none;
+  /* Refined, modern enterprise shadow hierarchy */
+  --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-default: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 
   /* Letter spacing */
   --letter-spacing-tighter: -0.05rem;
+  --letter-spacing-tight: -0.025rem;
   --letter-spacing-wide: 0.025rem;
   --letter-spacing-wider: 0.05rem;
 
   /* Animations */
-  --animate-fade-in: fade-in 0.5s ease-out;
-  --animate-slide-down: slide-down 0.3s ease-out;
+  --animate-fade-in: fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-down: slide-down 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-pulse-soft: pulse-soft 1.2s ease-in-out infinite;
 
-  /* Semantic shadcn-style tokens (HSL triplets defined in :root/.dark below).
-     Without these mappings the bg-card / bg-sidebar / border-border /
-     text-foreground utilities compile to nothing (transparent UI). */
+  /* Semantic shadcn-style tokens */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -135,119 +124,164 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 }
 
-/* Undefined utility referenced by button/badge "light" variants. */
+/* Light utility for button/badge */
 @utility bg-gradient-light {
   background: var(--color-light);
 }
 
-/* Animations - consolidated */
+/* Modern Icon Shapes */
+@utility icon-shape {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+}
+
+@utility icon-shape-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+@utility icon-shape-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex-shrink: 0;
+}
+
+/* Subtle icon tint backgrounds */
+@utility bg-gradient-primary-subtle {
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent);
+}
+
+@utility bg-gradient-success-subtle {
+  background: rgba(16, 185, 129, 0.14);
+}
+
+@utility bg-gradient-info-subtle {
+  background: rgba(14, 165, 233, 0.14);
+}
+
+@utility bg-gradient-warning-subtle {
+  background: rgba(245, 158, 11, 0.14);
+}
+
+@utility bg-gradient-danger-subtle {
+  background: rgba(239, 68, 68, 0.14);
+}
+
+/* Animations */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-10px); }
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulse-soft {
-  0%, 100% { opacity: 0.6; }
+  0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
 }
 
-/* Form-specific animations */
 @keyframes form-error-in {
-  0% { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  0% { opacity: 0; transform: translateY(-4px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes section-in {
-  0% { opacity: 0; transform: translateY(12px); }
+  0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
-}
-@keyframes input-fill-pulse {
-  0% { box-shadow: 0 0 0 0 var(--color-primary-alpha, rgba(94,114,228,0.15)); }
-  70% { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 @utility animate-form-error {
-  animation: form-error-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: form-error-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @utility animate-section-in {
-  animation: section-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: section-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Stagger section children for a cascade effect */
 .animate-section-stagger > * {
   opacity: 0;
-  animation: section-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: section-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .animate-section-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.animate-section-stagger > *:nth-child(2) { animation-delay: 50ms; }
-.animate-section-stagger > *:nth-child(3) { animation-delay: 100ms; }
-.animate-section-stagger > *:nth-child(4) { animation-delay: 150ms; }
-.animate-section-stagger > *:nth-child(5) { animation-delay: 200ms; }
-.animate-section-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.animate-section-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.animate-section-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.animate-section-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.animate-section-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.animate-section-stagger > *:nth-child(6) { animation-delay: 200ms; }
 
 /* CSS Variables for dynamic theming (light/dark) */
 :root {
-  --background: 0 0% 100%;
+  --background: 216 28% 97%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 234 72% 62%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215 16% 47%;
-  --primary: 234 72% 62%;
+  --border: 214 25% 86%;
+  --input: 214 25% 86%;
+  --ring: 221.2 83.2% 53.3%;
+  --muted: 214 30% 93%;
+  --muted-foreground: 215 25% 35%;
+  --primary: 221.2 83.2% 53.3%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96.1%;
+  --secondary: 214 30% 93%;
   --secondary-foreground: 222 47% 11%;
-  --accent: 210 40% 96.1%;
+  --accent: 214 30% 93%;
   --accent-foreground: 222 47% 11%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 100%;
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-accent: 210 40% 96.1%;
+  --sidebar-border: 214 25% 88%;
+  --sidebar-accent: 214 30% 94%;
   --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-primary: 234 72% 62%;
+  --sidebar-primary: 221.2 83.2% 53.3%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-ring: 234 72% 62%;
+  --sidebar-ring: 221.2 83.2% 53.3%;
 }
 
 .dark {
-  --background: 224 71% 4%;
+  --background: 222 47% 6%;
   --foreground: 210 40% 98%;
   --card: 222 47% 9%;
   --card-foreground: 210 40% 98%;
   --border: 217 33% 18%;
   --input: 217 33% 18%;
-  --ring: 234 72% 62%;
-  --muted: 217 33% 16%;
-  --muted-foreground: 215 20% 65%;
-  --primary: 234 72% 62%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 217 33% 16%;
+  --ring: 217.2 91.2% 59.8%;
+  --muted: 220 35% 13%;
+  --muted-foreground: 215 20% 74%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 220 35% 13%;
   --secondary-foreground: 210 40% 98%;
-  --accent: 217 33% 16%;
+  --accent: 220 35% 15%;
   --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 62.8% 50.6%;
   --destructive-foreground: 210 40% 98%;
   --sidebar: 222 47% 7%;
   --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217 33% 15%;
-  --sidebar-accent: 217 33% 15%;
+  --sidebar-border: 217 33% 16%;
+  --sidebar-accent: 220 35% 13%;
   --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-primary: 234 72% 62%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-ring: 234 72% 62%;
+  --sidebar-primary: 217.2 91.2% 59.8%;
+  --sidebar-primary-foreground: 222 47% 11%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
 }
 
 /* Base layer — with smooth theme transitions */
@@ -255,23 +289,20 @@
   border-color: hsl(var(--border));
 }
 
-/* ── Smooth Theme Transitions (Scoped) ───────────────────
-   The `theme-transitioning` class is added by useTheme.tsx
-   on toggle for ~300ms — avoids performance overhead and
-   conflicts with existing component transitions.           */
 @media (prefers-reduced-motion: no-preference) {
   html.theme-transitioning,
   html.theme-transitioning *,
   html.theme-transitioning *::before,
   html.theme-transitioning *::after {
     transition-property: background-color, border-color, color;
-    transition-duration: 250ms;
+    transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -279,62 +310,61 @@ html {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Open Sans', system-ui, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
-  color: var(--color-dark);
+  color: hsl(var(--foreground));
+  letter-spacing: -0.025em;
+  text-wrap: balance;
 }
 
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: white;
-}
+h1 { font-size: 2.5rem; line-height: 1.2; letter-spacing: -0.04em; }
+h2 { font-size: 2rem; line-height: 1.25; letter-spacing: -0.035em; }
+h3 { font-size: 1.5rem; line-height: 1.3; letter-spacing: -0.025em; }
+h4 { font-size: 1.25rem; line-height: 1.35; letter-spacing: -0.02em; }
+h5 { font-size: 1.125rem; line-height: 1.4; }
+h6 { font-size: 1rem; line-height: 1.5; }
 
-h1 { font-size: 3rem; line-height: 1.25; letter-spacing: -0.05rem; }
-h2 { font-size: 2.25rem; line-height: 1.3; letter-spacing: -0.05rem; }
-h3 { font-size: 1.875rem; line-height: 1.375; letter-spacing: -0.05rem; }
-h4 { font-size: 1.5rem; line-height: 1.375; letter-spacing: -0.05rem; }
-h5 { font-size: 1.25rem; line-height: 1.375; }
-h6 { font-size: 1rem; line-height: 1.625; }
-
-/* Gradient backgrounds — use CSS vars so they're dynamic */
+/* Gradient backgrounds */
 @utility bg-gradient-primary {
-  background: linear-gradient(310deg, var(--gradient-primary-start, #5e72e4), var(--gradient-primary-end, #825ee4));
+  background: linear-gradient(310deg, var(--gradient-primary-start, #1e40af), var(--gradient-primary-end, #2563eb));
 }
 
 @utility bg-gradient-info {
-  background: linear-gradient(310deg, var(--gradient-info-start, #1171ef), var(--gradient-info-end, #11cdef));
+  background: linear-gradient(310deg, var(--gradient-info-start, #0284c7), var(--gradient-info-end, #0ea5e9));
 }
 
 @utility bg-gradient-success {
-  background: linear-gradient(310deg, var(--gradient-success-start, #2dce89), var(--gradient-success-end, #2dcecc));
+  background: linear-gradient(310deg, var(--gradient-success-start, #059669), var(--gradient-success-end, #10b981));
 }
 
 @utility bg-gradient-warning {
-  background: linear-gradient(310deg, var(--gradient-warning-start, #fb6340), var(--gradient-warning-end, #fbb140));
+  background: linear-gradient(310deg, var(--gradient-warning-start, #d97706), var(--gradient-warning-end, #f59e0b));
 }
 
 @utility bg-gradient-danger {
-  background: linear-gradient(310deg, var(--gradient-danger-start, #f5365c), var(--gradient-danger-end, #f56036));
+  background: linear-gradient(310deg, var(--gradient-danger-start, #dc2626), var(--gradient-danger-end, #ef4444));
 }
 
 @utility bg-gradient-dark {
-  background: linear-gradient(310deg, var(--gradient-dark-start, #212229), var(--gradient-dark-end, #212529));
+  background: linear-gradient(310deg, var(--gradient-dark-start, #0f172a), var(--gradient-dark-end, #1e293b));
 }
 
-/* Gradient text — uses CSS vars for dynamic primary color */
+/* Gradient text */
 @utility text-gradient {
-  background: linear-gradient(310deg, var(--gradient-primary-start, #5e72e4), var(--gradient-primary-end, #825ee4));
+  background: linear-gradient(310deg, var(--gradient-primary-start, #1e40af), var(--gradient-primary-end, #2563eb));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Focus ring uses CSS var so it follows primary color */
+/* Focus ring */
 :focus-visible {
   outline: none;
-  ring: 2px solid var(--color-primary, #5e72e4);
+  ring: 2px solid var(--color-primary);
   ring-offset: 2px;
   ring-offset-color: hsl(var(--background));
 }
@@ -363,7 +393,7 @@ h6 { font-size: 1rem; line-height: 1.625; }
 
 /* Selection */
 ::selection {
-  background: color-mix(in srgb, var(--color-primary, #5e72e4) 20%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
   color: var(--color-primary);
 }
 
@@ -376,29 +406,18 @@ h6 { font-size: 1rem; line-height: 1.625; }
   }
 }
 
-/* ── Navbar Glass Effect ─────────────────────────────────
-   Provides a semi-transparent background with blur for the
-   sticky navbar so page content never shows through it.    */
+/* ── Navbar Glass Effect ───────────────────────────────── */
 .navbar-glass {
-  background-color: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card) / 0.95);
+  border-bottom: 1px solid hsl(var(--border) / 0.8);
 }
 
 .dark .navbar-glass {
-  background-color: rgba(5, 17, 57, 0.92);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: hsl(var(--card) / 0.95);
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
 }
 
-/* Eliminate under-shadows across all elements */
-*, *::before, *::after {
-  --tw-shadow: 0 0 #0000 !important;
-  --tw-shadow-colored: 0 0 #0000 !important;
-  box-shadow: none !important;
-}
-
-/* Slow spin animation for theme configurator gear icon */
+/* Slow spin animation for icons */
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -406,4 +425,29 @@ h6 { font-size: 1rem; line-height: 1.625; }
 
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
+}
+
+/* ── Global Contrast & Text Legibility Enhancements ──────
+   Guarantees that .text-muted, .text-dark, and low-opacity
+   utilities are crisp, WCAG AAA accessible, and never washed out. */
+.text-muted {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.text-dark {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Guard against extreme opacity washes rendering text invisible */
+.text-muted\/30,
+.text-muted\/40,
+.text-muted\/50,
+.text-muted\/60 {
+  color: hsl(var(--muted-foreground) / 0.88) !important;
+}
+
+.text-sidebar-foreground\/30,
+.text-sidebar-foreground\/40,
+.text-sidebar-foreground\/50 {
+  color: hsl(var(--sidebar-foreground) / 0.8) !important;
 }

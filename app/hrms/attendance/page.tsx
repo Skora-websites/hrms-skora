@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
-import { AttendancePunchCard } from "@/components/hr/attendance-punch-card";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Download, Table as TableIcon, CheckCircle2, AlertCircle, Clock, MapPin, Search } from "lucide-react";
 import { fetchAttendanceRecordsAction } from "@/lib/actions/attendance-actions";
@@ -88,7 +87,7 @@ export default function AttendancePage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Attendance Control & Shift Logs</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Office Hours: <strong>10:00 AM – 7:00 PM</strong> · GPS Geofenced Punch Records
+            Office Hours: <strong>10:00 AM to 7:00 PM</strong>, GPS Geofenced Punch Records
           </p>
         </div>
 
@@ -96,40 +95,35 @@ export default function AttendancePage() {
           <Button
             onClick={handleExportCSV}
             variant="outline"
-            className="gap-2 border-gray-300 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 text-xs font-semibold"
+            className="gap-2 border-gray-300 dark:border-border text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 text-xs font-semibold"
           >
             <Download className="h-4 w-4" /> Export CSV
           </Button>
         </div>
       </div>
 
-      {/* Top Universal Punch Card */}
-      <div className="mb-8">
-        <AttendancePunchCard />
-      </div>
-
       {/* Main Content Card with Tabs */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
         {/* Tab Switcher & Date Bar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-border/70">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+            <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-xl border border-border/70">
               <button
                 onClick={() => setActiveTab("table")}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                   activeTab === "table"
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-background text-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <TableIcon className="h-4 w-4" /> Table View
               </button>
               <button
                 onClick={() => setActiveTab("calendar")}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                   activeTab === "calendar"
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-background text-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <CalendarDays className="h-4 w-4" /> Calendar View
@@ -137,10 +131,10 @@ export default function AttendancePage() {
             </div>
 
             {/* Quick Date Presets */}
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+            <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-xl border border-border/70">
               <button
                 onClick={() => setSelectedDate(todayStr)}
-                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-colors duration-150 ${
                   isToday
                     ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -154,7 +148,7 @@ export default function AttendancePage() {
                   y.setDate(y.getDate() - 1);
                   setSelectedDate(y.toISOString().split("T")[0]);
                 }}
-                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-colors duration-150 ${
                   selectedDate === (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().split("T")[0]; })()
                     ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -169,7 +163,7 @@ export default function AttendancePage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
+              className="rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer"
             />
           </div>
 
@@ -181,7 +175,7 @@ export default function AttendancePage() {
               placeholder="Search by name, email, code..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-slate-50 dark:bg-black/40 text-slate-900 dark:text-white focus:outline-none focus:border-primary"
             />
           </div>
         </div>
@@ -192,13 +186,13 @@ export default function AttendancePage() {
             {loading ? (
               <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs">Loading attendance records...</div>
             ) : filteredRecords.length === 0 ? (
-              <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+              <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
                 No attendance punch records found for today. Use the punch card above to mark attendance!
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+                  <thead className="border-b border-border text-slate-500 dark:text-slate-400">
                     <tr>
                       <th className="pb-3 font-semibold">Date</th>
                       <th className="pb-3 font-semibold">Employee</th>
@@ -256,7 +250,7 @@ export default function AttendancePage() {
           <div className="space-y-4">
             <h4 className="font-bold text-sm text-slate-900 dark:text-white">Monthly Attendance Calendar Overview</h4>
 
-            <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 dark:text-slate-400 pb-2 border-b border-gray-200 dark:border-white/10">
+            <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 dark:text-slate-400 pb-2 border-b border-border">
               <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
             </div>
 
@@ -287,7 +281,7 @@ export default function AttendancePage() {
                         </span>
                       </div>
                     ) : (
-                      <span className="text-[9px] text-slate-400">—</span>
+                      <span className="text-[9px] text-slate-400">N/A</span>
                     )}
                   </div>
                 );

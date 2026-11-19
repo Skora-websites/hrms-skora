@@ -6,12 +6,25 @@ import { SUPER_ADMIN_EMAILS } from "@/lib/constants";
 
 // ── Role Types ─────────────────────────────────────────
 
-export type Role = "super_admin" | "admin" | "hr_admin" | "manager" | "employee";
+export type Role =
+  | "super_admin"
+  | "admin"
+  | "hr_admin"
+  | "manager"
+  | "employee"
+  | "finance_admin"
+  | "recruiter"
+  | "auditor"
+  | "team_lead";
 
 export const ROLES = {
   SUPER_ADMIN: "super_admin" as const,
   ADMIN: "admin" as const,
   HR_ADMIN: "hr_admin" as const,
+  FINANCE_ADMIN: "finance_admin" as const,
+  RECRUITER: "recruiter" as const,
+  AUDITOR: "auditor" as const,
+  TEAM_LEAD: "team_lead" as const,
   MANAGER: "manager" as const,
   EMPLOYEE: "employee" as const,
 } as const;
@@ -24,6 +37,12 @@ export const LEGACY_ROLE_MAP: Record<string, Role> = {
   admin: "hr_admin",
   hr_admin: "hr_admin",
   hr: "hr_admin",
+  finance_admin: "finance_admin",
+  finance: "finance_admin",
+  recruiter: "recruiter",
+  auditor: "auditor",
+  team_lead: "team_lead",
+  lead: "team_lead",
   manager: "manager",
   employee: "employee",
   agent: "employee",
@@ -41,7 +60,11 @@ export const ROLE_HIERARCHY: Record<Role, number> = {
   super_admin: 100,
   hr_admin: 80,
   admin: 80,
+  finance_admin: 75,
+  recruiter: 60,
+  auditor: 55,
   manager: 50,
+  team_lead: 40,
   employee: 20,
 };
 
@@ -49,6 +72,10 @@ export const ROLE_LABELS: Record<Role, string> = {
   super_admin: "CEO",
   hr_admin: "HR Admin",
   admin: "HR Admin",
+  finance_admin: "Finance Admin",
+  recruiter: "Recruiter",
+  auditor: "Auditor",
+  team_lead: "Team Lead",
   manager: "Manager",
   employee: "Employee",
 };
@@ -147,6 +174,19 @@ export const PERMISSIONS = {
   ROLE_MANAGEMENT_DELETE: "role_management.delete",
   PERMISSION_MANAGEMENT_VIEW: "permission_management.view",
   PERMISSION_MANAGEMENT_EDIT: "permission_management.edit",
+  WORKFLOW_VIEW: "workflow.view",
+  WORKFLOW_MANAGE: "workflow.manage",
+  SHIFTS_VIEW: "shifts.view",
+  SHIFTS_MANAGE: "shifts.manage",
+  SHIFTS_SWAP: "shifts.swap",
+  SETTLEMENT_VIEW: "settlement.view",
+  SETTLEMENT_PROCESS: "settlement.process",
+  LETTERS_VIEW: "letters.view",
+  LETTERS_GENERATE: "letters.generate",
+  STATUTORY_VIEW: "statutory.view",
+  STATUTORY_MANAGE: "statutory.manage",
+  WORKFORCE_VIEW: "workforce.view",
+  WORKFORCE_MANAGE: "workforce.manage",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -187,6 +227,66 @@ export const ROLE_PERMISSIONS: Record<Role, PermissionKey[]> = {
   super_admin: Object.values(PERMISSIONS),
   hr_admin: Object.values(PERMISSIONS).filter((p) => !p.startsWith("role_management") && !p.startsWith("permission_management")),
   admin: Object.values(PERMISSIONS).filter((p) => !p.startsWith("role_management") && !p.startsWith("permission_management")),
+  finance_admin: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.EMPLOYEES_VIEW,
+    PERMISSIONS.PAYROLL_VIEW,
+    PERMISSIONS.PAYROLL_PROCESS,
+    PERMISSIONS.PAYROLL_EDIT,
+    PERMISSIONS.SETTLEMENT_VIEW,
+    PERMISSIONS.SETTLEMENT_PROCESS,
+    PERMISSIONS.STATUTORY_VIEW,
+    PERMISSIONS.STATUTORY_MANAGE,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_EXPORT,
+    PERMISSIONS.DOCUMENTS_VIEW,
+    PERMISSIONS.HOLIDAYS_VIEW,
+  ],
+  recruiter: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.EMPLOYEES_VIEW,
+    PERMISSIONS.RECRUITMENT_VIEW,
+    PERMISSIONS.RECRUITMENT_CREATE,
+    PERMISSIONS.RECRUITMENT_EDIT,
+    PERMISSIONS.RECRUITMENT_DELETE,
+    PERMISSIONS.ONBOARDING_VIEW,
+    PERMISSIONS.LETTERS_VIEW,
+    PERMISSIONS.LETTERS_GENERATE,
+    PERMISSIONS.DOCUMENTS_VIEW,
+    PERMISSIONS.HOLIDAYS_VIEW,
+  ],
+  auditor: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.EMPLOYEES_VIEW,
+    PERMISSIONS.ATTENDANCE_VIEW,
+    PERMISSIONS.LEAVE_VIEW,
+    PERMISSIONS.PAYROLL_VIEW,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.REPORTS_EXPORT,
+    PERMISSIONS.DOCUMENTS_VIEW,
+    PERMISSIONS.HOLIDAYS_VIEW,
+  ],
+  team_lead: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.EMPLOYEES_VIEW,
+    PERMISSIONS.ATTENDANCE_VIEW,
+    PERMISSIONS.ATTENDANCE_REGULARIZE,
+    PERMISSIONS.LEAVE_VIEW,
+    PERMISSIONS.LEAVE_APPLY,
+    PERMISSIONS.LEAVE_APPROVE,
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_SWAP,
+    PERMISSIONS.PERFORMANCE_VIEW,
+    PERMISSIONS.PERFORMANCE_CREATE,
+    PERMISSIONS.TASKS_HRM_VIEW,
+    PERMISSIONS.TASKS_HRM_CREATE,
+    PERMISSIONS.TASKS_HRM_EDIT,
+    PERMISSIONS.TASKS_HRM_ASSIGN,
+    PERMISSIONS.TICKETS_VIEW,
+    PERMISSIONS.TICKETS_REPLY,
+    PERMISSIONS.HOLIDAYS_VIEW,
+    PERMISSIONS.DOCUMENTS_VIEW,
+  ],
   manager: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.EMPLOYEES_VIEW,
@@ -194,6 +294,8 @@ export const ROLE_PERMISSIONS: Record<Role, PermissionKey[]> = {
     PERMISSIONS.LEAVE_VIEW,
     PERMISSIONS.LEAVE_APPLY,
     PERMISSIONS.LEAVE_APPROVE,
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_SWAP,
     PERMISSIONS.PERFORMANCE_VIEW,
     PERMISSIONS.PERFORMANCE_CREATE,
     PERMISSIONS.TASKS_HRM_VIEW,
@@ -209,6 +311,8 @@ export const ROLE_PERMISSIONS: Record<Role, PermissionKey[]> = {
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.ATTENDANCE_VIEW,
     PERMISSIONS.LEAVE_APPLY,
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_SWAP,
     PERMISSIONS.ASSETS_VIEW,
     PERMISSIONS.DOCUMENTS_VIEW,
     PERMISSIONS.ENGAGE_POST,
@@ -250,8 +354,8 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/hrms/recruitment": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/performance": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/reports": ["super_admin", "hr_admin", "admin", "manager", "employee"],
+  "/hrms/workflow": ["super_admin", "hr_admin", "admin"],
   "/hrms/settings": ["super_admin", "hr_admin", "admin", "manager", "employee"],
-  "/hrms/ai": ["super_admin", "hr_admin", "admin", "manager", "employee"],
 };
 
 export function hasPermission(userRole: string, permissionKey: string, rolePermissions?: Record<string, string[]>): boolean {

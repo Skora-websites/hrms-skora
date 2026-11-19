@@ -135,7 +135,7 @@ export default function HrAdminOnboardingPage() {
           name: t.employeeName || t.name || "",
           email: t.email || "",
           role: t.role || (t.status === "invite_requested" ? "Account Request" : "Employee"),
-          department: t.department || "—",
+          department: t.department || "N/A",
           documentName: t.documentName || "",
           documentUrl: t.documentUrl || "",
           status: (t.status === "rejected" || t.status === "escalated" ? "rejected_48h"
@@ -143,7 +143,7 @@ export default function HrAdminOnboardingPage() {
             : t.status === "invite_requested" ? "invite_requested"
             : "pending") as Candidate["status"],
           employeeCode: t.employeeCode,
-          submittedAt: t.submittedAt ? new Date(t.submittedAt).toLocaleDateString() : (t.requestedAt ? new Date(t.requestedAt).toLocaleDateString() : "—"),
+          submittedAt: t.submittedAt ? new Date(t.submittedAt).toLocaleDateString() : (t.requestedAt ? new Date(t.requestedAt).toLocaleDateString() : "N/A"),
           deadlineHoursRemaining: t.rejectionDeadline
             ? Math.max(0, Math.round((new Date(t.rejectionDeadline).getTime() - Date.now()) / 3600000))
             : undefined,
@@ -301,7 +301,7 @@ export default function HrAdminOnboardingPage() {
       return data.error || `Failed (HTTP ${res.status}).`;
     } catch (err: any) {
       console.error("Failed to resend welcome email:", err);
-      return err?.message || "Network error — please retry.";
+      return err?.message || "Network error, please retry.";
     } finally {
       setResending(null);
     }
@@ -331,7 +331,7 @@ export default function HrAdminOnboardingPage() {
           <button
             type="button"
             onClick={toggleDeliveries}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary/40"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:border-primary/40"
           >
             <History className="h-3.5 w-3.5 text-primary" />
             Email delivery history
@@ -343,7 +343,7 @@ export default function HrAdminOnboardingPage() {
           </button>
         </div>
         {showDeliveries && (
-          <div className="mt-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4">
+          <div className="mt-3 rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <History className="h-3.5 w-3.5 text-primary" /> Recent outbound emails
@@ -384,7 +384,7 @@ export default function HrAdminOnboardingPage() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
           <h3 className="font-bold text-base flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-primary" /> Requests &amp; Applications
@@ -394,14 +394,14 @@ export default function HrAdminOnboardingPage() {
             <button
               type="button"
               onClick={() => setLive((v) => !v)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-bold transition ${live ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-slate-300 dark:border-white/10 text-slate-500"}`}
-              title={live ? "Live sync on — new requests appear automatically every 15s" : "Live sync paused — use Refresh"}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-bold transition ${live ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-slate-300 dark:border-border text-slate-500"}`}
+              title={live ? "Live sync on: new requests appear automatically every 15s" : "Live sync paused: use Refresh"}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-500 motion-safe:animate-pulse motion-reduce:animate-none" : "bg-slate-400"}`} />
               {live ? "Live" : "Paused"}
             </button>
             <Button size="sm" variant="outline" onClick={loadCandidates} disabled={loading} className="h-7 px-2 text-[10px] font-bold">
-              <RefreshCw className={`h-3 w-3 mr-0.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+              <RefreshCw className={`h-3 w-3 mr-0.5 ${loading ? "motion-safe:animate-spin motion-reduce:animate-none" : ""}`} /> Refresh
             </Button>
           </div>
         </div>
@@ -409,7 +409,7 @@ export default function HrAdminOnboardingPage() {
         {loading && candidates.length === 0 ? (
           <div className="p-8 text-center text-slate-500 text-xs">Loading requests...</div>
         ) : candidates.length === 0 ? (
-          <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+          <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
             No pending account requests or applications.
           </div>
         ) : (
@@ -421,17 +421,17 @@ export default function HrAdminOnboardingPage() {
                 placeholder="Search queue by name, email, role, department, or employee code..."
                 value={queueSearch}
                 onChange={(e) => setQueueSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               />
             </div>
             {filteredCandidates.length === 0 ? (
-              <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+              <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
                 No requests match your search.
               </div>
             ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+              <thead className="border-b border-border text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="pb-3 font-semibold w-8"></th>
                   <th className="pb-3 font-semibold">Candidate</th>
@@ -552,9 +552,9 @@ function FragmentRow({
                 onClick={doResend}
                 disabled={resending}
                 className={`text-[10px] font-bold h-7 px-2 ${c.inviteEmailed ? "" : "bg-amber-500 hover:bg-amber-600 text-white"}`}
-                title={c.inviteEmailed ? "Send a fresh temporary password email again" : "Welcome email failed — resend with a fresh temporary password"}
+                title={c.inviteEmailed ? "Send a fresh temporary password email again" : "Welcome email failed, resend with a fresh temporary password"}
               >
-                {resending ? <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-0.5" />}
+                {resending ? <Loader2 className="h-3 w-3 mr-0.5 motion-safe:animate-spin motion-reduce:animate-none" /> : <RefreshCw className="h-3 w-3 mr-0.5" />}
                 Resend welcome email
               </Button>
               {resendMsg && <span className="text-[10px] text-slate-500 dark:text-slate-400 text-right max-w-[220px] break-words" role="status">{resendMsg}</span>}
@@ -586,9 +586,9 @@ function Chip({ children, color }: { children: React.ReactNode; color: string })
 function Field({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
   return (
     <div className="min-w-0">
-      <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className="block text-xs font-semibold text-slate-400">{label}</span>
       <span className={`block text-xs font-medium text-slate-900 dark:text-white break-words ${mono ? "font-mono" : ""}`}>
-        {value || "—"}
+        {value || "N/A"}
       </span>
     </div>
   );
@@ -609,9 +609,9 @@ function SensitiveFieldRow({
   const busy = revealing === `${candidate.id}:${field}`;
   return (
     <div className="min-w-0">
-      <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className="block text-xs font-semibold text-slate-400">{label}</span>
       <span className="flex items-center gap-2">
-        <span className="block text-xs font-medium font-mono text-slate-900 dark:text-white break-all">{value || "—"}</span>
+        <span className="block text-xs font-medium font-mono text-slate-900 dark:text-white break-all">{value || "N/A"}</span>
         {isMasked && token && (
           <button
             type="button"
@@ -620,7 +620,7 @@ function SensitiveFieldRow({
             className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary hover:bg-primary/20 disabled:opacity-50 shrink-0"
             title="Reveal (audit-logged)"
           >
-            {busy ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Eye className="h-2.5 w-2.5" />}
+            {busy ? <Loader2 className="h-2.5 w-2.5 motion-safe:animate-spin motion-reduce:animate-none" /> : <Eye className="h-2.5 w-2.5" />}
             Reveal
           </button>
         )}

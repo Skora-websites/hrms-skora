@@ -163,7 +163,7 @@ function DefaultEmptyState({ message, onRetry }: { message: string; onRetry?: ()
       <div className="h-16 w-16 rounded-2xl bg-gradient-primary/10 flex items-center justify-center mx-auto mb-4">
         <Search className="h-8 w-8 text-primary" />
       </div>
-      <p className="text-dark dark:text-white font-semibold text-lg">{message}</p>
+      <p className="text-foreground font-semibold text-lg">{message}</p>
       {onRetry && (
         <Button className="mt-4" variant="outline" onClick={onRetry}>
           Try Again
@@ -181,8 +181,8 @@ function DefaultErrorState({ message, onRetry }: { message: string; onRetry?: ()
       <div className="h-16 w-16 rounded-2xl bg-gradient-danger/10 flex items-center justify-center mx-auto mb-4">
         <Search className="h-8 w-8 text-danger" />
       </div>
-      <p className="text-dark dark:text-white font-semibold text-lg">Failed to load data</p>
-      <p className="text-sm text-muted mt-1 max-w-md mx-auto">{message}</p>
+      <p className="text-foreground font-semibold text-lg">Failed to load data</p>
+      <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">{message}</p>
       {onRetry && (
         <Button className="mt-4" variant="outline" onClick={onRetry}>
           Try Again
@@ -402,7 +402,7 @@ export function DataTable<T extends Record<string, any>>({
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           {searchable && (
             <div className="relative flex-1 max-w-sm w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder={searchPlaceholder}
                 className="pl-9 h-9"
@@ -419,7 +419,7 @@ export function DataTable<T extends Record<string, any>>({
       {/* Table Container */}
       <div
         className={cn(
-          "bg-card rounded-xl border border-border overflow-hidden",
+          "bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden",
           minHeight && "relative"
         )}
         style={minHeight ? { minHeight } : undefined}
@@ -461,8 +461,8 @@ export function DataTable<T extends Record<string, any>>({
                             <button
                               onClick={() => handleSortToggle(sortableKey)}
                               className={cn(
-                                "group inline-flex items-center gap-1.5 hover:text-dark dark:hover:text-white transition-colors font-bold text-xs uppercase tracking-wider",
-                                sortKey === sortableKey && "text-dark dark:text-white"
+                                "group inline-flex items-center gap-1.5 hover:text-foreground transition-colors font-semibold text-xs text-muted-foreground",
+                                sortKey === sortableKey && "text-foreground"
                               )}
                               aria-label={`Sort by ${col.header}${sortKey === sortableKey ? ` (${sortDir === "asc" ? "ascending" : "descending"})` : ""}`}
                             >
@@ -473,7 +473,7 @@ export function DataTable<T extends Record<string, any>>({
                               />
                             </button>
                           ) : (
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted dark:text-white/70">
+                            <span className="text-xs font-semibold text-muted-foreground">
                               {col.header}
                             </span>
                           )}
@@ -482,7 +482,7 @@ export function DataTable<T extends Record<string, any>>({
                     })}
                     {actions && actions.length > 0 && (
                       <TableHead className="px-4 py-3.5 text-right">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted dark:text-white/70">
+                        <span className="text-xs font-semibold text-muted-foreground">
                           Actions
                         </span>
                       </TableHead>
@@ -574,7 +574,7 @@ export function DataTable<T extends Record<string, any>>({
             {/* Pagination Footer */}
             <div
               className={cn(
-                "px-4 py-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-muted",
+                "px-4 py-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-muted-foreground",
                 "bg-gray-50/50 dark:bg-gray-800/20"
               )}
             >
@@ -582,25 +582,25 @@ export function DataTable<T extends Record<string, any>>({
               <div className="flex items-center gap-3 flex-wrap">
                 {showEntriesSelector && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs">Show</span>
+                    <span className="text-xs font-medium">Show</span>
                     <div className="relative">
                       <select
                         value={pageSize}
                         onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                        className="h-7 rounded-md border border-input bg-background px-2 pr-6 text-xs text-dark dark:text-white appearance-none cursor-pointer focus:border-primary focus:outline-none"
+                        className="h-7 rounded-md border border-input bg-background px-2 pr-6 text-xs text-foreground appearance-none cursor-pointer focus:border-primary focus:outline-none"
                         aria-label="Entries per page"
                       >
                         {entriesOptions.map((opt) => (
                           <option key={opt} value={opt}>{opt}</option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted pointer-events-none" />
+                      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
                     </div>
-                    <span className="text-xs">entries</span>
+                    <span className="text-xs font-medium">entries</span>
                   </div>
                 )}
                 {showRecordCount && totalItems > 0 && (
-                  <span className="text-xs">
+                  <span className="text-xs font-medium">
                     Showing {startRecord} to {endRecord} of {totalItems} entries
                   </span>
                 )}
@@ -630,7 +630,7 @@ export function DataTable<T extends Record<string, any>>({
 
                   {pageNumbers.map((p, i) =>
                     p === "ellipsis" ? (
-                      <span key={`e-${i}`} className="px-1 text-xs text-muted">
+                      <span key={`e-${i}`} className="px-1 text-xs text-muted-foreground">
                         ...
                       </span>
                     ) : (

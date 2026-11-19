@@ -26,9 +26,8 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         <div className={cn("relative group", icon && "has-icon")}>
           {icon && (
             <div className={cn(
-              "absolute left-3.5 top-1/2 -translate-y-1/2 z-10 transition-all duration-300",
-              error ? "text-danger" : hasValue ? "text-primary" : "text-dark/70 dark:text-gray-400 group-focus-within:text-primary",
-              hasValue && !error && "scale-105"
+              "absolute left-3.5 top-1/2 -translate-y-1/2 z-10 transition-colors duration-150",
+              error ? "text-destructive" : hasValue ? "text-primary" : "text-muted-foreground group-focus-within:text-primary"
             )}>
               {icon}
             </div>
@@ -41,16 +40,16 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
             maxLength={maxLength}
             className={cn(
               // Base styles
-              "peer w-full h-12 rounded-xl border-2 bg-background px-4 text-sm text-dark dark:text-white",
-              "transition-all duration-300 ease-out outline-none",
+              "peer w-full h-11 rounded-xl border bg-background px-4 text-sm text-foreground",
+              "transition-[border-color,box-shadow] duration-150 ease-out outline-none",
               "placeholder:text-transparent",
-              "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800/50",
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/50",
               // Hover
-              "hover:border-gray-300 dark:hover:border-gray-500",
-              // Focus — uses CSS var so it follows theme color
-              "focus:border-[var(--color-primary,#5e72e4)]",
-              // Filled state — subtle accent on left border
-              hasValue && !error && !props.disabled && "border-l-[var(--color-primary,#5e72e4)]",
+              "hover:border-border/90",
+              // Focus
+              "focus:border-primary focus:ring-1 focus:ring-primary/20",
+              // Filled state
+              hasValue && !error && !props.disabled && "border-l-primary",
               // Icon padding
               icon && "pl-11",
               endIcon && "pr-11",
@@ -58,10 +57,10 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
               floating && "pt-5 pb-1.5",
               // Error state
               error
-                ? "border-danger focus:border-danger hover:border-danger"
+                ? "border-destructive focus:border-destructive hover:border-destructive"
                 : "border-border",
               // Success state
-              success && !error && "border-success focus:border-success",
+              success && !error && "border-emerald-500 focus:border-emerald-500",
               className
             )}
             aria-invalid={!!error}
@@ -70,7 +69,7 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
           />
           {/* End icon (e.g. password toggle, clear button) */}
           {endIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
               {endIcon}
             </div>
           )}
@@ -79,32 +78,24 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
             <label
               htmlFor={inputId}
               className={cn(
-                "absolute left-4 top-1/2 -translate-y-1/2 text-sm transition-all duration-300 ease-out pointer-events-none select-none",
-                "peer-placeholder-shown:text-sm peer-placeholder-shown:text-dark/70 dark:peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2",
-                "peer-focus:text-xs peer-focus:top-2.5 peer-focus:-translate-y-0 peer-focus:text-[var(--color-primary,#5e72e4)]",
+                "absolute left-4 top-1/2 -translate-y-1/2 text-sm transition-colors duration-150 ease-out pointer-events-none select-none",
+                "peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2",
+                "peer-focus:text-xs peer-focus:top-2.5 peer-focus:-translate-y-0 peer-focus:text-primary",
                 hasValue && "text-xs top-2.5 -translate-y-0",
                 icon && "peer-placeholder-shown:left-11 peer-focus:left-11 left-11",
                 !icon && "peer-placeholder-shown:left-4 peer-focus:left-4",
-                error ? "peer-focus:text-danger" : "peer-focus:text-[var(--color-primary,#5e72e4)]",
-                hasValue && !error && "text-[var(--color-primary,#5e72e4)]/80",
-                error && "text-danger"
+                error ? "peer-focus:text-destructive text-destructive" : hasValue ? "text-primary" : "text-muted-foreground"
               )}
             >
               {label}
-              {props.required && <span className="text-danger ml-0.5">*</span>}
+              {props.required && <span className="text-destructive ml-0.5">*</span>}
             </label>
-          )}
-          {/* Filled indicator dot — hidden when endIcon is present */}
-          {hasValue && !error && !success && !endIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <span className="block h-1.5 w-1.5 rounded-full bg-[var(--color-primary,#5e72e4)] opacity-40" />
-            </div>
           )}
         </div>
         {/* Error message */}
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-xs text-danger flex items-center gap-1 animate-form-error">
-            <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <p id={`${inputId}-error`} className="mt-1.5 text-xs text-destructive flex items-center gap-1 motion-safe:animate-form-error">
+            <svg aria-hidden="true" className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -115,9 +106,9 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         {/* Helper text + char count */}
         {helperText && !error && (
           <div className="mt-1 flex items-center justify-between">
-            <p id={`${inputId}-help`} className="text-xs text-dark/70 dark:text-gray-400">{helperText}</p>
+            <p id={`${inputId}-help`} className="text-xs text-muted-foreground">{helperText}</p>
             {showCount && maxLength && (
-              <span className="text-xxs text-dark/70 dark:text-gray-400 transition-colors duration-200" style={charCount > maxLength * 0.85 ? { color: charCount >= maxLength ? 'var(--color-danger)' : 'var(--color-warning)' } : {}}>
+              <span className="text-xs text-muted-foreground transition-colors duration-150" style={charCount > maxLength * 0.85 ? { color: charCount >= maxLength ? 'var(--color-danger)' : 'var(--color-warning)' } : {}}>
                 {charCount}/{maxLength}
               </span>
             )}
@@ -125,7 +116,7 @@ const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         )}
         {!helperText && showCount && maxLength && !error && (
           <div className="mt-1 flex items-center justify-end">
-            <span className="text-xxs text-dark/70 dark:text-gray-400 transition-colors duration-200" style={charCount > maxLength * 0.85 ? { color: charCount >= maxLength ? 'var(--color-danger)' : 'var(--color-warning)' } : {}}>
+            <span className="text-xs text-muted-foreground transition-colors duration-150" style={charCount > maxLength * 0.85 ? { color: charCount >= maxLength ? 'var(--color-danger)' : 'var(--color-warning)' } : {}}>
               {charCount}/{maxLength}
             </span>
           </div>

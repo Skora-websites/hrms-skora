@@ -9,6 +9,14 @@ import {
   assignEmployeeToShift,
   deleteShiftAssignment,
 } from "@/services/hrm/attendance";
+import {
+  getShiftRosterGrid,
+  batchAssignRoster,
+  createShiftSwapRequest,
+  respondPeerShiftSwap,
+  approveManagerShiftSwap,
+  getShiftSwapRequests,
+} from "@/services/hrm/attendance/shifts";
 import { requireAuth, requireHrLevel, isErrorResponse } from "@/lib/api-auth";
 
 const DEFAULT_SHIFTS = [
@@ -28,6 +36,20 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get("id");
     const type = searchParams.get("type");
     const userId = searchParams.get("userId") || undefined;
+
+    if (type === "roster") {
+      const startDate = searchParams.get("startDate") || new Date().toISOString().slice(0, 10);
+      const endDate = searchParams.get("endDate") || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      const department = searchParams.get("department") || undefined;
+      const roster = await getShiftRosterGrid(tenantId, startDate, endDate, department);
+      return NextResponse.json({ data: roster });
+    }
+
+    if (type === "swaps") {
+      const isManager = ["super_admin", "hr_admin", "admin", "manager"].includes(auth.role || "");
+      const swaps = await getShiftSwapRequests(tenantId, userId || auth.userId, isManager);
+      return NextResponse.json({ data: swaps });
+    }
 
     if (type === "assignments") {
       const assignments = await getShiftAssignments(tenantId, userId);
@@ -58,13 +80,74 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireHrLevel();
+    const auth = await requireAuth();
     if (isErrorResponse(auth)) return auth;
 
     const tenantId = "default";
     const body = await request.json();
 
+    // 1. Shift Swap actions (accessible to employees & managers)
+    if (body.action === "swap-request") {
+      if (!body.targetUserId || !body.shiftDate || !body.requesterShiftId) {
+        return NextResponse.json({ error: "targetUserId, shiftDate, and requesterShiftId are required" }, { status: 400 });
+      }
+      const swap = await createShiftSwapRequest(tenantId, {
+        requesterId: auth.userId || body.requesterId,
+        requesterName: body.requesterName || "Employee",
+        requesterShiftId: body.requesterShiftId,
+        targetUserId: body.targetUserId,
+        targetUserName: body.targetUserName || "Colleague",
+        targetShiftId: body.targetShiftId,
+        shiftDate: body.shiftDate,
+        reason: body.reason || "Personal schedule adjustment",
+      });
+      return NextResponse.json({ data: swap }, { status: 201 });
+    }
+
+    if (body.action === "swap-peer-respond") {
+      if (!body.swapId || !body.response) {
+        return NextResponse.json({ error: "swapId and response ('accepted' | 'declined') are required" }, { status: 400 });
+      }
+      const updated = await respondPeerShiftSwap(body.swapId, auth.userId || body.peerUserId, body.response);
+      return NextResponse.json({ data: updated });
+    }
+
+    if (body.action === "swap-manager-approve") {
+      const isManager = ["super_admin", "hr_admin", "admin", "manager"].includes(auth.role || "");
+      if (!isManager) {
+        return NextResponse.json({ error: "Only managers or HR admins can approve swap requests" }, { status: 403 });
+      }
+      if (!body.swapId || !body.decision) {
+        return NextResponse.json({ error: "swapId and decision ('approved' | 'rejected') are required" }, { status: 400 });
+      }
+      const updated = await approveManagerShiftSwap(
+        body.swapId,
+        auth.userId || "manager",
+        body.managerName || "Manager",
+        body.decision
+      );
+      return NextResponse.json({ data: updated });
+    }
+
+    // 2. Batch Roster assignment (HR / Manager level)
+    if (body.action === "roster-batch") {
+      const isPrivileged = ["super_admin", "hr_admin", "admin", "manager"].includes(auth.role || "");
+      if (!isPrivileged) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
+      if (!Array.isArray(body.entries)) {
+        return NextResponse.json({ error: "entries array required" }, { status: 400 });
+      }
+      const count = await batchAssignRoster(tenantId, body.entries);
+      return NextResponse.json({ success: true, count }, { status: 201 });
+    }
+
+    // 3. Single employee shift assignment
     if (body.action === "assign") {
+      const isPrivileged = ["super_admin", "hr_admin", "admin", "manager"].includes(auth.role || "");
+      if (!isPrivileged) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
       if (!body.userId || !body.shiftId) {
         return NextResponse.json({ error: "userId and shiftId are required" }, { status: 400 });
       }
@@ -77,6 +160,12 @@ export async function POST(request: NextRequest) {
         endDate: body.endDate ? new Date(body.endDate) : undefined,
       });
       return NextResponse.json({ data: assignment }, { status: 201 });
+    }
+
+    // 4. Shift definition creation (HR level)
+    const isHr = ["super_admin", "hr_admin", "admin"].includes(auth.role || "");
+    if (!isHr) {
+      return NextResponse.json({ error: "Only HR or Super Admin can create shift definitions" }, { status: 403 });
     }
 
     if (!body.name || !body.startTime || !body.endTime) {

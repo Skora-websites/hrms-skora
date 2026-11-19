@@ -36,11 +36,11 @@ export function RegularizationRequest({ onSubmit }: RegularizationRequestProps) 
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
-      <h3 className="font-bold text-base flex items-center gap-2 mb-4">
-        <FileText className="h-5 w-5 text-blue-500" /> Attendance Regularization
+    <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+      <h3 className="font-bold text-base flex items-center gap-2 mb-4 text-foreground">
+        <FileText className="h-5 w-5 text-primary" /> Attendance Regularization
       </h3>
-      <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+      <p className="text-xs text-muted-foreground mb-4">
         Submit a regularization request for late arrivals, missed punches, or clock-in errors.
         This will be routed to your Manager for approval.
       </p>
@@ -62,7 +62,7 @@ export function RegularizationRequest({ onSubmit }: RegularizationRequestProps) 
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-            className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -76,7 +76,7 @@ export function RegularizationRequest({ onSubmit }: RegularizationRequestProps) 
             required
             rows={3}
             placeholder="e.g., Late arrival due to traffic, missed punch out, system error..."
-            className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
           />
         </div>
 

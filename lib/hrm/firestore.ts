@@ -1,12 +1,15 @@
-// Firestore.ts — backed 100% by MongoDB (drop-in replacement)
-// No Firebase is used; all storage, queries, and auth are in MongoDB.
+// firestore.ts — Service layer backed 100% by MySQL (InnoDB).
+// All data, relations, and transactional logic run on MySQL via mysql2.
 import "server-only";
-import { createMongoService, WhereClause, QueryOptions, FirestoreWhereOp, FirestoreOrderDirection } from "@/lib/hrm/mongo";
+import { createMySQLService, WhereClause, QueryOptions, FirestoreWhereOp, FirestoreOrderDirection } from "@/lib/hrm/db-service";
 
 // Re-export types for backward compatibility
 export type { WhereClause, QueryOptions, FirestoreWhereOp, FirestoreOrderDirection };
 
-// Alias: createFirestoreService now delegates to MongoDB
+// Service factory aliases backed by MySQL
+export const createFirestoreService = createMySQLService;
+export const createMongoService = createMySQLService;
+
 // Type imports for service instances
 import type {
   Tenant, TenantLanguage, Organization, Department, Designation, BusinessUnit, Location,
@@ -30,10 +33,12 @@ import type {
   HRMTask, HRMTaskComment, TaskAuditLog,
   Ticket, TicketReply, TicketTimeline,
   Expense, ExpenseCategory, SalaryAdvance, OvertimeRecord, Kudos, KudosLike,
+  WorkflowRule, WorkflowExecutionLog, ShiftSwapRequest,
+  ExitSettlement, DocumentLetterTemplate, GeneratedEmployeeLetter,
+  StatutoryConfig, EmployeeTaxDeclaration, PayrollDisbursementBatch,
+  DepartmentHeadcountPlan, InternalJobPosting, Performance360Review,
+  CustomReportDefinition,
 } from "@/types";
-
-
-export const createFirestoreService = createMongoService;
 
 export const COLLECTIONS = {
   tenants: "tenants",
@@ -134,6 +139,21 @@ export const COLLECTIONS = {
   overtimeRecords: "overtime_records",
   kudos: "kudos",
   kudosLikes: "kudos_likes",
+  workflowRules: "workflow_rules",
+  workflowExecutionLogs: "workflow_execution_logs",
+  shiftSwapRequests: "shift_swap_requests",
+  exitSettlements: "exit_settlements",
+  documentLetterTemplates: "document_letter_templates",
+  generatedEmployeeLetters: "generated_employee_letters",
+  statutoryConfig: "statutory_config",
+  employeeTaxDeclarations: "employee_tax_declarations",
+  payrollDisbursementBatches: "payroll_disbursement_batches",
+  departmentHeadcountPlans: "department_headcount_plans",
+  internalJobPostings: "internal_job_postings",
+  performance360Reviews: "performance_360_reviews",
+  customReportDefinitions: "custom_report_definitions",
+  jobs: "jobs",
+  applications: "applications",
 } as const;
 
 // ── Audit Log ────────────────────────────────────────
@@ -269,6 +289,23 @@ export const salaryAdvancesService = createFirestoreService<SalaryAdvance>(COLLE
 export const overtimeRecordsService = createFirestoreService<OvertimeRecord>(COLLECTIONS.overtimeRecords);
 export const kudosService = createFirestoreService<Kudos>(COLLECTIONS.kudos);
 export const kudosLikesService = createFirestoreService<KudosLike>(COLLECTIONS.kudosLikes);
+
+// ── Enterprise Workflow, Shift, Exit, Statutory & Planning ──
+export const workflowRulesService = createFirestoreService<WorkflowRule>(COLLECTIONS.workflowRules);
+export const workflowExecutionLogsService = createFirestoreService<WorkflowExecutionLog>(COLLECTIONS.workflowExecutionLogs);
+export const shiftSwapRequestsService = createFirestoreService<ShiftSwapRequest>(COLLECTIONS.shiftSwapRequests);
+export const exitSettlementsService = createFirestoreService<ExitSettlement>(COLLECTIONS.exitSettlements);
+export const documentLetterTemplatesService = createFirestoreService<DocumentLetterTemplate>(COLLECTIONS.documentLetterTemplates);
+export const generatedEmployeeLettersService = createFirestoreService<GeneratedEmployeeLetter>(COLLECTIONS.generatedEmployeeLetters);
+export const statutoryConfigService = createFirestoreService<StatutoryConfig>(COLLECTIONS.statutoryConfig);
+export const employeeTaxDeclarationsService = createFirestoreService<EmployeeTaxDeclaration>(COLLECTIONS.employeeTaxDeclarations);
+export const payrollDisbursementBatchesService = createFirestoreService<PayrollDisbursementBatch>(COLLECTIONS.payrollDisbursementBatches);
+export const departmentHeadcountPlansService = createFirestoreService<DepartmentHeadcountPlan>(COLLECTIONS.departmentHeadcountPlans);
+export const internalJobPostingsService = createFirestoreService<InternalJobPosting>(COLLECTIONS.internalJobPostings);
+export const performance360ReviewsService = createFirestoreService<Performance360Review>(COLLECTIONS.performance360Reviews);
+export const customReportDefinitionsService = createFirestoreService<CustomReportDefinition>(COLLECTIONS.customReportDefinitions);
+export const jobsService = createFirestoreService<any>(COLLECTIONS.jobs);
+export const jobApplicationsService = createFirestoreService<any>(COLLECTIONS.applications);
 
 // ── Re-export types for convenience ────────────────────
 export type {

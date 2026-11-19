@@ -124,7 +124,7 @@ export default function PayrollPage() {
         key: "totalNetPay",
         header: "Net Pay",
         sortable: true,
-        cell: (pay: any) => <span className="text-sm font-semibold text-dark dark:text-white">{pay.totalNetPay ? formatCurrency(pay.totalNetPay) : "—"}</span>,
+        cell: (pay: any) => <span className="text-sm font-semibold text-foreground">{pay.totalNetPay ? formatCurrency(pay.totalNetPay) : "—"}</span>,
         className: "text-right",
         headerClassName: "text-right",
       },
@@ -194,7 +194,7 @@ export default function PayrollPage() {
             <div className="flex items-center justify-between mb-2">
               <stat.icon className={`h-5 w-5 ${stat.color}`} />
             </div>
-            <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>
           </div>
         ))}

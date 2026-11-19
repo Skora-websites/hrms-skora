@@ -9,6 +9,7 @@ import {
   employeeSalariesService,
   employeeSalaryHistoryService,
 } from "@/lib/hrm/firestore";
+import { getExpenses, reimburseExpense } from "@/services/hrm/expenses";
 import type {
   PayGroup,
   PayGroupComponent,
@@ -207,6 +208,28 @@ export async function processPayroll(
       }
     }
 
+    // Ingest approved, pending expense reimbursements for this user
+    let reimbursementTotal = 0;
+    let userApprovedExpenses: any[] = [];
+    try {
+      userApprovedExpenses = await getExpenses(tenantId, {
+        userId: salary.userId,
+        status: "approved",
+      });
+      for (const exp of userApprovedExpenses) {
+        if (!exp.payrollRunId && exp.status === "approved") {
+          reimbursementTotal += Number(exp.amount || 0);
+        }
+      }
+    } catch (expErr) {
+      console.warn("Failed to query approved expenses for payroll run:", expErr);
+    }
+
+    if (reimbursementTotal > 0) {
+      earnings["Reimbursements"] = (earnings["Reimbursements"] || 0) + reimbursementTotal;
+      grossPay += reimbursementTotal;
+    }
+
     const netPay = grossPay - totalDeduct;
     totalGrossPay += grossPay;
     totalDeductions += totalDeduct;
@@ -223,6 +246,22 @@ export async function processPayroll(
       status: "pending",
       tenantId,
     } as any);
+
+    // Mark ingested expenses as reimbursed
+    if (reimbursementTotal > 0 && userApprovedExpenses.length > 0) {
+      for (const exp of userApprovedExpenses) {
+        if (!exp.payrollRunId && exp.status === "approved") {
+          try {
+            await reimburseExpense(exp.id, {
+              payrollRunId: payrollRun.id,
+              payoutMethod: "payroll",
+            });
+          } catch {
+            // ignore failure
+          }
+        }
+      }
+    }
   }
 
   // Update payroll run totals

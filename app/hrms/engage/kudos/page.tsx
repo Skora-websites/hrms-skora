@@ -27,6 +27,11 @@ import {
   AlertCircle,
   Hash,
   ThumbsUp,
+  Handshake,
+  Star,
+  Lightbulb,
+  Target,
+  Rocket,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getInitials } from "@/lib/utils";
@@ -60,12 +65,12 @@ interface LeaderboardUser {
 }
 
 const BADGES = [
-  { label: "Team Player", icon: "🤝" },
-  { label: "Rockstar", icon: "⭐" },
-  { label: "Innovator", icon: "💡" },
-  { label: "Problem Solver", icon: "🎯" },
-  { label: "Customer Champion", icon: "🏆" },
-  { label: "Above & Beyond", icon: "🚀" },
+  { label: "Team Player", icon: Handshake },
+  { label: "Rockstar", icon: Star },
+  { label: "Innovator", icon: Lightbulb },
+  { label: "Problem Solver", icon: Target },
+  { label: "Customer Champion", icon: Trophy },
+  { label: "Above & Beyond", icon: Rocket },
 ];
 
 const CORE_VALUES = ["#Teamwork", "#Excellence", "#Innovation", "#CustomerFirst", "#Integrity"];
@@ -236,7 +241,7 @@ export default function KudosWallPage() {
             <Card className="border border-border/70 shadow-xs bg-card">
               <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                     <Flame className="h-4 w-4 text-amber-500" />
                     <span>Monthly Kudos Budget</span>
                   </div>
@@ -377,10 +382,10 @@ export default function KudosWallPage() {
                     <p className="text-xs text-muted-foreground text-center py-4">No points awarded this month yet.</p>
                   ) : (
                     leaderboard.slice(0, 5).map((u, idx) => (
-                      <div key={u.receiverId} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors">
+                      <div key={u.receiverId} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors duration-150">
                         <div className="flex items-center gap-2.5">
-                          <span className="font-bold text-xs w-4 text-center text-muted-foreground">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`}
+                          <span className="font-mono font-bold text-xs w-5 text-center text-muted-foreground">
+                            #{idx + 1}
                           </span>
                           <Avatar className="h-7 w-7 border border-border/60">
                             <AvatarImage src={u.receiverAvatar} />
@@ -409,7 +414,7 @@ export default function KudosWallPage() {
             {/* Core Values Guide Card */}
             <Card className="border border-border/70 shadow-xs">
               <CardContent className="p-5 space-y-3">
-                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">Company Core Values</h4>
+                <h4 className="font-bold text-foreground text-xs">Company Core Values</h4>
                 <div className="space-y-2 text-xs">
                   <div className="p-2.5 rounded-lg bg-muted/40 border border-border/50">
                     <p className="font-semibold text-primary">#Innovation</p>
@@ -474,21 +479,24 @@ export default function KudosWallPage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Award Badge</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {BADGES.map((b) => (
-                    <button
-                      key={b.label}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, badge: b.label })}
-                      className={`p-2 rounded-lg border text-xs text-center transition-all ${
-                        formData.badge === b.label
-                          ? "border-primary bg-primary/10 font-bold text-primary"
-                          : "border-border/70 hover:bg-muted/40"
-                      }`}
-                    >
-                      <span className="text-sm block mb-0.5">{b.icon}</span>
-                      <span className="truncate block text-[11px]">{b.label}</span>
-                    </button>
-                  ))}
+                  {BADGES.map((b) => {
+                    const IconComp = b.icon;
+                    return (
+                      <button
+                        key={b.label}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, badge: b.label })}
+                        className={`p-2 rounded-lg border text-xs text-center transition-colors duration-150 ${
+                          formData.badge === b.label
+                            ? "border-primary bg-primary/10 font-bold text-primary"
+                            : "border-border/70 hover:bg-muted/40"
+                        }`}
+                      >
+                        <IconComp className="h-4 w-4 mx-auto mb-1 text-primary" />
+                        <span className="truncate block text-[11px]">{b.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

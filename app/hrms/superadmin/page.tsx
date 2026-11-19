@@ -1,368 +1,134 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MailStatusCard } from "@/components/superadmin/mail-status-card";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Users,
   UserCheck,
   Clock,
-  CalendarDays,
   DollarSign,
-  ClipboardList,
-  Shield,
-  ShieldCheck,
   ShieldAlert,
-  MapPin,
+  ShieldCheck,
   CheckCircle2,
-  Activity,
-  TrendingUp,
   AlertCircle,
-  Briefcase,
-  Search,
-  ArrowUpRight,
-  BarChart3,
-  ChevronRight,
+  RefreshCw,
+  Edit,
+  Trash2,
+  X,
+  ExternalLink,
   Loader2,
-  XCircle,
-  FileText,
-  Home,
-  Building2,
 } from "lucide-react";
-import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/auth-provider";
-
-// ── Types ──────────────────────────────────────────────────
-
-interface Employee {
-  _id?: string;
-  id?: string;
-  name?: string;
-  displayName?: string;
-  email: string;
-  department?: string;
-  designation?: string;
-  status?: string;
-  employeeCode?: string;
-  role?: string;
-  reportingManager?: string;
-  joiningDate?: string;
-  attendanceStatus?: string;
-}
-
-interface AttendanceRecord {
-  _id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  employeeCode?: string;
-  date: string;
-  punchInTime?: string;
-  punchOutTime?: string;
-  location?: string;
-  distanceMeters?: number;  // parsed from location string
-  status?: string;
-  workHours?: number;
-  managerId?: string;
-  overtimeHours?: number;
-  regularizationStatus?: string;
-}
-
-interface EscalationRecord {
-  id: string;
-  employeeName: string;
-  email: string;
-  department: string;
-  rejectionDate: string;
-  deadlineHoursRemaining: number;
-  status: string;
-}
-
-interface LiveStatusEmployee {
-  userId: string;
-  name: string;
-  email: string;
-  employeeCode: string;
-  department: string;
-  designation: string;
-  role: string;
-  status: string; // punched_in | punched_out | absent
-  auxState: string | null; // active | on_break | meeting | null
-  punchInTime: string | null;
-  punchOutTime: string | null;
-  effectiveWorkMinutes: number;
-  totalBreakMinutes: number;
-  workHours: number;
-  totalElapsedMinutes: number;
-  currentLocation: any;
-  auxSince: string | null;
-  location: string | null;
-  workLocation: "office" | "remote" | null;
-  status_label: string;
-}
-
-interface LiveStatusSummary {
-  totalEmployees: number;
-  punchedIn: number;
-  onBreak: number;
-  inMeeting: number;
-  active: number;
-  punchedOut: number;
-  absent: number;
-  inOffice: number;
-  remote: number;
-}
-
-interface LeaveRequest {
-  id: string;
-  employeeName: string;
-  type: string;
-  fromDate: string;
-  toDate: string;
-  totalDays: number;
-  reason: string;
-  status: "pending" | "approved" | "rejected";
-  requestedBy: "employee" | "manager";
-}
-
-interface OnboardingCandidate {
-  id: string;
-  userId: string;
-  employeeName: string;
-  email: string;
-  department?: string;
-  documentName?: string;
-  documentUrl?: string;
-  status: string;
-  submittedAt: string;
-}
-
-interface UserRecord {
-  id: string;
-  displayName?: string;
-  firstName?: string;
-  email: string;
-  role: string;
-  status: string;
-  reportingManager?: string;
-}
-
-// ── Main Component ─────────────────────────────────────────
+import { CeoFinancialBurnCard } from "@/components/superadmin/ceo-financial-burn-card";
+import { CeoOperationsRadar } from "@/components/superadmin/ceo-operations-radar";
+import {
+  CeoGovernanceConsole,
+  type DirectoryUser,
+} from "@/components/superadmin/ceo-governance-console";
+import { CeoSystemHealthCard } from "@/components/superadmin/ceo-system-health-card";
 
 export default function SuperadminOverviewPage() {
   const { user } = useAuth();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [escalations, setEscalations] = useState<EscalationRecord[]>([]);
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [hrAdmins, setHrAdmins] = useState<UserRecord[]>([]);
-  const [managers, setManagers] = useState<UserRecord[]>([]);
+  const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Edit/Delete modal state
-  const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
+  // Edit / Delete User Modal
+  const [editingUser, setEditingUser] = useState<DirectoryUser | null>(null);
   const [editRole, setEditRole] = useState("");
   const [editStatus, setEditStatus] = useState("");
   const [editReportingManager, setEditReportingManager] = useState("");
   const [saving, setSaving] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<UserRecord | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<DirectoryUser | null>(null);
 
-  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  });
+  const showToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMsg({ type, text });
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
-  // Live Operations Dashboard
-  const [liveEmployees, setLiveEmployees] = useState<LiveStatusEmployee[]>([]);
-  const [liveSummary, setLiveSummary] = useState<LiveStatusSummary | null>(null);
-  const [liveSearch, setLiveSearch] = useState("");
-  // Offer-letter feature removed entirely — no generation, no email, no
-  // management UI anywhere in the product.
-  const [pendingOnboarding, setPendingOnboarding] = useState<OnboardingCandidate[]>([]);
+  const loadData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    else setRefreshing(true);
 
-  const [liveFilter, setLiveFilter] = useState<"all" | "punched_in" | "in_office" | "remote" | "on_break" | "in_meeting" | "active" | "punched_out" | "absent">("all");
+    try {
+      const res = await fetch("/api/hrm/v2/superadmin/dashboard-summary");
+      if (!res.ok) {
+        throw new Error(`Failed to load summary: ${res.statusText}`);
+      }
+      const json = await res.json();
+      if (json?.data) {
+        setData(json.data);
+        setError(null);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to load executive summary");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
 
-    // Auto-polling every 10 seconds for live updates
+    // 60-second soft background refresh (replaces 10-second spam polling)
     const interval = setInterval(() => {
       loadData(true);
-    }, 10000);
+    }, 60000);
 
     const handlePunchUpdate = () => {
       loadData(true);
     };
     window.addEventListener("attendance-updated", handlePunchUpdate);
 
-
-  return () => {
+    return () => {
       clearInterval(interval);
       window.removeEventListener("attendance-updated", handlePunchUpdate);
     };
-  }, []);
+  }, [loadData]);
 
-  const loadData = async (isSilent = false) => {
-    if (!isSilent) setLoading(true);      try {        const [empRes, attRes, escRes, leaveRes, hrRes, mgrRes, onbRes, liveRes] =
-        await Promise.allSettled([
-          fetch("/api/hrm/v2/users?action=list").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/attendance").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/escalations").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/leaves?status=pending").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/users?action=list&role=hr_admin").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/users?action=list&role=manager").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/onboarding?pending=true").then((r) => (r.ok ? r.json() : null)),
-          fetch("/api/hrm/v2/attendance/live-status").then((r) => (r.ok ? r.json() : null)),
-        ]);
+  // CEO 1-Click Reporting Manager Assignment
+  const handleAssignReportingManager = async (employeeId: string, managerName: string) => {
+    try {
+      const res = await fetch("/api/hrm/v2/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: employeeId,
+          action: "profile",
+          reportingManager: managerName,
+        }),
+      });
 
-      if (empRes.status === "fulfilled" && empRes.value) {
-        const d = empRes.value.data;
-        setEmployees(Array.isArray(d) ? d.filter((e: any) => {
-        const r = (e.role || "").toLowerCase();
-        return r !== "super_admin" && r !== "superadmin" && r !== "ceo";
-      }) : []);
+      if (!res.ok) {
+        throw new Error("Failed to assign reporting manager");
       }
-      if (attRes.status === "fulfilled" && attRes.value) {
-        const d = attRes.value.data;
-        setAttendance(Array.isArray(d) ? d : []);
-      }
-      if (escRes.status === "fulfilled" && escRes.value) {
-        const d = escRes.value.data;
-        setEscalations(Array.isArray(d) ? d : []);
-      }
-      if (leaveRes.status === "fulfilled" && leaveRes.value) {
-        const d = leaveRes.value.data;
-        setLeaveRequests(Array.isArray(d) ? d : []);
-      }
-      if (hrRes.status === "fulfilled" && hrRes.value) {
-        const d = hrRes.value.data;
-        setHrAdmins(Array.isArray(d) ? d : []);
-      }
-      if (mgrRes.status === "fulfilled" && mgrRes.value) {
-        const d = mgrRes.value.data;
-        setManagers(Array.isArray(d) ? d : []);
-      }
-      if (liveRes.status === "fulfilled" && liveRes.value) {
-        setLiveEmployees(Array.isArray(liveRes.value.data) ? liveRes.value.data : []);
-        if (liveRes.value.summary) setLiveSummary(liveRes.value.summary);
-      }
-      if (onbRes.status === "fulfilled" && onbRes.value) {
-        setPendingOnboarding(Array.isArray(onbRes.value.data) ? onbRes.value.data : []);
-      }
-    } catch {
-      // use empty state
+
+      showToast(`Reporting manager assigned to ${managerName}`);
+      loadData(true);
+    } catch (err: any) {
+      showToast(err?.message || "Assignment failed", "error");
     }
-    if (!isSilent) setLoading(false);
   };
 
-  // ── Onboarding Counts ──
-  const pendingOnbCount = pendingOnboarding.length;
-
-  // ── Computed KPIs ──
-
-  const totalEmployees = employees.length;
-  const toLocalDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const todayStr = toLocalDateStr(new Date());
-  const isSelectedToday = selectedAttendanceDate === todayStr;
-
-  const todayAttendance = attendance.filter((a) => {
-    const punchDate = a.date || (a.punchInTime ? new Date(a.punchInTime).toISOString().split("T")[0] : "");
-    return punchDate === selectedAttendanceDate;
-  });
-  const presentCount = todayAttendance.filter(
-    (a) => a.status === "PRESENT" || a.status === "LATE" || a.status === "HALF_DAY" || a.status === "present" || a.status === "half_day" || a.status === "WFH" || a.status === "wfh"
-  ).length;
-  const absentCount = Math.max(0, totalEmployees - presentCount);
-  const pendingLeaves = leaveRequests.filter((l) => l.status === "pending");
-  const overtimeHours = todayAttendance.reduce(
-    (sum, a) => sum + (a.overtimeHours || 0),
-    0
-  );
-
-  const filteredEmployees = searchQuery
-    ? employees.filter(
-        (e) =>
-          (e.displayName || e.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.department?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : employees;
-
-  // Per-section search boxes for the remaining data sections.
-  const [attendanceSearch, setAttendanceSearch] = useState("");
-  const [leaveSearch, setLeaveSearch] = useState("");
-  const filteredTodayAttendance = attendanceSearch
-    ? todayAttendance.filter(
-        (a) =>
-          (a.userName || a.userEmail || "").toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-          (a.employeeCode || "").toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-          (a.status || "").toLowerCase().includes(attendanceSearch.toLowerCase())
-      )
-    : todayAttendance;
-  const filteredPendingLeaves = leaveSearch
-    ? pendingLeaves.filter(
-        (l) =>
-          l.employeeName?.toLowerCase().includes(leaveSearch.toLowerCase()) ||
-          l.type?.toLowerCase().includes(leaveSearch.toLowerCase()) ||
-          l.reason?.toLowerCase().includes(leaveSearch.toLowerCase())
-      )
-    : pendingLeaves;
-
-  // Live Operations list: single source of truth for the filter+search result
-  // so the "X / Y shown" counter always matches the cards below.
-  const filteredLiveEmployees = liveEmployees
-    .filter((emp) => {
-      if (liveFilter === "punched_in") return emp.status === "punched_in";
-      if (liveFilter === "in_office") return emp.status === "punched_in" && emp.workLocation === "office";
-      if (liveFilter === "remote") return emp.status === "punched_in" && emp.workLocation === "remote";
-      if (liveFilter === "on_break") return emp.status === "punched_in" && emp.auxState === "on_break";
-      if (liveFilter === "in_meeting") return emp.status === "punched_in" && emp.auxState === "meeting";
-      if (liveFilter === "active") return emp.status === "punched_in" && emp.auxState === "active";
-      if (liveFilter === "punched_out") return emp.status === "punched_out";
-      if (liveFilter === "absent") return emp.status === "absent";
-      return true;
-    })
-    .filter((emp) => {
-      if (!liveSearch) return true;
-      const q = liveSearch.toLowerCase();
-      return (
-        emp.name.toLowerCase().includes(q) ||
-        emp.email.toLowerCase().includes(q) ||
-        emp.employeeCode.toLowerCase().includes(q) ||
-        emp.department.toLowerCase().includes(q)
-      );
-    });
-
-  // ── Handlers ──
-
-  // Employee Directory rows share the same edit modal as the HR/Manager
-  // roster — map the directory row into a UserRecord first.
-  const openEditFromEmployee = (emp: Employee) => {
-    const rec: UserRecord = {
-      id: emp.id || emp._id || "",
-      displayName: emp.displayName || emp.name,
-      email: emp.email,
-      role: emp.role || "employee",
-      status: emp.status || "active",
-      reportingManager: emp.reportingManager,
-    };
-    setEditingUser(rec);
-    setEditRole(rec.role);
-    setEditStatus(rec.status);
-    setEditReportingManager(rec.role === "manager" ? "" : rec.reportingManager || "");
+  // Open Edit User Modal
+  const handleOpenEditUser = (u: DirectoryUser) => {
+    setEditingUser(u);
+    setEditRole(u.role);
+    setEditStatus(u.status);
+    setEditReportingManager(u.role === "manager" ? "" : u.reportingManager || "");
   };
 
-  const handleEditUser = async () => {
+  // Save Edit User Changes
+  const handleSaveEditUser = async () => {
     if (!editingUser) return;
     setSaving(true);
     try {
-      // Role change first so the server-side promotion/demotion semantics
-      // (manager → reporting manager cleared; demotion → auto-assigned) run
-      // BEFORE any explicit reporting-manager choice below — the CEO's final
-      // pick always wins and the stored value never fights the role logic.
+      // 1. Role change first if modified
       if (editRole && editRole !== editingUser.role) {
         await fetch("/api/hrm/v2/users", {
           method: "PATCH",
@@ -374,9 +140,8 @@ export default function SuperadminOverviewPage() {
           }),
         });
       }
-      // CEO-controlled reporting structure: only sent when changed, and only
-      // for non-managers — managers ARE management, so they carry no reporting
-      // manager of their own (the dropdown is hidden for them too).
+
+      // 2. Reporting manager if modified and user is not a manager
       if (editRole !== "manager" && editReportingManager !== (editingUser.reportingManager || "")) {
         await fetch("/api/hrm/v2/users", {
           method: "PATCH",
@@ -388,6 +153,8 @@ export default function SuperadminOverviewPage() {
           }),
         });
       }
+
+      // 3. Status if modified
       if (editStatus && editStatus !== editingUser.status) {
         await fetch("/api/hrm/v2/users", {
           method: "PATCH",
@@ -399,953 +166,308 @@ export default function SuperadminOverviewPage() {
           }),
         });
       }
-      setSuccessMsg("User updated successfully");
+
+      showToast("User access and structure updated successfully");
       setEditingUser(null);
-      setTimeout(() => setSuccessMsg(null), 3000);
-      loadData();
-    } catch (err) {
-      console.error(err);
+      loadData(true);
+    } catch (err: any) {
+      showToast(err?.message || "Failed to update user", "error");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
+  // Delete User
   const handleDeleteUser = async () => {
     if (!confirmDelete) return;
     setSaving(true);
     try {
-      await fetch(`/api/hrm/v2/users?userId=${confirmDelete.id}`, {
+      const res = await fetch(`/api/hrm/v2/users?userId=${confirmDelete.id}`, {
         method: "DELETE",
       });
-      setSuccessMsg("User deleted successfully");
+      if (!res.ok) throw new Error("Delete failed");
+
+      showToast("User account terminated successfully");
       setConfirmDelete(null);
-      setTimeout(() => setSuccessMsg(null), 3000);
-      loadData();
-    } catch (err) {
-      console.error(err);
+      setEditingUser(null);
+      loadData(true);
+    } catch (err: any) {
+      showToast(err?.message || "Failed to delete user", "error");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  };
+
+  if (loading && !data) {
+    return (
+      <AppShell title="CEO Command Center">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm font-semibold text-muted-foreground">
+            Loading executive command center...
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const fb = data?.financialBurn || {};
+  const op = data?.operationsRadar || {};
+  const gq = data?.governanceQueue || {};
+  const sh = data?.systemHealth || {};
+  const directory = data?.directory || [];
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(val || 0);
   };
 
   return (
     <AppShell title="CEO Command Center">
-      {/* ── Success Toast ── */}
-      {successMsg && (
-        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-          <CheckCircle2 className="h-4 w-4" />
-          {successMsg}
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div
+          className={`fixed top-4 right-4 z-[70] flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-2 ${
+            toastMsg.type === "success"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+              : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400"
+          }`}
+        >
+          {toastMsg.type === "success" ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          {toastMsg.text}
         </div>
       )}
 
-      {/* ═══ HEADER ═══ */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-white/10 pb-6">
+      {/* Executive Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            Welcome back, {user?.name || "CEO"}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Full visibility across your organization — employees, attendance,
-            leaves, and escalations
-          </p>
-        </div>
-        <Link
-          href="/hrms/superadmin/settings"
-          className="flex items-center space-x-2 bg-white dark:bg-[#0B0F19] hover:bg-gray-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 border border-gray-200 dark:border-white/10 font-semibold text-xs px-4 py-2.5 rounded-xl transition-colors"
-        >
-          <Shield className="w-4 h-4 text-primary" />
-          <span>Platform Settings</span>
-        </Link>
-      </div>
-
-      {/* ═══ KPI CARDS ═══ */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPICard
-          icon={<Users className="h-5 w-5 text-primary" />}
-          label="Total Employees"
-          value={totalEmployees}
-          trend="+2 this month"
-          trendUp
-        />
-        <KPICard
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-500" />}
-          label="Present Today"
-          value={presentCount}
-          trend={`${todayAttendance.length > 0 ? Math.round((presentCount / totalEmployees) * 100) : 0}% attendance`}
-          trendUp
-        />
-        <KPICard
-          icon={<AlertCircle className="h-5 w-5 text-red-500" />}
-          label="Absent Today"
-          value={absentCount > 0 ? absentCount : 0}
-          trend={absentCount > 0 ? "Needs attention" : "All here!"}
-          trendUp={absentCount === 0}
-        />
-        <KPICard
-          icon={<CalendarDays className="h-5 w-5 text-orange-500" />}
-          label="Pending Leaves"
-          value={pendingLeaves.length}
-          trend={
-            pendingLeaves.length > 0
-              ? `${pendingLeaves.filter((l) => l.requestedBy === "manager").length} from managers`
-              : "All clear"
-          }
-          trendUp={pendingLeaves.length === 0}
-        />
-        <KPICard
-          icon={<Clock className="h-5 w-5 text-purple-500" />}
-          label="Overtime Today"
-          value={`${overtimeHours.toFixed(1)}h`}
-          trend={overtimeHours > 0 ? "Approved hours" : "None logged"}
-          trendUp
-        />
-      </div>
-
-      {/* ═══ QUICK ACTIONS ═══ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <QuickAction
-          href="/hrms/hr-admin/employees"
-          icon={<Users className="h-5 w-5" />}
-          label="Manage Employees"
-          color="primary"
-        />
-        <QuickAction
-          href="/hrms/hr-admin/onboarding"
-          icon={<UserCheck className="h-5 w-5" />}
-          label="Onboarding"
-          color="emerald"
-        />
-        <QuickAction
-          href="/hrms/hr-admin/payroll"
-          icon={<DollarSign className="h-5 w-5" />}
-          label="Run Payroll"
-          color="blue"
-        />
-        <QuickAction
-          href="/hrms/superadmin/audit-logs"
-          icon={<FileText className="h-5 w-5" />}
-          label="Audit Logs"
-          color="orange"
-        />
-      </div>
-
-      {/* ═══ EMAIL / SMTP STATUS ═══ */}
-      <MailStatusCard />
-
-      {/* ═══ LIVE OPERATIONS DASHBOARD ═══ */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-gray-100 dark:border-white/10">
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Live Operations Dashboard</h2>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                Real-time AUX status · Effective hours · Punch times · Auto-refreshes every 10s
-              </p>
-            </div>
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
+              Welcome back, {user?.name || "CEO"}
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
+              Executive
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
-              {([
-                ["all", "All"],
-                ["punched_in", "Punched In"],
-                ["in_office", "In Office"],
-                ["remote", "Remote"],
-                ["on_break", "On Break"],
-                ["in_meeting", "In Meeting"],
-                ["active", "Active"],
-                ["punched_out", "Punched Out"],
-                ["absent", "Absent"],
-              ] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setLiveFilter(key)}
-                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
-                    liveFilter === key
-                      ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={liveSearch}
-                onChange={(e) => setLiveSearch(e.target.value)}
-                className="w-32 pl-7 pr-2 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        {liveSummary && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-5">
-            <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20">
-              <p className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{liveSummary.punchedIn}</p>
-              <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium">Punched In</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
-              <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{liveSummary.inOffice}</p>
-              <p className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">In Office</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20">
-              <p className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{liveSummary.remote}</p>
-              <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium">Remote</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
-              <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{liveSummary.active}</p>
-              <p className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">Active</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-              <p className="text-lg font-extrabold text-amber-600 dark:text-amber-400">{liveSummary.onBreak}</p>
-              <p className="text-[10px] text-amber-500 dark:text-amber-400 font-medium">On Break</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
-              <p className="text-lg font-extrabold text-purple-600 dark:text-purple-400">{liveSummary.inMeeting}</p>
-              <p className="text-[10px] text-purple-500 dark:text-purple-400 font-medium">In Meeting</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
-              <p className="text-lg font-extrabold text-slate-600 dark:text-slate-400">{liveSummary.punchedOut}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Punched Out</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20">
-              <p className="text-lg font-extrabold text-red-600 dark:text-red-400">{liveSummary.absent}</p>
-              <p className="text-[10px] text-red-500 dark:text-red-400 font-medium">Absent</p>
-            </div>
-          </div>
-        )}
-
-        {/* Filter result counter */}
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-            {liveFilter === "all" && !liveSearch ? (
-              <span>{liveEmployees.length} shown</span>
-            ) : (
-              <span>
-                {filteredLiveEmployees.length} / {liveEmployees.length} shown
-              </span>
-            )}
+          <p className="text-xs text-muted-foreground mt-1">
+            Real-time organizational governance, statutory financial burn & live operational control
           </p>
         </div>
 
-        {/* Live Employee Cards */}
-        <div className="space-y-2">
-          {filteredLiveEmployees.map((emp) => {
-              const auxColor =
-                emp.auxState === "on_break"
-                  ? "amber"
-                  : emp.auxState === "meeting"
-                  ? "purple"
-                  : "emerald";
-              const auxLabel =
-                emp.auxState === "on_break"
-                  ? "On Break"
-                  : emp.auxState === "meeting"
-                  ? "In Meeting"
-                  : emp.auxState === "active"
-                  ? "Active"
-                  : "—";
-              const statusColor =
-                emp.status === "punched_in"
-                  ? "emerald"
-                  : emp.status === "punched_out"
-                  ? "slate"
-                  : "red";
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="text-xs flex items-center gap-1.5"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
+          </Button>
 
-              return (
-                <div
-                  key={emp.userId}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border transition-all ${
-                    emp.status === "punched_in"
-                      ? "bg-white dark:bg-black/30 border-gray-100 dark:border-white/5 hover:border-primary/30"
-                      : emp.status === "punched_out"
-                      ? "bg-slate-50 dark:bg-black/20 border-gray-100 dark:border-white/5 opacity-70"
-                      : "bg-red-50/50 dark:bg-red-500/5 border-red-100 dark:border-red-500/10"
-                  }`}
-                >
-                  {/* Employee Info */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${
-                      statusColor === "emerald" ? "bg-emerald-500" : statusColor === "slate" ? "bg-slate-400" : "bg-red-400"
-                    }`}>
-                      {emp.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{emp.name}</span>
-                        <span className="font-mono text-[10px] text-primary font-bold">{emp.employeeCode}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                        {emp.department} · {emp.designation}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status & AUX */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {emp.status === "punched_in" && (
-                      <>
-                        {/* Work Location Badge */}
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                          emp.workLocation === "remote"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30"
-                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"
-                        }`}>
-                          {emp.workLocation === "remote" ? (
-                            <>
-                              <Home className="h-3 w-3" /> Remote
-                            </>
-                          ) : (
-                            <>
-                              <Building2 className="h-3 w-3" /> Office
-                            </>
-                          )}
-                        </span>
-
-                        {/* AUX Badge — with "since N min" highlight for the
-                            current state (auxSince = open period start time) */}
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                          auxColor === "amber"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30"
-                            : auxColor === "purple"
-                            ? "bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/30"
-                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30"
-                        }`}>
-                          {auxLabel}
-                          {(() => {
-                            if (!emp.auxSince) return null;
-                            const mins = Math.max(0, Math.round((Date.now() - new Date(emp.auxSince).getTime()) / 60000));
-                            if (mins < 1) return null;
-                            const dur = mins >= 60 ? ` ${Math.floor(mins / 60)}h ${mins % 60}m` : ` ${mins}m`;
-                            return <span className="opacity-80 font-mono">·{dur}</span>;
-                          })()}
-                        </span>
-
-                        {/* Effective Hours */}
-                        <div className="text-center min-w-[70px]">
-                          <p className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">
-                            {Math.floor(emp.effectiveWorkMinutes / 60)}h {emp.effectiveWorkMinutes % 60}m
-                          </p>
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500">Work</p>
-                        </div>
-
-                        {/* Break */}
-                        {emp.totalBreakMinutes > 0 && (
-                          <div className="text-center min-w-[60px]">
-                            <p className="text-sm font-bold text-amber-600 dark:text-amber-400 font-mono">
-                              {emp.totalBreakMinutes}m
-                            </p>
-                            <p className="text-[9px] text-slate-400 dark:text-slate-500">Break</p>
-                          </div>
-                        )}
-
-                        {/* Punch-in time */}
-                        <div className="text-center min-w-[70px]">
-                          <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                            {emp.punchInTime ? new Date(emp.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
-                          </p>
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500">Punch In</p>
-                        </div>
-                      </>
-                    )}
-
-                    {emp.status === "punched_out" && (
-                      <>
-                        <div className="text-center min-w-[70px]">
-                          <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                            {emp.punchInTime ? new Date(emp.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
-                          </p>
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500">In</p>
-                        </div>
-                        <div className="text-center min-w-[70px]">
-                          <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                            {emp.punchOutTime ? new Date(emp.punchOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
-                          </p>
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500">Out</p>
-                        </div>
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400 border border-slate-200 dark:border-slate-500/30">
-                          {emp.workHours}h logged
-                        </span>
-                      </>
-                    )}
-
-                    {emp.status === "absent" && (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30">
-                        Not Punched In
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-          {liveEmployees.length === 0 && (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
-              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-xs font-medium">No attendance data available yet</p>
-            </div>
-          )}
+          <Link href="/hrms/hr-admin">
+            <Button size="sm" variant="outline" className="text-xs flex items-center gap-1">
+              <span>HR Admin Desk</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* ═══ EMPLOYEE DIRECTORY ═══ */}
-      <SectionCard
-        title="Employee Directory"
-        subtitle="All employees across the organization"
-        icon={<Users className="h-5 w-5 text-primary" />}
-        count={totalEmployees}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or department..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
-            />
+      {/* Top Strategic KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Total Active Staff</span>
+            <Users className="h-4 w-4 text-primary" />
           </div>
+          <div className="text-2xl font-extrabold text-foreground tracking-tight">
+            {fb.activeEmployeeCount ?? 0}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Active organizational workforce
+          </p>
         </div>
 
-        {filteredEmployees.length === 0 ? (
-          <EmptyState message={loading ? "Loading employees..." : "No employees found. Add employees through the HR Admin dashboard."} />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
-                <tr>
-                  <th className="pb-3 pr-4">Name</th>
-                  <th className="pb-3 pr-4">Department</th>
-                  <th className="pb-3 pr-4">Designation</th>
-                  <th className="pb-3 pr-4">Code</th>
-                  <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3 pr-4">Manager</th>
-                  <th className="pb-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-                {filteredEmployees.slice(0, 15).map((emp) => (
-                  <tr
-                    key={emp._id || emp.id}
-                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                  >
-                    <td className="py-3 pr-4">
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {emp.displayName || emp.name}
-                      </span>
-                      <span className="block text-[10px] text-slate-500 font-normal">
-                        {emp.email}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
-                      {emp.department || "—"}
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
-                      {emp.designation || "—"}
-                    </td>
-                    <td className="py-3 pr-4 font-mono font-bold text-primary text-[11px]">
-                      {emp.employeeCode || "—"}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <StatusChip status={emp.status || "active"} />
-                    </td>
-                    <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">
-                      {emp.reportingManager || "—"}
-                    </td>
-                    <td className="py-3">
-                      <button
-                        onClick={() => openEditFromEmployee(emp)}
-                        className="text-[10px] font-bold text-primary hover:underline"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredEmployees.length > 15 && (
-              <div className="text-center pt-3">
-                <Link
-                  href="/hrms/hr-admin/employees"
-                  className="text-xs text-primary hover:underline font-semibold"
-                >
-                  View all {filteredEmployees.length} employees →
-                </Link>
-              </div>
-            )}
+        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>On Duty Today</span>
+            <Clock className="h-4 w-4 text-emerald-500" />
           </div>
-        )}
-      </SectionCard>
-
-      {/* ═══ ATTENDANCE OVERVIEW ═══ */}
-      <SectionCard
-        title={isSelectedToday ? "Today's Attendance Overview" : `Attendance Overview (${selectedAttendanceDate})`}
-        subtitle={`${presentCount} Present · ${absentCount} Absent · ${totalEmployees} Total Employees`}
-        icon={<MapPin className="h-5 w-5 text-indigo-500" />}
-        count={todayAttendance.length}
-        action={
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-gray-200 dark:border-white/10">
-              <button
-                onClick={() => setSelectedAttendanceDate(todayStr)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                  isSelectedToday
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                }`}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => {
-                  const y = new Date();
-                  y.setDate(y.getDate() - 1);                   setSelectedAttendanceDate(toLocalDateStr(y));
-                }}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                  selectedAttendanceDate === (() => { const y = new Date(); y.setDate(y.getDate() - 1); return toLocalDateStr(y); })()
-                    ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                }`}
-              >
-                Yesterday
-              </button>
-            </div>
-            <input
-              type="date"
-              value={selectedAttendanceDate}
-              onChange={(e) => setSelectedAttendanceDate(e.target.value)}
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-2.5 py-1 text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-primary cursor-pointer font-bold"
-            />
-            <Link
-              href="/hrms/hr-admin/attendance"
-              className="text-xs text-primary hover:underline font-semibold ml-1"
-            >
-              Master →
-            </Link>
+          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+            {op.punchedIn ?? 0}
           </div>
-        }
-      >
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search attendance by name, email, code, or status..."
-            value={attendanceSearch}
-            onChange={(e) => setAttendanceSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
-          />
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {op.inOffice ?? 0} In Office &bull; {op.remote ?? 0} Remote
+          </p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
-              <tr>
-                <th className="pb-3 pr-4">Employee</th>
-                <th className="pb-3 pr-4">Punch In</th>
-                <th className="pb-3 pr-4">Punch Out</th>
-                <th className="pb-3 pr-4">Geofence</th>
-                <th className="pb-3 pr-4">Status</th>
-                <th className="pb-3">Overtime / Escalation</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-              {filteredTodayAttendance.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState
-                      message={
-                        loading
-                          ? "Loading attendance data..."
-                          : `No punch records found for ${selectedAttendanceDate}. Total ${absentCount} employees absent.`
-                      }
-                    />
-                  </td>
-                </tr>
-              ) : (
-                filteredTodayAttendance.map((rec, idx) => (
-                  <tr
-                    key={rec._id || `${rec.userId}-${rec.date}-${idx}`}
-                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                  >
-                    <td className="py-3 pr-4">
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {rec.userName || "Unknown"}
-                      </span>
-                      {rec.employeeCode && (
-                        <span className="ml-1.5 text-[10px] bg-gray-100 dark:bg-white/10 text-indigo-500 px-2 py-0.5 rounded font-mono">
-                          {rec.employeeCode}
-                        </span>
-                      )}
-                      {rec.userEmail && (
-                        <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                          {rec.userEmail}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 font-mono">
-                      {rec.punchInTime ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                          {new Date(rec.punchInTime).toLocaleTimeString()}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 font-mono">
-                      {rec.punchOutTime ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                          {new Date(rec.punchOutTime).toLocaleTimeString()}
-                        </span>
-                      ) : rec.punchInTime ? (
-                        <span className="text-yellow-500 text-[10px] font-bold">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 text-[10px] font-mono">
-                      {rec.distanceMeters !== undefined ? (
-                        <span
-                          className={
-                            rec.distanceMeters <= 100
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-red-600 dark:text-red-400"
-                          }
-                        >
-                          {rec.distanceMeters}m
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <AttendanceStatusBadge status={rec.status} />
-                    </td>
-                    <td className="py-3">
-                      {rec.regularizationStatus === "PENDING" ? (
-                        <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
-                          Pending Regularization
-                        </span>
-                      ) : rec.overtimeHours && rec.overtimeHours > 0 ? (
-                        <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
-                          {rec.overtimeHours}h OT
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[10px]">
-                          Standard
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </SectionCard>
 
-      {/* ═══ TWO-COLUMN: LEAVE REQUESTS + HR/MANAGER ROSTER ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Leave Requests */}
-        <SectionCard
-          title="Pending Leave Requests"
-          subtitle="Approve or reject employee and manager leaves"
-          icon={<CalendarDays className="h-5 w-5 text-orange-500" />}
-          count={pendingLeaves.length}
-        >
-          {pendingLeaves.length === 0 ? (
-            <EmptyState message="No pending leave requests. All clear!" />
-          ) : (
-            <div className="space-y-2">
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search leave requests by employee, type, or reason..."
-                  value={leaveSearch}
-                  onChange={(e) => setLeaveSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary"
-                />
-              </div>
-              {filteredPendingLeaves.slice(0, 8).map((l) => (
-                <div
-                  key={l.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 text-xs"
-                >
-                  <div className="min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate">
-                      {l.employeeName}
-                    </span>
-                    <span className="text-slate-500 text-[10px]">
-                      {l.type} · {l.totalDays}d · {l.reason}
-                    </span>
-                    {l.requestedBy === "manager" && (
-                      <span className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded mt-1 inline-block font-bold">
-                        MANAGER REQUEST
-                      </span>
-                    )}
-                  </div>
-                  <Link
-                    href="/hrms/hr-admin"
-                    className="shrink-0 ml-2 text-primary text-[10px] font-bold hover:underline"
-                  >
-                    Review →
-                  </Link>
-                </div>
-              ))}
-              {pendingLeaves.length > 8 && (
-                <div className="text-center pt-1">
-                  <Link
-                    href="/hrms/hr-admin"
-                    className="text-xs text-primary hover:underline font-semibold"
-                  >
-                    View all {pendingLeaves.length} requests →
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* HR Admin & Manager Roster */}
-        <SectionCard
-          title="HR Admin & Manager Roster"
-          subtitle="Assigned HR administrator and management team"
-          icon={<ShieldCheck className="h-5 w-5 text-primary" />}
-          count={hrAdmins.length + managers.length}
-        >
-          <div className="space-y-4">
-            {/* HR Admins */}
-            <div>
-              <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-2">
-                HR Administrator
-              </h4>
-              {hrAdmins.length === 0 ? (
-                <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
-                  No HR Admin assigned yet
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {hrAdmins.map((u) => (
-                    <RosterRow
-                      key={u.id}
-                      user={u}
-                      onEdit={() => {
-                        setEditingUser(u);
-                        setEditRole(u.role);
-                        setEditStatus(u.status);
-                        // Managers never carry a reporting manager — keep the
-                        // field empty so no stale value is accidentally saved.
-                        setEditReportingManager(u.role === "manager" ? "" : u.reportingManager || "");
-                      }}
-                      onDelete={() => setConfirmDelete(u)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Managers */}
-            <div>
-              <h4 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-2">
-                Managers
-              </h4>
-              {managers.length === 0 ? (
-                <div className="p-4 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-400 text-[11px]">
-                  No managers assigned yet
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {managers.map((u) => (
-                    <RosterRow
-                      key={u.id}
-                      user={u}
-                      onEdit={() => {
-                        setEditingUser(u);
-                        setEditRole(u.role);
-                        setEditStatus(u.status);
-                        // Managers never carry a reporting manager — keep the
-                        // field empty so no stale value is accidentally saved.
-                        setEditReportingManager(u.role === "manager" ? "" : u.reportingManager || "");
-                      }}
-                      onDelete={() => setConfirmDelete(u)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Projected Monthly Outflow</span>
+            <DollarSign className="h-4 w-4 text-blue-500" />
           </div>
-        </SectionCard>
+          <div className="text-2xl font-extrabold text-foreground tracking-tight truncate">
+            {formatCurrency(fb.totalProjectedBurn ?? 0)}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Wages + EPFO + ESIC + Claims
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Governance Radar</span>
+            <ShieldAlert className="h-4 w-4 text-amber-500" />
+          </div>
+          <div className="text-2xl font-extrabold text-foreground tracking-tight">
+            {(gq.totalUnassigned ?? 0) + (gq.totalEscalations ?? 0)}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {gq.totalUnassigned ?? 0} Unassigned &bull; {gq.totalEscalations ?? 0} 48h Escalations
+          </p>
+        </div>
       </div>
 
-      {/* ═══ PENDING ONBOARDING APPLICATIONS ═══ */}
-      <SectionCard
-        title="Pending Onboarding Applications"
-        subtitle="New employee registrations awaiting approval"
-        icon={<UserCheck className="h-5 w-5 text-emerald-500" />}
-        count={pendingOnbCount}
-      >
-        {pendingOnboarding.length === 0 ? (
-          <EmptyState message="No pending onboarding applications." />
-        ) : (
-          <div className="space-y-2">
-            {pendingOnboarding.map((c: any) => (
-              <div key={c.id || c._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 text-xs">
-                <div>
-                  <span className="font-bold text-slate-900 dark:text-white block">{c.employeeName || c.name}</span>
-                  <span className="text-slate-500 text-[10px]">{c.email} {c.department ? "· " + c.department : ""}</span>
-                  {c.documentName && (
-                    <span className="text-[10px] text-primary block mt-1">
-                      <FileText className="h-3 w-3 inline mr-1" />{c.documentName}
-                    </span>
-                  )}
-                </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">PENDING</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
+      {/* Strategic Pillar 1: Financial Burn & Statutory Outflows */}
+      <div className="mt-6">
+        <CeoFinancialBurnCard data={fb} />
+      </div>
 
-      {/* ═══ ONBOARDING ESCALATION QUEUE ═══ */}
-      <SectionCard
-        title="Onboarding Escalation Queue"
-        subtitle="Employees who missed their 48-hour document re-upload deadline"
-        icon={<ShieldAlert className="h-5 w-5 text-red-500" />}
-        count={escalations.length}
-        variant="danger"
-      >
-        {escalations.length === 0 ? (
-          <div className="text-center py-6">
-            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              No Onboarding Escalations
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">
-              All document re-upload deadlines are currently compliant.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {escalations.map((u) => (
-              <div
-                key={u.id}
-                className="p-4 rounded-xl bg-slate-50 dark:bg-black/30 border border-red-200 dark:border-red-500/20 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                    {u.employeeName}
-                  </h3>
-                  <span className="bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-[10px] font-bold px-2 py-0.5 rounded">
-                    48H DEADLINE EXPIRED
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  {u.email} · {u.department}
-                </p>
-                <div className="pt-2 flex items-center justify-between border-t border-gray-200 dark:border-white/5 text-[11px]">
-                  <span className="text-slate-400 font-mono">
-                    Escalated: {u.rejectionDate}
-                  </span>
-                  <Link
-                    href="/hrms/hr-admin/onboarding"
-                    className="text-primary font-bold hover:underline"
-                  >
-                    Resolve →
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
+      {/* Strategic Pillar 2: Organization Live Operations & AUX Radar */}
+      <div className="mt-6">
+        <CeoOperationsRadar data={op} />
+      </div>
 
-      {/* ═══ EDIT USER MODAL ═══ */}
+      {/* Strategic Pillar 3: Governance & Escalations Console */}
+      <div className="mt-6">
+        <CeoGovernanceConsole
+          unassigned={gq.unassignedManagers || []}
+          escalations={gq.onboardingEscalations || []}
+          availableManagers={gq.availableManagers || []}
+          directory={directory}
+          onAssignManager={handleAssignReportingManager}
+          onEditUser={handleOpenEditUser}
+        />
+      </div>
+
+      {/* Strategic Pillar 4: Pure MySQL System Health & Audit Logs */}
+      <div className="mt-6 mb-12">
+        <CeoSystemHealthCard data={sh} />
+      </div>
+
+      {/* ═══ CEO USER EDIT MODAL ═══ */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
-            <h3 className="font-bold text-lg">Edit User Role & Status</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Editing: {editingUser.email}
-            </p>
-            <div className="space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl text-card-foreground">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Edit className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">
+                  Manage Access: {editingUser.displayName || editingUser.email}
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold mb-1">Role</label>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                  User Role
+                </label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                  className="w-full h-9 text-xs rounded-lg border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 >
-                  <option value="hr_admin">HR Admin</option>
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
                   <option value="employee">Employee</option>
+                  <option value="manager">Manager</option>
+                  <option value="hr_admin">HR Admin</option>
+                  <option value="super_admin">Super Admin (CEO)</option>
                 </select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Promoting to manager automatically clears any reporting manager hierarchy.
+                </p>
               </div>
-              {/* CEO-only: assign the reporting manager — employees only.
-                  Managers are hidden this option entirely: they ARE management
-                  and carry no reporting manager (the role action clears it on
-                  promotion). Dropdown of actual manager accounts keeps the
-                  stored name consistent with what the manager sees and what
-                  leave-approval scoping uses. */}
+
               {editRole !== "manager" && (
-              <div>
-                <label className="block text-xs font-semibold mb-1">
-                  Reporting Manager <span className="text-[9px] font-bold text-primary uppercase">(CEO only)</span>
-                </label>
-                <select
-                  value={editReportingManager}
-                  onChange={(e) => setEditReportingManager(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="">No reporting manager</option>
-                  {managers
-                    // Self-reporting guard: nobody can be their own manager.
-                    .filter((m) => m.id !== editingUser.id && (m.displayName || m.email) !== editingUser.email)
-                    .map((m) => (
-                    <option key={m.id} value={m.displayName || m.email}>
-                      {m.displayName || m.email}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-slate-400 mt-1">Assign the employee&apos;s reporting manager. Changes reflect on their profile immediately.</p>
-              </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    Reporting Manager (CEO Controlled)
+                  </label>
+                  <select
+                    value={editReportingManager}
+                    onChange={(e) => setEditReportingManager(e.target.value)}
+                    className="w-full h-9 text-xs rounded-lg border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Unassigned</option>
+                    {(gq.availableManagers || []).map((m: any) => (
+                      <option key={m.id} value={m.name}>
+                        {m.name} ({m.department})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
+
               <div>
-                <label className="block text-xs font-semibold mb-1">
-                  Status
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                  Account Status
                 </label>
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                  className="w-full h-9 text-xs rounded-lg border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="active">Active</option>
-                  <option value="disabled">Disabled</option>
                   <option value="inactive">Inactive</option>
+                  <option value="disabled">Disabled / Locked</option>
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-white/10">
-              <button
-                onClick={() => setEditingUser(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5"
+
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setConfirmDelete(editingUser)}
+                className="text-xs flex items-center gap-1"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleEditUser}
-                disabled={saving}
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Delete</span>
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingUser(null)}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveEditUser}
+                  disabled={saving}
+                  className="text-xs"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -1353,267 +475,41 @@ export default function SuperadminOverviewPage() {
 
       {/* ═══ DELETE CONFIRMATION MODAL ═══ */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-900 dark:text-white">
-            <h3 className="font-bold text-lg text-red-600 dark:text-red-400">
-              Delete User
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              Are you sure you want to delete{" "}
-              <strong>
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-destructive/30 bg-card p-6 shadow-xl text-card-foreground">
+            <div className="flex items-center gap-2 text-destructive mb-2">
+              <AlertCircle className="h-5 w-5" />
+              <h4 className="text-sm font-bold">Terminate User Account</h4>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Are you sure you want to permanently delete{" "}
+              <strong className="text-foreground">
                 {confirmDelete.displayName || confirmDelete.email}
               </strong>
-              ? This permanently deletes their account and record from the database.
+              ? This action is irrevocable and logged in the system audit stream.
             </p>
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-white/10">
-              <button
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5"
+                className="text-xs"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={handleDeleteUser}
                 disabled={saving}
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="text-xs"
               >
-                {saving ? "Deleting..." : "Delete User"}
-              </button>
+                {saving ? "Deleting..." : "Confirm Delete"}
+              </Button>
             </div>
           </div>
         </div>
       )}
-
     </AppShell>
-  );
-}
-
-// ── Sub-components ─────────────────────────────────────────
-
-function KPICard({
-  icon,
-  label,
-  value,
-  trend,
-  trendUp,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  trend: string;
-  trendUp: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-4 backdrop-blur-md text-slate-900 dark:text-white">
-      <div className="flex items-center justify-between mb-2">{icon}</div>
-      <p className="text-2xl font-extrabold">{value}</p>
-      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-        {label}
-      </p>
-      <p
-        className={`text-[10px] mt-1 font-semibold ${
-          trendUp
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-orange-600 dark:text-orange-400"
-        }`}
-      >
-        {trend}
-      </p>
-    </div>
-  );
-}
-
-function QuickAction({
-  href,
-  icon,
-  label,
-  color,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-}) {
-  const colors: Record<string, string> = {
-    primary: "text-primary bg-primary/10 border-primary/20",
-    emerald: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-    blue: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-    orange: "text-orange-500 bg-orange-500/10 border-orange-500/20",
-  };
-
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 p-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] hover:border-primary/30 transition-colors group"
-    >
-      <div
-        className={`p-2 rounded-lg border ${colors[color] || colors.primary}`}
-      >
-        {icon}
-      </div>
-      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">
-        {label}
-      </span>
-      <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 ml-auto group-hover:text-primary transition-colors" />
-    </Link>
-  );
-}
-
-function SectionCard({
-  title,
-  subtitle,
-  icon,
-  count,
-  variant,
-  action,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  count: number;
-  variant?: "danger";
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={`rounded-2xl border bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white ${
-        variant === "danger"
-          ? "border-red-200 dark:border-red-500/20"
-          : "border-gray-200 dark:border-white/10"
-      }`}
-    >
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <div
-            className={`p-2.5 rounded-xl border ${
-              variant === "danger"
-                ? "bg-red-500/10 border-red-500/20"
-                : "bg-primary/10 border-primary/20"
-            }`}
-          >
-            {icon}
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              {title}
-            </h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              {subtitle}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {action}
-          <span className="text-xs font-mono text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full font-bold">
-            {count}
-          </span>
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function RosterRow({
-  user,
-  onEdit,
-  onDelete,
-}: {
-  user: UserRecord;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-100 dark:border-white/5 text-xs">
-      <div className="min-w-0">
-        <span className="font-bold text-slate-900 dark:text-white block truncate">
-          {user.displayName || user.firstName || user.email}
-        </span>
-        <span className="text-[10px] text-slate-500 block truncate">
-          {user.email}
-        </span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0 ml-3">
-        <span
-          className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-            user.status === "active"
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-              : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
-          }`}
-        >
-          {user.status === "active" ? "Active" : "Disabled"}
-        </span>
-        <button
-          onClick={onEdit}
-          className="text-[10px] font-semibold text-primary hover:underline px-1.5 py-0.5 rounded hover:bg-primary/10"
-        >
-          Edit
-        </button>
-        <button
-          onClick={onDelete}
-          className="text-[10px] font-semibold text-red-500 hover:underline px-1.5 py-0.5 rounded hover:bg-red-500/10"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StatusChip({ status }: { status: string }) {
-  const isActive = status === "active" || status === "ACTIVE";
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-        isActive
-          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-          : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20"
-      }`}
-    >
-      {isActive ? "Active" : status}
-    </span>
-  );
-}
-
-function AttendanceStatusBadge({ status }: { status?: string }) {
-  const map: Record<string, { bg: string; text: string; label: string }> = {
-    PRESENT: {
-      bg: "bg-emerald-500/10 border-emerald-500/20",
-      text: "text-emerald-600 dark:text-emerald-400",
-      label: "PRESENT",
-    },
-    LATE: {
-      bg: "bg-yellow-500/10 border-yellow-500/20",
-      text: "text-yellow-600 dark:text-yellow-400",
-      label: "LATE",
-    },
-    HALF_DAY: {
-      bg: "bg-blue-500/10 border-blue-500/20",
-      text: "text-blue-600 dark:text-blue-400",
-      label: "HALF DAY",
-    },
-    ABSENT: {
-      bg: "bg-red-500/10 border-red-500/20",
-      text: "text-red-600 dark:text-red-400",
-      label: "ABSENT",
-    },
-  };
-  const s = map[status || ""] || map.ABSENT;
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${s.bg} ${s.text}`}
-    >
-      {s.label}
-    </span>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="p-6 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
-      {message}
-    </div>
   );
 }

@@ -1,3 +1,5 @@
+// lib/db/mongo-helper.ts — Legacy helper shim.
+// Backed 100% by MySQL via ./mysql.
 import "server-only";
 import { getDb as getMySQLDb, MySQLDatabase } from "./mysql";
 

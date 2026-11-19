@@ -32,6 +32,7 @@ import {
   FolderOpen,
   Receipt,
   CreditCard,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -80,6 +81,7 @@ const iconMap: Record<string, React.ElementType> = {
   Receipt,
   CreditCard,
   Sparkles,
+  Zap,
 };
 
 const roleSettingsMap: Record<string, string> = {
@@ -190,40 +192,40 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         href={item.href}
         onClick={() => isMobile && onClose()}
         className={cn(
-          "group relative flex items-center gap-3 rounded-lg transition-all duration-200",
-          isCollapsed ? "justify-center mx-auto w-10 h-10" : "px-3 py-2.5",
-          "text-sm font-medium",
+          "group relative flex items-center gap-3 rounded-xl transition-colors duration-150",
+          isCollapsed ? "justify-center mx-auto w-10 h-10" : "px-3 py-2",
+          "text-xs font-medium",
           isActive
-            ? "text-primary"
-            : "text-sidebar-foreground/80 hover:text-sidebar-accent-foreground"
+            ? "text-primary font-semibold"
+            : "text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
         )}
       >
         {/* Active indicator bar - gradient accent */}
         {isActive && !isCollapsed && (
-          <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary/80 to-primary/30" />
+          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
         )}
         {isActive && isCollapsed && (
-          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-primary/80 to-primary/30" />
+          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
         )}
 
         {/* Active background glow */}
         {isActive && (
-          <span className="absolute inset-0 rounded-lg bg-primary/[0.07] dark:bg-primary/[0.12]" />
+          <span className="absolute inset-0 rounded-xl bg-primary/[0.08] dark:bg-primary/[0.15] border border-primary/20" />
         )}
 
         {/* Icon */}
         <span
           className={cn(
-            "relative z-10 flex items-center justify-center transition-all duration-200",
+            "relative z-10 flex items-center justify-center transition-transform duration-150",
             isCollapsed ? "h-[18px] w-[18px]" : "h-[18px] w-[18px] shrink-0"
           )}
         >
           <Icon
             className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-[18px] w-[18px] transition-colors duration-150",
               isActive
                 ? "text-primary"
-                : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground group-hover:scale-105"
+                : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground group-hover:scale-105"
             )}
             strokeWidth={isActive ? 2.5 : 2}
           />
@@ -233,7 +235,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {!isCollapsed && (
           <span
             className={cn(
-              "relative z-10 truncate transition-all duration-200",
+              "relative z-10 truncate transition-colors duration-150",
               isActive && "font-semibold"
             )}
           >
@@ -251,12 +253,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <TooltipContent
             side="right"
             sideOffset={16}
-            className="z-60 border border-white/10 bg-[#0b1120]/95 backdrop-blur-xl text-white text-xs font-medium px-3 py-1.5 rounded-lg"
+            className="z-60 border border-border bg-popover text-popover-foreground text-xs font-medium px-3 py-1.5 rounded-lg shadow-md"
           >
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-              {item.title}
-            </div>
+            <div>{item.title}</div>
           </TooltipContent>
         </Tooltip>
       );
@@ -283,29 +282,29 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <button
               onClick={() => toggleGroup(group)}
               className={cn(
-                "flex items-center gap-2 rounded-lg px-1.5 py-1 -ml-1.5 transition-all duration-200 w-full text-left",
+                "flex items-center gap-2 rounded-lg px-1.5 py-1 -ml-1.5 transition-colors duration-150 w-full text-left",
                 "hover:bg-sidebar-accent/60 group/expander"
               )}
             >
               <ChevronDown
                 className={cn(
-                  "h-3 w-3 text-sidebar-foreground/40 transition-transform duration-200",
+                  "h-3 w-3 text-sidebar-foreground/70 transition-transform duration-200",
                   isExpanded ? "rotate-0" : "-rotate-90"
                 )}
               />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/40">
+              <span className="text-xs font-semibold text-sidebar-foreground/80">
                 {label}
               </span>
               <div
                 className={cn(
-                  "ml-auto h-px flex-1 transition-all duration-200",
+                  "ml-auto h-px flex-1 transition-opacity duration-150",
                   "bg-sidebar-border/50"
                 )}
               />
             </button>
           ) : (
             <>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/40">
+              <span className="text-xs font-semibold text-sidebar-foreground/80">
                 {label}
               </span>
               <div className="ml-3 flex-1 h-px bg-sidebar-border/50" />
@@ -316,8 +315,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {isExpandable ? (
           <div
             className={cn(
-              "overflow-hidden transition-[max-height] duration-300 ease-in-out",
-              isExpanded ? "max-h-[500px]" : "max-h-0"
+              "overflow-hidden transition-opacity duration-200 ease-in-out motion-reduce:transition-none",
+              isExpanded ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0 pointer-events-none"
             )}
           >
             <div className="space-y-0.5 pt-0.5">
@@ -338,7 +337,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Mobile overlay */}
       {isMobile && open && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm motion-safe:animate-fade-in"
           onClick={onClose}
         />
       )}
@@ -348,7 +347,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           "fixed left-0 top-0 z-50 flex h-full flex-col",
           "bg-sidebar dark:bg-sidebar",
           "border-r border-sidebar-border",
-          "transition-[width,margin,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "transition-transform duration-300 ease-out motion-reduce:transition-none",
           "dark:border-white/[0.06]",
           isMobile
             ? cn("w-[270px]", open ? "translate-x-0" : "-translate-x-full")
@@ -387,7 +386,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     SKORA <span className="text-primary font-light">HRMS</span>
                   </span>
                 </div>
-                <span className="text-[10px] font-medium text-sidebar-foreground/50 tracking-wider uppercase leading-tight">
+                <span className="text-xs text-muted-foreground leading-tight">
                   Enterprise Portal
                 </span>
               </div>
@@ -400,7 +399,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="shrink-0 px-3 pt-3.5 pb-2">
             <div
               className={cn(
-                "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
+                "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors duration-150",
                 searchFocused
                   ? "border-primary/40 bg-primary/[0.04] dark:bg-primary/[0.06]"
                   : "border-sidebar-border/60 bg-sidebar-accent/40 dark:bg-sidebar-accent/50 hover:border-sidebar-border hover:bg-sidebar-accent/60"
@@ -408,21 +407,21 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             >
               <Search
                 className={cn(
-                  "h-3.5 w-3.5 shrink-0 transition-colors duration-200",
+                  "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                   searchFocused
                     ? "text-primary"
-                    : "text-sidebar-foreground/40"
+                    : "text-sidebar-foreground/70"
                 )}
               />
               <input
                 placeholder="Quick search..."
                 value={navSearch}
                 onChange={(e) => setNavSearch(e.target.value)}
-                className="flex-1 bg-transparent text-xs text-sidebar-accent-foreground placeholder:text-sidebar-foreground/30 outline-none border-none"
+                className="flex-1 bg-transparent text-xs text-sidebar-accent-foreground placeholder:text-sidebar-foreground/70 outline-none border-none"
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
               />
-              <kbd className="inline-flex h-5 items-center gap-0.5 rounded-md border border-sidebar-border/50 bg-sidebar-accent/60 px-1.5 text-[10px] font-medium text-sidebar-foreground/40">
+              <kbd className="inline-flex h-5 items-center gap-0.5 rounded-md border border-sidebar-border/50 bg-sidebar-accent/60 px-1.5 text-xs font-medium text-sidebar-foreground/70">
                 <span>⌘</span>K
               </kbd>
             </div>
@@ -431,7 +430,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {isCollapsed && (
           <div className="flex justify-center shrink-0 pt-3.5 pb-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sidebar-border/40 text-sidebar-foreground/40 hover:text-sidebar-accent-foreground hover:border-sidebar-border hover:bg-sidebar-accent/50 transition-all duration-200 cursor-pointer">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sidebar-border/40 text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:border-sidebar-border hover:bg-sidebar-accent/50 transition-colors duration-150 cursor-pointer">
               <Search className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -453,10 +452,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <button
                   onClick={() => setTheme("light")}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-all duration-200",
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-colors duration-150",
                     theme === "light"
-                      ? "bg-white dark:bg-sidebar-accent/80 text-amber-500 font-semibold"
-                      : "text-sidebar-foreground/50 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
+                      ? "bg-white dark:bg-sidebar-accent/80 text-amber-500 font-semibold shadow-xs"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
                   )}
                 >
                   <Sun className="h-3.5 w-3.5" />
@@ -465,10 +464,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <button
                   onClick={() => setTheme("dark")}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-all duration-200",
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-colors duration-150",
                     theme === "dark"
-                      ? "bg-sidebar-accent/80 text-indigo-400 font-semibold dark:bg-sidebar"
-                      : "text-sidebar-foreground/50 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
+                      ? "bg-sidebar-accent/80 text-indigo-400 font-semibold dark:bg-sidebar shadow-xs"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
                   )}
                 >
                   <Moon className="h-3.5 w-3.5" />
@@ -491,22 +490,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   href={roleSettingsMap[user?.role || "employee"] || "/hrms/employee/settings"}
                   onClick={() => isMobile && onClose()}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl transition-all duration-200 hover:bg-sidebar-accent/60 px-2.5 py-2 flex-1 min-w-0 group/user",
+                    "flex items-center gap-3 rounded-xl transition-colors duration-150 hover:bg-sidebar-accent/60 px-2.5 py-2 flex-1 min-w-0 group/user",
                     isCollapsed && "px-0 py-0 justify-center"
                   )}
                 >
                   <div className="relative shrink-0">
-                    <Avatar className="h-8 w-8 ring-2 ring-sidebar-border/60 ring-offset-2 ring-offset-sidebar transition-all duration-200 group-hover/user:ring-primary/40">
+                    <Avatar className="h-8 w-8 ring-2 ring-sidebar-border/60 ring-offset-2 ring-offset-sidebar transition-[box-shadow] duration-150 group-hover/user:ring-primary/40">
                       {user?.image ? (
                         <AvatarImage src={user.image} alt={displayName} />
                       ) : (
-                        <AvatarFallback className="text-[11px] font-bold bg-gradient-to-br from-primary to-primary/70 text-white">
+                        <AvatarFallback className="text-[11px] font-bold bg-primary text-white">
                           {initials}
                         </AvatarFallback>
                       )}
                     </Avatar>
-                    {/* Online indicator */}
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-sidebar bg-success" />
                   </div>
 
                   {!isCollapsed && (
@@ -514,7 +511,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                       <span className="text-sm font-semibold text-sidebar-accent-foreground dark:text-white truncate leading-tight">
                         {displayName}
                       </span>
-                      <span className="text-[11px] text-sidebar-foreground/50 truncate capitalize leading-tight">
+                      <span className="text-xs text-muted-foreground truncate capitalize leading-tight">
                         {roleLabel}
                       </span>
                     </div>
@@ -525,10 +522,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <TooltipContent
                   side="right"
                   sideOffset={16}
-                  className="z-60 border border-white/10 bg-[#0b1120]/95 backdrop-blur-xl text-white rounded-xl px-3 py-2"
+                  className="z-60 border border-border bg-popover text-popover-foreground rounded-xl px-3 py-2 shadow-md"
                 >
                   <p className="font-semibold text-sm">{displayName}</p>
-                  <p className="text-muted-foreground text-[11px] capitalize mt-0.5">
+                  <p className="text-muted-foreground text-xs capitalize mt-0.5">
                     {roleLabel}
                   </p>
                 </TooltipContent>
@@ -549,7 +546,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         window.location.href = "/hrms/login";
                       }
                     }}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/40 hover:text-danger hover:bg-danger/10 transition-all duration-200 shrink-0"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/70 hover:text-danger hover:bg-danger/10 transition-colors duration-150 shrink-0"
                   >
                     <LogOut className="h-4 w-4" />
                   </button>
@@ -569,13 +566,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   <button
                     onClick={() => setSidebarMini(!isSidebarMini)}
                     className={cn(
-                      "flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60 transition-all duration-200 w-full",
+                      "flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60 transition-colors duration-150 w-full",
                       isCollapsed && "justify-center px-0"
                     )}
                   >
                     <ChevronLeft
                       className={cn(
-                        "h-4 w-4 transition-all duration-300",
+                        "h-4 w-4 transition-transform duration-200",
                         isCollapsed && "rotate-180"
                       )}
                     />

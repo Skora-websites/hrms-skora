@@ -330,7 +330,7 @@ export default function EmployeeProfilePage() {
       <div className="max-w-3xl space-y-6">
         {!isSuperAdmin && verificationStatus === "PENDING" && (
           <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-xs text-yellow-700 dark:text-yellow-400 flex items-start gap-3">
-            <Clock className="h-5 w-5 shrink-0 text-yellow-500 animate-pulse mt-0.5" />
+            <Clock className="h-5 w-5 shrink-0 text-yellow-500 motion-safe:animate-pulse motion-reduce:animate-none mt-0.5" />
             <div>
               <p className="font-bold text-sm">Document Verification Pending with HR</p>
               <p className="mt-0.5">
@@ -342,7 +342,7 @@ export default function EmployeeProfilePage() {
 
         {!isSuperAdmin && verificationStatus === "REJECTED_48H" && (
           <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-xs text-red-700 dark:text-red-400 flex items-start gap-3">
-            <AlertTriangle className="h-6 w-6 shrink-0 text-red-500 animate-bounce mt-0.5" />
+            <AlertTriangle className="h-6 w-6 shrink-0 text-red-500 mt-0.5" />
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <p className="font-bold text-sm text-red-600 dark:text-red-300">Document Verification Rejected by HR</p>
@@ -358,7 +358,7 @@ export default function EmployeeProfilePage() {
         )}
 
         {/* Profile Card & Form */}
-        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-5">
+        <form onSubmit={handleSaveProfile} className="rounded-2xl border border-border bg-card p-6 text-card-foreground space-y-5">
           {saved && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
               <CheckCircle2 className="h-4 w-4" />
@@ -373,14 +373,14 @@ export default function EmployeeProfilePage() {
           )}
 
           {/* User info overview with Employee Code */}
-          <div className="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-white/10">
+          <div className="flex items-center justify-between gap-4 pb-4 border-b border-border">
             <div className="flex items-center gap-4">
               <div className="h-14 w-14 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xl">
                 {(user?.name || user?.email || "SA").substring(0, 2).toUpperCase()}
               </div>
               <div>
                 <h3 className="font-bold text-slate-900 dark:text-white text-lg">{user?.name || "Employee"}</h3>
-                <p className="text-xs text-primary font-semibold uppercase">{user?.role || "Employee"}</p>
+                <p className="text-xs text-primary font-semibold capitalize">{user?.role || "Employee"}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email || "Not signed in"}</p>
               </div>
             </div>
@@ -405,13 +405,13 @@ export default function EmployeeProfilePage() {
                 <label className="text-slate-500 dark:text-slate-400 block mb-1 font-semibold">Reporting Authority</label>
                 {/* Read-only: the reporting structure is set by the CEO and
                     reflects here automatically. (was editable inputs) */}
-                <div className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-slate-100/70 dark:bg-black/60 px-3 py-2 text-sm text-slate-900 dark:text-white">
+                <div className="w-full rounded-lg border border-border bg-slate-100/70 dark:bg-black/60 px-3 py-2 text-sm text-slate-900 dark:text-white">
                   {reportingManager || <span className="text-slate-400">To be assigned</span>}
                 </div>
-                <div className="w-full mt-2 rounded-lg border border-gray-200 dark:border-white/10 bg-slate-100/70 dark:bg-black/60 px-3 py-1.5 text-[11px] text-primary">
-                  {managerEmail || <span className="text-slate-400">—</span>}
+                <div className="w-full mt-2 rounded-lg border border-border bg-slate-100/70 dark:bg-black/60 px-3 py-1.5 text-[11px] text-primary">
+                  {managerEmail || <span className="text-slate-400">N/A</span>}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1.5">Assigned by the CEO — changes reflect here automatically</p>
+                <p className="text-[10px] text-slate-400 mt-1.5">Assigned by the CEO, changes reflect here automatically</p>
               </div>
 
               <div>
@@ -421,14 +421,14 @@ export default function EmployeeProfilePage() {
                   value={domainWork}
                   onChange={(e) => setDomainWork(e.target.value)}
                   placeholder="e.g. Frontend Development"
-                  className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  className="w-full rounded-lg border border-border bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
                 />
                 <input
                   type="text"
                   value={allottedTeam}
                   onChange={(e) => setAllottedTeam(e.target.value)}
                   placeholder="Allotted Unit / Team"
-                  className="w-full mt-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400 focus:border-primary focus:outline-none"
+                  className="w-full mt-2 rounded-lg border border-border bg-white dark:bg-black/40 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400 focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
@@ -442,7 +442,7 @@ export default function EmployeeProfilePage() {
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -452,7 +452,7 @@ export default function EmployeeProfilePage() {
                 type="text"
                 value={emergencyContact}
                 onChange={(e) => setEmergencyContact(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function EmployeeProfilePage() {
               type="text"
               value={bankAccount}
               onChange={(e) => setBankAccount(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
             />
           </div>
 
@@ -475,7 +475,7 @@ export default function EmployeeProfilePage() {
         </form>
 
         {/* Change Password */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
+        <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground space-y-4">
           <div>
             <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
               <Lock className="h-5 w-5 text-primary" /> Change Password
@@ -509,7 +509,7 @@ export default function EmployeeProfilePage() {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
             </div>
             <div>
@@ -521,7 +521,7 @@ export default function EmployeeProfilePage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Min 8 chars, letters + numbers"
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
             </div>
             <div>
@@ -533,7 +533,7 @@ export default function EmployeeProfilePage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter new password"
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function EmployeeProfilePage() {
         </div>
 
         {/* Onboarding Documents */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white space-y-4">
+        <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base flex items-center gap-2 text-slate-900 dark:text-white">
@@ -596,7 +596,7 @@ export default function EmployeeProfilePage() {
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-xs"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 dark:bg-black/40 border border-border text-xs"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
@@ -646,8 +646,8 @@ export default function EmployeeProfilePage() {
       {/* Modal 1: View Document Preview */}
       {viewingDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 space-y-4 text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-base flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" /> Document Preview: {viewingDoc.type}
               </h3>
@@ -656,7 +656,7 @@ export default function EmployeeProfilePage() {
               </button>
             </div>
 
-            <div className="p-6 text-center bg-slate-50 dark:bg-black/40 rounded-xl border border-dashed border-gray-200 dark:border-white/10 space-y-3">
+            <div className="p-6 text-center bg-slate-50 dark:bg-black/40 rounded-xl border border-dashed border-border space-y-3">
               <FileText className="h-14 w-14 text-primary mx-auto" />
               <p className="font-mono font-bold text-sm text-primary">{viewingDoc.name}</p>
             </div>
@@ -683,8 +683,8 @@ export default function EmployeeProfilePage() {
       {/* Modal 2: Upload Document */}
       {(editingDoc || showAddModal) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 space-y-4 text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-base flex items-center gap-2">
                 <FileUp className="h-5 w-5 text-primary" /> {editingDoc ? `Upload New File (${editingDoc.type})` : "Add New Onboarding Document"}
               </h3>
@@ -710,7 +710,7 @@ export default function EmployeeProfilePage() {
                 <select
                   value={newDocType}
                   onChange={(e) => setNewDocType(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none"
                 >
                   {DOC_TYPES.map((t) => (
                     <option key={t} value={t}>{t}</option>
@@ -729,7 +729,7 @@ export default function EmployeeProfilePage() {
                   onClick={triggerFileBrowse}
                   className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-primary/40 rounded-xl bg-slate-50 dark:bg-black/40 hover:bg-slate-100 dark:hover:bg-black/60 cursor-pointer transition-colors text-center"
                 >
-                  <Upload className="h-8 w-8 text-primary mb-2 animate-bounce" />
+                  <Upload className="h-8 w-8 text-primary mb-2" />
                   <span className="font-bold text-slate-900 dark:text-white text-xs">
                     {selectedFile ? selectedFile.name : "Click to Browse Govt ID / Passport File"}
                   </span>
@@ -742,7 +742,7 @@ export default function EmployeeProfilePage() {
               </div>
 
               {selectedFile && (
-                <div className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
+                <div className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-black/30 border border-border">
                   <div className="flex items-center justify-between text-xs font-semibold">
                     <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                       {isUploading ? (
@@ -763,14 +763,14 @@ export default function EmployeeProfilePage() {
 
                   <div className="w-full h-2.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-300 ease-out"
+                      className="h-full bg-gradient-to-r from-primary to-emerald-500"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"

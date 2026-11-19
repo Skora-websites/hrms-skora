@@ -14,13 +14,13 @@ const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 6, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[11rem] overflow-hidden rounded-md border border-border bg-card p-1 animate-slide-up",
+        "z-50 min-w-[12rem] overflow-hidden rounded-xl border border-border/80 bg-card/95 p-1.5 text-card-foreground shadow-xl backdrop-blur-md animate-slide-down",
         className
       )}
       {...props}
@@ -38,7 +38,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm text-muted outline-none transition-colors focus:bg-gray-100 dark:focus:bg-gray-800 focus:text-dark dark:focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center rounded-lg px-2.5 py-2 text-xs font-medium text-foreground outline-none transition-colors hover:bg-muted focus:bg-muted focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
@@ -56,7 +56,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      "px-3 py-2 text-xs font-bold text-muted uppercase tracking-wider",
+      "px-2.5 py-1.5 text-xs font-semibold text-muted-foreground",
       inset && "pl-8",
       className
     )}
@@ -71,7 +71,7 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-border", className)}
+    className={cn("-mx-1 my-1 h-px bg-border/70", className)}
     {...props}
   />
 ));

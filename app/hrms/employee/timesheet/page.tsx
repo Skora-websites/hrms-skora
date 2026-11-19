@@ -104,7 +104,7 @@ export default function EmployeeTimesheetPage() {
         <div className="lg:col-span-1">
           <form
             onSubmit={submit}
-            className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white space-y-4"
+            className="rounded-2xl border border-border bg-card p-6 text-card-foreground space-y-4"
           >
             <h3 className="font-bold text-base flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" /> Log Hours
@@ -115,7 +115,7 @@ export default function EmployeeTimesheetPage() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -128,7 +128,7 @@ export default function EmployeeTimesheetPage() {
                 step="0.5"
                 value={hours}
                 onChange={(e) => setHours(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -139,7 +139,7 @@ export default function EmployeeTimesheetPage() {
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
                 placeholder="What did you work on?"
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
             <div>
@@ -148,7 +148,7 @@ export default function EmployeeTimesheetPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
             <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">
@@ -173,7 +173,7 @@ export default function EmployeeTimesheetPage() {
 
         {/* Right 2 Cols: Timesheet Log History */}
         <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
             <h3 className="font-bold text-slate-900 dark:text-white text-base mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" /> Submitted Timesheet History
             </h3>
@@ -183,13 +183,13 @@ export default function EmployeeTimesheetPage() {
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading entries...
               </div>
             ) : timesheets.length === 0 ? (
-              <div className="p-8 text-center border border-dashed border-gray-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 text-xs">
+              <div className="p-8 text-center border border-dashed border-border rounded-xl text-slate-500 dark:text-slate-400 text-xs">
                 No timesheet entries logged yet. Use the form on the left to submit your hours.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-gray-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
+                  <thead className="border-b border-border text-slate-500 dark:text-slate-400">
                     <tr>
                       <th className="pb-3 font-semibold">Date</th>
                       <th className="pb-3 font-semibold">Work</th>

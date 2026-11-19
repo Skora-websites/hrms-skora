@@ -59,7 +59,7 @@ function dashboardFor(role: string | undefined): string {
 const PROTECTED_PREFIX_ROLES: [string, string[]][] = [
   ["/hrms/superadmin", ["super_admin"]],
   ["/hrms/hr-admin", ["hr_admin", "admin"]],
-  ["/hrms/manager", ["manager"]],
+  ["/hrms/manager", ["manager", "hr_admin", "admin"]],
 ];
 
 async function freshRoleRequired(request: NextRequest, sessionCookie: string | undefined): Promise<string | null> {

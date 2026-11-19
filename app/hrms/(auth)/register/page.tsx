@@ -42,14 +42,14 @@ const YES_NO = ["Yes", "No"] as const;
 // the page component, every keystroke recreates them and React remounts the
 // whole form subtree, throwing away input focus mid-typing.
 const inputCls =
-  "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary";
+  "w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2.5 text-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary";
 const labelCls = "block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1";
 
 function Section({
   icon, title, children,
 }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-5 sm:p-6 space-y-4">
+    <section className="rounded-2xl border border-border bg-card p-5 sm:p-6 space-y-4">
       <h2 className="flex items-center gap-2.5 text-sm font-bold text-slate-900 dark:text-white pb-2 border-b border-gray-100 dark:border-white/5">
         {icon}
         {title}
@@ -216,15 +216,15 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">SKORA HRMS — Onboarding Form</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">SKORA HRMS: Onboarding Form</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            HR will review your submission and email a temporary password to your address —
+            HR will review your submission and email a temporary password to your address,
             only your email is required; everything else is optional
           </p>
         </div>
 
         {requested ? (
-          <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-10 text-center space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-10 text-center space-y-3">
             <CheckCircle2 className="h-12 w-12 text-success mx-auto" />
             <p className="font-bold text-sm text-slate-900 dark:text-white">Onboarding form sent to HR!</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -424,10 +424,10 @@ export default function RegisterPage() {
             </Section>
 
             <div className="flex flex-col items-center gap-3 pb-6">
-              <Button type="submit" className="w-full sm:w-64 h-11 font-bold" disabled={loading}>
+              <Button type="submit" className="w-full sm:w-64 h-11 font-bold focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" disabled={loading}>
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Submitting...
+                    <Loader2 className="h-4 w-4 motion-safe:animate-spin motion-reduce:animate-none" /> Submitting...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">

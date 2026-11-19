@@ -275,6 +275,26 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     mustChangePassword: !body.password,
   } as any);
 
+  // Trigger automated workflow
+  try {
+    const { triggerWorkflowEvent } = await import("@/services/hrm/workflow");
+    await triggerWorkflowEvent(
+      "employee.created",
+      {
+        id: employee.id,
+        userId: employee.id,
+        employeeName: displayName,
+        employeeEmail: normalizedEmail,
+        department: body.departmentName || body.department || "General",
+        designation: body.designationName || body.designation || "Staff",
+        reportingManager: body.reportingManager || "",
+      },
+      tenantId
+    );
+  } catch (err) {
+    // Non-blocking trigger error
+  }
+
   return NextResponse.json({ data: employee }, { status: 201 });
 }, { label: "HRM Employees" });
 

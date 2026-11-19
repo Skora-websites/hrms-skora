@@ -113,8 +113,9 @@ export default function ReportsPage() {
             variant="outline"
             onClick={() => fetchReport(activeTab)}
             disabled={loading}
+            className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "motion-safe:animate-spin motion-reduce:animate-none" : ""}`} />
             Refresh
           </Button>
           <Button
@@ -139,7 +140,7 @@ export default function ReportsPage() {
                 setActiveTab(tab.id);
                 setSearch("");
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-150 ${
                 isActive
                   ? "bg-primary text-white shadow-sm"
                   : "bg-card border border-border text-muted hover:text-dark dark:hover:text-white"
@@ -153,13 +154,13 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-card rounded-2xl border border-border p-12 text-center animate-pulse">
-          <p className="text-sm text-muted">Compiling {activeTab} analytics...</p>
+        <div className="bg-card rounded-2xl border border-border p-12 text-center motion-safe:animate-pulse motion-reduce:animate-none">
+          <p className="text-sm text-muted">Compiling {activeTab} analytics…</p>
         </div>
       ) : !report ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center">
           <BarChart3 className="h-12 w-12 text-muted mx-auto mb-3" />
-          <p className="text-dark dark:text-white font-semibold">No report generated</p>
+          <p className="text-foreground font-semibold">No report generated</p>
           <p className="text-xs text-muted mt-1">HR-level permissions required to inspect this dataset.</p>
         </div>
       ) : (
@@ -176,7 +177,7 @@ export default function ReportsPage() {
                   className="bg-card rounded-xl border border-border p-4 flex flex-col justify-between"
                 >
                   <p className="text-xs text-muted truncate">{s.label}</p>
-                  <p className="text-2xl font-bold text-dark dark:text-white mt-1">
+                  <p className="text-2xl font-bold text-foreground mt-1">
                     {s.value}
                   </p>
                 </motion.div>
@@ -209,7 +210,7 @@ export default function ReportsPage() {
                     {report.columns.map((col) => (
                       <th
                         key={col.key}
-                        className="py-3 px-4 font-semibold text-dark dark:text-white uppercase tracking-wider text-[11px]"
+                        className="py-3 px-4 font-semibold text-foreground text-xs"
                       >
                         {col.label}
                       </th>
@@ -237,7 +238,7 @@ export default function ReportsPage() {
                           const isStatus =
                             col.key.toLowerCase().includes("status");
                           return (
-                            <td key={col.key} className="py-3 px-4 text-dark dark:text-white">
+                            <td key={col.key} className="py-3 px-4 text-foreground">
                               {isStatus ? (
                                 <Badge
                                   variant={

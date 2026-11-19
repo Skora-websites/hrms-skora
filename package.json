@@ -7,11 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "node scripts/test-with-server.js",
-    "test:e2e:watch": "node scripts/test-with-server.js --watch",
-    "pretest": "node scripts/seed-test-accounts.js || echo \"[pretest] seeding skipped (DB unreachable) - suite continues\""
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

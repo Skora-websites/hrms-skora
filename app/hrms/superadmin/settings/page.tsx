@@ -172,7 +172,7 @@ export default function SuperAdminSettingsPage() {
                 type="number"
                 value={sessionTimeout}
                 onChange={(e) => setSessionTimeout(Number(e.target.value))}
-                className="w-24 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
+                className="w-24 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
               />
             </SettingsRow>
 
@@ -184,7 +184,7 @@ export default function SuperAdminSettingsPage() {
                 type="number"
                 value={passwordMinLength}
                 onChange={(e) => setPasswordMinLength(Number(e.target.value))}
-                className="w-24 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
+                className="w-24 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
               />
             </SettingsRow>
 
@@ -198,7 +198,7 @@ export default function SuperAdminSettingsPage() {
                 max={365}
                 value={passwordExpiryDays}
                 onChange={(e) => setPasswordExpiryDays(Math.max(0, Math.min(365, Number(e.target.value))))}
-                className="w-24 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
+                className="w-24 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right"
               />
             </SettingsRow>
           </div>
@@ -218,7 +218,7 @@ export default function SuperAdminSettingsPage() {
               <select
                 value={officeStart}
                 onChange={(e) => setOfficeStart(Number(e.target.value))}
-                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-32 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {Array.from({ length: 13 }, (_, i) => 6 + i * 0.5).map((h) => (
                   <option key={h} value={h}>{fmtHour(h)}</option>
@@ -233,7 +233,7 @@ export default function SuperAdminSettingsPage() {
               <select
                 value={officeEnd}
                 onChange={(e) => setOfficeEnd(Number(e.target.value))}
-                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-32 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {Array.from({ length: 11 }, (_, i) => 14 + i * 0.5).map((h) => (
                   <option key={h} value={h}>{fmtHour(h)}</option>
@@ -248,7 +248,7 @@ export default function SuperAdminSettingsPage() {
               <select
                 value={lateAfter}
                 onChange={(e) => setLateAfter(Number(e.target.value))}
-                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-32 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {Array.from({ length: 13 }, (_, i) => 10 + i * 0.5).map((h) => (
                   <option key={h} value={h}>{fmtHour(h)}</option>
@@ -263,7 +263,7 @@ export default function SuperAdminSettingsPage() {
               <select
                 value={requiredHours}
                 onChange={(e) => setRequiredHours(Number(e.target.value))}
-                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-32 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {[7, 7.5, 8, 8.5, 9].map((h) => (
                   <option key={h} value={h}>{fmtDuration(h)}</option>
@@ -278,7 +278,7 @@ export default function SuperAdminSettingsPage() {
               <select
                 value={breakAllowance}
                 onChange={(e) => setBreakAllowance(Number(e.target.value))}
-                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-32 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {[0, 15, 30, 45, 60].map((m) => (
                   <option key={m} value={m}>{m} minutes</option>
@@ -312,7 +312,7 @@ export default function SuperAdminSettingsPage() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                       workDays.includes(idx)
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-white dark:bg-black/40 text-slate-400 border-gray-200 dark:border-white/10"
+                        : "bg-white dark:bg-black/40 text-slate-400 border-border"
                     }`}
                   >
                     {day}
@@ -349,7 +349,7 @@ export default function SuperAdminSettingsPage() {
                 step="any"
                 value={officeLatitude}
                 onChange={(e) => setOfficeLatitude(Number(e.target.value))}
-                className="w-36 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right font-mono"
+                className="w-36 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right font-mono"
               />
             </SettingsRow>
 
@@ -362,7 +362,7 @@ export default function SuperAdminSettingsPage() {
                 step="any"
                 value={officeLongitude}
                 onChange={(e) => setOfficeLongitude(Number(e.target.value))}
-                className="w-36 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right font-mono"
+                className="w-36 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary text-right font-mono"
               />
             </SettingsRow>
 
@@ -373,7 +373,7 @@ export default function SuperAdminSettingsPage() {
               <select
                 value={geofenceRadius}
                 onChange={(e) => setGeofenceRadius(Number(e.target.value))}
-                className="w-32 rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
+                className="w-32 rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary"
               >
                 {[50, 100, 150, 250, 500, 1000].map((r) => (
                   <option key={r} value={r}>{r} meters</option>
@@ -428,7 +428,7 @@ function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
       <h3 className="font-bold text-base flex items-center gap-2 mb-1">
         {icon} {title}
       </h3>

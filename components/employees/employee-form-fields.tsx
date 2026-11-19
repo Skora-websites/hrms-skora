@@ -269,28 +269,28 @@ function EmployeeFormFields({
       </FormSection>
 
       {/* Section 4: Emergency Contact (collapsible) */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden transition-all duration-300">
+      <div className="rounded-xl border border-border bg-card overflow-hidden transition-colors duration-150">
         <button
           type="button"
           onClick={() => setEmergencyExpanded((prev) => !prev)}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-colors duration-150"
         >
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
               <PhoneCall className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-bold text-dark dark:text-white">Emergency Contact</p>
-              <p className="text-xs text-dark/70 dark:text-gray-400">
+              <p className="text-sm font-bold text-foreground">Emergency Contact</p>
+              <p className="text-xs text-muted-foreground">
                 {emergencyExpanded
                   ? "Click to collapse"
-                  : "Optional — person to contact in emergencies"}
+                  : "Optional: person to contact in emergencies"}
               </p>
             </div>
           </div>
           <ChevronDown
             className={cn(
-              "h-4 w-4 text-muted transition-transform duration-300",
+              "h-4 w-4 text-muted transition-transform duration-300 motion-reduce:transition-none",
               emergencyExpanded && "rotate-180"
             )}
           />

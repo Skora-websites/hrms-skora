@@ -265,7 +265,7 @@ export default function AssetsPage() {
               <Package className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-dark dark:text-white">{asset.name}</p>
+              <p className="text-sm font-medium text-foreground">{asset.name}</p>
               {asset.assetCode && <p className="text-xs font-mono text-muted">{asset.assetCode}</p>}
             </div>
           </div>
@@ -274,14 +274,14 @@ export default function AssetsPage() {
       {
         key: "serialNumber",
         header: "Serial #",
-        cell: (asset: any) => <span className="text-sm font-mono text-muted">{asset.serialNumber || "—"}</span>,
+        cell: (asset: any) => <span className="text-sm font-mono text-muted">{asset.serialNumber || "N/A"}</span>,
         hideOnTablet: true,
       },
       {
         key: "categoryId",
         header: "Category",
         sortable: true,
-        cell: (asset: any) => <span className="text-sm text-muted">{asset.categoryId || "—"}</span>,
+        cell: (asset: any) => <span className="text-sm text-muted">{asset.categoryId || "N/A"}</span>,
         hideOnMobile: true,
       },
       {
@@ -289,9 +289,9 @@ export default function AssetsPage() {
         header: "Assigned To",
         cell: (asset: any) => {
           const uid = asset.assignedToUserId || asset.assignedTo;
-          if (!uid) return <span className="text-xs text-muted">—</span>;
+          if (!uid) return <span className="text-xs text-muted">N/A</span>;
           return (
-            <span className="text-xs font-medium text-dark dark:text-white flex items-center gap-1">
+            <span className="text-xs font-medium text-foreground flex items-center gap-1">
               <Users className="h-3 w-3 text-muted" />
               {userNames[uid] || uid}
             </span>
@@ -304,7 +304,7 @@ export default function AssetsPage() {
         sortable: true,
         cell: (asset: any) => (
           <Badge variant={conditionColors[asset.condition as keyof typeof conditionColors] || "info"} size="sm">
-            {ASSET_CONDITIONS.find((c) => c.value === asset.condition)?.label || asset.condition || "—"}
+            {ASSET_CONDITIONS.find((c) => c.value === asset.condition)?.label || asset.condition || "N/A"}
           </Badge>
         ),
         hideOnTablet: true,
@@ -315,7 +315,7 @@ export default function AssetsPage() {
         sortable: true,
         cell: (asset: any) => (
           <Badge variant={statusColors[asset.status as keyof typeof statusColors] || "info"} size="sm">
-            {ASSET_STATUS_OPTIONS.find((s) => s.value === asset.status)?.label || asset.status || "—"}
+            {ASSET_STATUS_OPTIONS.find((s) => s.value === asset.status)?.label || asset.status || "N/A"}
           </Badge>
         ),
       },
@@ -324,7 +324,7 @@ export default function AssetsPage() {
         header: "Purchase Date",
         sortable: true,
         cell: (asset: any) => (
-          <span className="text-sm text-muted">{asset.purchaseDate ? formatDate(asset.purchaseDate as any) : "—"}</span>
+          <span className="text-sm text-muted">{asset.purchaseDate ? formatDate(asset.purchaseDate as any) : "N/A"}</span>
         ),
         hideOnMobile: true,
       },
@@ -403,7 +403,7 @@ export default function AssetsPage() {
       </ToastPortal>
 
       <PageHeader title="Assets & Equipment" description="Track and manage company equipment, employee allocations, and returns.">
-        <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
+        <Button className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" onClick={() => { resetForm(); setShowAddDialog(true); }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Asset
         </Button>

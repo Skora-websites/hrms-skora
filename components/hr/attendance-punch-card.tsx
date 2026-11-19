@@ -292,68 +292,72 @@ export function AttendancePunchCard() {
     }
   };
 
-  if (loading) return <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-sm text-slate-500">Loading attendance…</div>;
+  if (loading) return <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-sm text-muted-foreground">Loading attendance…</div>;
 
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 text-slate-900 dark:text-white">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
+    <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-border/70">
         <div>
           <h3 className="font-bold text-base flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" /> Daily Attendance &amp; Shift Punch
+            <Clock className="h-5 w-5 text-primary" /> Daily Attendance and Shift Punch
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Office: <strong>{formatHour(rules.officeStart)} – {formatHour(rules.officeEnd)}</strong> · Late after <strong>{formatHour(rules.lateAfter)}</strong> · GPS Geofencing Active
+          <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span>Office: <strong>{formatHour(rules.officeStart)} to {formatHour(rules.officeEnd)}</strong></span>
+            <span className="text-border">|</span>
+            <span>Late after: <strong>{formatHour(rules.lateAfter)}</strong></span>
+            <span className="text-border">|</span>
+            <span>GPS Geofencing Active</span>
           </p>
         </div>
         {punchedIn && !punchedOut && (
-          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 rounded-full flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            LIVE · {record?.workLocation === "remote" ? "Remote" : "In Office"}
+          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse motion-reduce:animate-none" />
+            <span>Live ({record?.workLocation === "remote" ? "Remote" : "In Office"})</span>
           </span>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 p-3 text-xs text-red-600 dark:text-red-400">
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-600 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
       {success && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400">
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span>{success}</span>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-5 rounded-xl bg-slate-50 dark:bg-black/40 border border-gray-200 dark:border-white/5">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-5 rounded-xl bg-muted/40 border border-border/70">
         <div>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{punchedIn ? "Punched In at:" : "Status:"}</span>
-          <p className="text-base font-bold mt-1">{punchedIn ? new Date(record.punchInTime).toLocaleTimeString() : "Not Punched In Today"}</p>
-          {punchedOut && <p className="text-sm font-semibold text-emerald-600 mt-1">Out: {new Date(record.punchOutTime).toLocaleTimeString()}</p>}
+          <span className="text-xs text-muted-foreground">{punchedIn ? "Punched In at:" : "Status:"}</span>
+          <p className="text-base font-bold mt-1 text-foreground">{punchedIn ? new Date(record.punchInTime).toLocaleTimeString() : "Not Punched In Today"}</p>
+          {punchedOut && <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">Out: {new Date(record.punchOutTime).toLocaleTimeString()}</p>}
           {punchedIn && <div className="mt-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">Status: {record.status || "PRESENT"}</div>}
           {record?.location && (
-            <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-              <MapPin className="h-3 w-3 text-primary shrink-0" />
+            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1 font-medium">
+              <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>{record.location}</span>
             </p>
           )}
           {gpsStatus?.distance !== undefined && (
-            <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-              <Navigation className="h-3 w-3 text-primary shrink-0" />
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 font-medium">
+              <Navigation className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>{gpsStatus.distance}m from office {gpsStatus.accuracy ? `(±${gpsStatus.accuracy}m GPS accuracy)` : ""}</span>
             </p>
           )}
         </div>
 
-        <div className="text-center bg-white dark:bg-black/60 px-6 py-3 rounded-xl border border-gray-200 dark:border-white/10">
-          <span className="font-mono text-3xl font-extrabold tracking-wider">{formatDuration(effectiveSeconds)}</span>
-          <span className="text-[10px] text-slate-500 block mt-1">Effective Work Time</span>
+        <div className="text-center bg-background px-6 py-3.5 rounded-xl border border-border/80 shadow-xs">
+          <span className="font-mono text-3xl font-extrabold tracking-wider text-foreground">{formatDuration(effectiveSeconds)}</span>
+          <span className="text-xs text-muted-foreground block mt-1 font-medium">Effective Work Time</span>
         </div>
 
         <div>
           {!punchedIn ? (
-            <Button onClick={handlePunchIn} disabled={punching} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-6 h-11">
+            <Button onClick={handlePunchIn} disabled={punching} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-6 h-11 shadow-sm">
               {punching ? "Verifying GPS…" : (
                 <>
                   <MapPin className="h-4 w-4" />
@@ -362,12 +366,12 @@ export function AttendancePunchCard() {
               )}
             </Button>
           ) : punchedOut ? (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 px-4 py-2 rounded-xl border border-emerald-200 bg-emerald-50">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10">
               <CheckCircle2 className="h-3.5 w-3.5" />
               <span>Shift Complete</span>
             </span>
           ) : (
-            <Button onClick={handlePunchOut} disabled={punching} variant="danger" className="font-bold gap-2 px-6 h-11">
+            <Button onClick={handlePunchOut} disabled={punching} variant="danger" className="font-bold gap-2 px-6 h-11 shadow-sm">
               <LogOut className="h-4 w-4" />
               <span>{punching ? "Saving…" : "Punch Out"}</span>
             </Button>
@@ -376,15 +380,15 @@ export function AttendancePunchCard() {
       </div>
 
       {!punchedIn && (
-        <p className="text-[10px] text-slate-400 mt-3 text-center flex items-center justify-center gap-1.5">
+        <p className="text-xs text-muted-foreground mt-3 text-center flex items-center justify-center gap-1.5 font-medium">
           <Navigation className="h-3 w-3 text-primary" />
           <span>GPS geofencing verified on punch-in (Office radius: {officeCoords.radiusMeters}m).</span>
         </p>
       )}
 
       {punchedIn && !punchedOut && (
-        <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-black/30 border border-gray-200 dark:border-white/10">
-          <div className="flex items-center gap-2 mb-3 text-xs font-semibold">
+        <div className="mt-4 p-4 rounded-xl bg-muted/40 border border-border/70">
+          <div className="flex items-center gap-2 mb-3 text-xs font-semibold text-foreground">
             <Zap className="h-3.5 w-3.5 text-primary" /> AUX Status
           </div>
           <div className="flex gap-2">
@@ -393,10 +397,10 @@ export function AttendancePunchCard() {
                 key={state}
                 onClick={() => changeAux(state)}
                 disabled={auxSwitching}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-colors duration-150 cursor-pointer ${
                   auxState === state
-                    ? "bg-primary text-white border-primary"
-                    : "bg-white dark:bg-black/40 border-gray-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/5"
+                    ? "bg-primary text-white border-primary shadow-xs"
+                    : "bg-background border-border/80 text-foreground hover:bg-muted"
                 }`}
               >
                 {state === "active" ? (

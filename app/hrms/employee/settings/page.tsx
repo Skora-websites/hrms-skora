@@ -123,24 +123,24 @@ export default function EmployeeSettingsPage() {
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 <Mail className="h-3.5 w-3.5 inline mr-1" /> Email
               </label>
-              <input type="email" value={user?.email || ""} disabled className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-black/20 px-3 py-2 text-sm text-slate-500 cursor-not-allowed" />
+              <input type="email" value={user?.email || ""} disabled className="w-full rounded-xl border border-border bg-gray-100 dark:bg-black/20 px-3 py-2 text-sm text-slate-500 cursor-not-allowed" />
               <p className="text-[10px] text-slate-400 mt-1">Email cannot be changed here</p>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 <Phone className="h-3.5 w-3.5 inline mr-1" /> Phone Number
               </label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Alternate Email</label>
-              <input type="email" value={alternateEmail} onChange={(e) => setAlternateEmail(e.target.value)} placeholder="personal@email.com" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
+              <input type="email" value={alternateEmail} onChange={(e) => setAlternateEmail(e.target.value)} placeholder="personal@email.com" className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
             </div>
           </div>
         </SettingsSection>
@@ -150,16 +150,16 @@ export default function EmployeeSettingsPage() {
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Name</label>
-              <input type="text" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} placeholder="Full name" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
+              <input type="text" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} placeholder="Full name" className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
-                <input type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
+                <input type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} placeholder="+91 XXXXX XXXXX" className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Relationship</label>
-                <select value={emergencyRelation} onChange={(e) => setEmergencyRelation(e.target.value)} className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none">
+                <select value={emergencyRelation} onChange={(e) => setEmergencyRelation(e.target.value)} className="w-full rounded-xl border border-border bg-slate-50 dark:bg-black/40 px-3 py-2 text-sm focus:border-primary focus:outline-none">
                   <option value="">Select...</option>
                   <option value="spouse">Spouse</option>
                   <option value="parent">Parent</option>
@@ -186,7 +186,7 @@ export default function EmployeeSettingsPage() {
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border transition-colors capitalize ${
                       theme === t
                         ? "bg-primary text-white border-primary"
-                        : "bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-gray-200 dark:border-white/10 hover:border-primary/50"
+                        : "bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-border hover:border-primary/50"
                     }`}
                   >
                     {t === "light" && <Sun className="h-3.5 w-3.5" />}
@@ -225,7 +225,7 @@ export default function EmployeeSettingsPage() {
 
 function SettingsSection({ title, icon, description, children }: { title: string; icon: React.ReactNode; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] p-6 backdrop-blur-md text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
       <h3 className="font-bold text-base flex items-center gap-2 mb-1">{icon} {title}</h3>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">{description}</p>
       {children}

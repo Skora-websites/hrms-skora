@@ -31,7 +31,6 @@ export const EXPANDABLE_GROUPS: NavGroup[] = ["hrm"];
 
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", href: "/hrms/dashboard", icon: "LayoutDashboard", group: "overview" },
-  { title: "AI Assistant", href: "/hrms/ai", icon: "Sparkles", group: "overview" },
   // ── HRM Module ──
   { title: "Employees", href: "/hrms/employees", icon: "Users", group: "hrm" },
   { title: "Attendance", href: "/hrms/attendance", icon: "Clock", group: "hrm" },
@@ -56,13 +55,13 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Tasks", href: "/hrms/tasks", icon: "ClipboardList", group: "hrm" },
   { title: "Tickets", href: "/hrms/tickets", icon: "MessageSquare", group: "hrm" },
   // ── System ──
+  { title: "Automation", href: "/hrms/workflow", icon: "Zap", group: "system" },
   { title: "Settings", href: "/hrms/settings", icon: "Settings", group: "system" },
 ];
 
 export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
   super_admin: [
     { title: "CEO Command Center", href: "/hrms/superadmin", icon: "LayoutDashboard", group: "overview" },
-    { title: "AI Assistant", href: "/hrms/ai", icon: "Sparkles", group: "overview" },
     { title: "Employees", href: "/hrms/hr-admin/employees", icon: "Users", group: "hrm" },
     { title: "Attendance", href: "/hrms/hr-admin/attendance", icon: "Clock", group: "hrm" },
     { title: "Expense Desk", href: "/hrms/hr-admin/expenses", icon: "Receipt", group: "hrm" },
@@ -72,11 +71,11 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "Leave Policies", href: "/hrms/hr-admin/leave-policies", icon: "CalendarDays", group: "hrm" },
     { title: "Kudos Wall", href: "/hrms/engage/kudos", icon: "Sparkles", group: "operations" },
     { title: "Audit Logs", href: "/hrms/superadmin/audit-logs", icon: "FileText", group: "system" },
+    { title: "Automation", href: "/hrms/workflow", icon: "Zap", group: "system" },
     { title: "Settings", href: "/hrms/superadmin/settings", icon: "Settings", group: "system" },
   ],
   hr_admin: [
     { title: "Employee Directory", href: "/hrms/hr-admin/employees", icon: "Users", group: "overview" },
-    { title: "AI Assistant", href: "/hrms/ai", icon: "Sparkles", group: "overview" },
     { title: "Attendance Master", href: "/hrms/hr-admin/attendance", icon: "Clock", group: "hrm" },
     { title: "Expense Desk", href: "/hrms/hr-admin/expenses", icon: "Receipt", group: "hrm" },
     { title: "Overtime Desk", href: "/hrms/hr-admin/attendance/overtime", icon: "Clock", group: "hrm" },
@@ -84,11 +83,11 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "Leave Policies", href: "/hrms/hr-admin/leave-policies", icon: "CalendarDays", group: "hrm" },
     { title: "Onboarding", href: "/hrms/hr-admin/onboarding", icon: "UserCheck", group: "lifecycle" },
     { title: "Kudos Wall", href: "/hrms/engage/kudos", icon: "Sparkles", group: "operations" },
+    { title: "Automation", href: "/hrms/workflow", icon: "Zap", group: "system" },
     { title: "Settings", href: "/hrms/hr-admin/settings", icon: "Settings", group: "system" },
   ],
   admin: [
     { title: "Employee Directory", href: "/hrms/hr-admin/employees", icon: "Users", group: "overview" },
-    { title: "AI Assistant", href: "/hrms/ai", icon: "Sparkles", group: "overview" },
     { title: "Attendance Master", href: "/hrms/hr-admin/attendance", icon: "Clock", group: "hrm" },
     { title: "Expense Desk", href: "/hrms/hr-admin/expenses", icon: "Receipt", group: "hrm" },
     { title: "Overtime Desk", href: "/hrms/hr-admin/attendance/overtime", icon: "Clock", group: "hrm" },
@@ -100,14 +99,14 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
   ],
   manager: [
     { title: "Team Overview", href: "/hrms/manager", icon: "LayoutDashboard", group: "overview" },
-    { title: "AI Assistant", href: "/hrms/ai", icon: "Sparkles", group: "overview" },
     { title: "My Team", href: "/hrms/manager/my-team", icon: "Users", group: "overview" },
     { title: "Approvals", href: "/hrms/manager/approvals", icon: "CheckCircle2", group: "hrm" },
     { title: "Timesheets", href: "/hrms/manager/timesheets", icon: "FileText", group: "hrm" },
-    { title: "Expense Claims", href: "/hrms/employee/expenses", icon: "Receipt", group: "hrm" },
+    { title: "Team Expenses", href: "/hrms/manager/expenses", icon: "Receipt", group: "hrm" },
     { title: "Salary Advance", href: "/hrms/employee/salary-advance", icon: "CreditCard", group: "hrm" },
     { title: "Performance & Goals", href: "/hrms/performance", icon: "TrendingUp", group: "hrm" },
     { title: "My Leave", href: "/hrms/employee/leaves", icon: "CalendarDays", group: "lifecycle" },
+    { title: "My Expenses", href: "/hrms/employee/expenses", icon: "DollarSign", group: "lifecycle" },
     { title: "My Payslips", href: "/hrms/employee/payslips", icon: "DollarSign", group: "lifecycle" },
     { title: "Team Attendance", href: "/hrms/attendance", icon: "Clock", group: "hrm" },
     { title: "Kudos Wall", href: "/hrms/engage/kudos", icon: "Sparkles", group: "operations" },
@@ -116,7 +115,6 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
   ],
   employee: [
     { title: "My Hub", href: "/hrms/employee", icon: "LayoutDashboard", group: "overview" },
-    { title: "AI Assistant", href: "/hrms/ai", icon: "Sparkles", group: "overview" },
     { title: "Leave Requests", href: "/hrms/employee/leaves", icon: "CalendarDays", group: "hrm" },
     { title: "Payslips", href: "/hrms/employee/payslips", icon: "DollarSign", group: "hrm" },
     { title: "Expense Claims", href: "/hrms/employee/expenses", icon: "Receipt", group: "hrm" },
@@ -126,6 +124,42 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "My Performance", href: "/hrms/employee/performance", icon: "TrendingUp", group: "hrm" },
     { title: "My Assets", href: "/hrms/employee/assets", icon: "Package", group: "lifecycle" },
     { title: "My Documents", href: "/hrms/documents/my", icon: "FolderOpen", group: "lifecycle" },
+    { title: "Settings", href: "/hrms/employee/settings", icon: "Settings", group: "system" },
+  ],
+  finance_admin: [
+    { title: "Payroll Disbursal", href: "/hrms/hr-admin/payroll", icon: "DollarSign", group: "hrm" },
+    { title: "Expense Desk", href: "/hrms/hr-admin/expenses", icon: "Receipt", group: "hrm" },
+    { title: "Salary Advance", href: "/hrms/employee/salary-advance", icon: "CreditCard", group: "hrm" },
+    { title: "Exit Settlements", href: "/hrms/exit", icon: "LogOut", group: "lifecycle" },
+    { title: "Reports", href: "/hrms/reports", icon: "BarChart3", group: "crm" },
+    { title: "Documents", href: "/hrms/documents", icon: "FileText", group: "operations" },
+    { title: "Settings", href: "/hrms/hr-admin/settings", icon: "Settings", group: "system" },
+  ],
+  recruiter: [
+    { title: "Recruitment Desk", href: "/hrms/recruitment", icon: "UserCheck", group: "hrm" },
+    { title: "Candidates", href: "/hrms/recruitment/candidates", icon: "Users", group: "hrm" },
+    { title: "Jobs", href: "/hrms/recruitment/jobs", icon: "Briefcase", group: "hrm" },
+    { title: "Onboarding", href: "/hrms/hr-admin/onboarding", icon: "UserCheck", group: "lifecycle" },
+    { title: "Employee Directory", href: "/hrms/employees", icon: "Users", group: "hrm" },
+    { title: "Documents", href: "/hrms/documents", icon: "FileText", group: "operations" },
+  ],
+  auditor: [
+    { title: "Audit Logs", href: "/hrms/superadmin/audit-logs", icon: "FileText", group: "system" },
+    { title: "Employees", href: "/hrms/employees", icon: "Users", group: "hrm" },
+    { title: "Attendance", href: "/hrms/attendance", icon: "Clock", group: "hrm" },
+    { title: "Leaves", href: "/hrms/leaves", icon: "CalendarDays", group: "hrm" },
+    { title: "Payroll", href: "/hrms/payroll", icon: "DollarSign", group: "hrm" },
+    { title: "Reports", href: "/hrms/reports", icon: "BarChart3", group: "crm" },
+  ],
+  team_lead: [
+    { title: "Team Overview", href: "/hrms/manager", icon: "LayoutDashboard", group: "overview" },
+    { title: "My Team", href: "/hrms/manager/my-team", icon: "Users", group: "overview" },
+    { title: "Approvals", href: "/hrms/manager/approvals", icon: "CheckCircle2", group: "hrm" },
+    { title: "Timesheets", href: "/hrms/manager/timesheets", icon: "FileText", group: "hrm" },
+    { title: "Team Attendance", href: "/hrms/attendance", icon: "Clock", group: "hrm" },
+    { title: "Leaves", href: "/hrms/employee/leaves", icon: "CalendarDays", group: "hrm" },
+    { title: "Kudos Wall", href: "/hrms/engage/kudos", icon: "Sparkles", group: "operations" },
+    { title: "Tickets", href: "/hrms/tickets", icon: "MessageSquare", group: "operations" },
     { title: "Settings", href: "/hrms/employee/settings", icon: "Settings", group: "system" },
   ],
 };
@@ -149,7 +183,7 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
  * Example value: {"hr@example.com":{"role":"hr_admin","displayName":"Jane Doe",...}}
  */
 export interface HrmsAccountRole {
-  role: "super_admin" | "hr_admin" | "manager" | "employee";
+  role: "super_admin" | "hr_admin" | "manager" | "employee" | "finance_admin" | "recruiter" | "auditor" | "team_lead";
   displayName: string;
   firstName: string;
   lastName: string;

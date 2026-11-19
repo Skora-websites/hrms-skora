@@ -80,7 +80,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 function StarRating({ rating }: { rating: number }) {
-  if (!rating) return <span className="text-xs text-muted">—</span>;
+  if (!rating) return <span className="text-xs text-muted">N/A</span>;
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -93,7 +93,7 @@ function StarRating({ rating }: { rating: number }) {
           }`}
         />
       ))}
-      <span className="text-xs font-semibold text-dark dark:text-white ml-1">{rating.toFixed(1)}</span>
+      <span className="text-xs font-semibold text-foreground ml-1">{rating.toFixed(1)}</span>
     </div>
   );
 }
@@ -162,7 +162,7 @@ export default function ReviewsPage() {
     fetchData();
   }, [fetchData]);
 
-  const nameOf = (id: string) => userNames[id] || id || "—";
+  const nameOf = (id: string) => userNames[id] || id || "N/A";
 
   const handleCreateReview = async () => {
     if (!reviewForm.userId) {
@@ -279,7 +279,7 @@ export default function ReviewsPage() {
         title="Performance Reviews"
         description="View, initiate, and evaluate performance review cycles and ratings."
       >
-        <Button onClick={() => setShowCreateDialog(true)}>
+        <Button className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none" onClick={() => setShowCreateDialog(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Start Review
         </Button>
@@ -299,7 +299,7 @@ export default function ReviewsPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
           <Star className="h-12 w-12 text-muted mx-auto mb-4" />
-          <p className="text-dark dark:text-white font-semibold text-lg">No reviews found</p>
+          <p className="text-foreground font-semibold text-lg">No reviews found</p>
           <p className="text-sm text-muted mt-1">Start a review to begin tracking employee evaluations.</p>
         </div>
       ) : (
@@ -318,7 +318,7 @@ export default function ReviewsPage() {
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-dark dark:text-white">{nameOf(review.userId)}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{nameOf(review.userId)}</h3>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="text-xs text-muted flex items-center gap-1">
                         <Users className="h-3 w-3" /> Reviewer: {nameOf(review.reviewerId)}
@@ -408,7 +408,7 @@ export default function ReviewsPage() {
               </div>
 
               <div className="p-3 bg-muted/20 rounded-lg space-y-3">
-                <p className="text-xs font-semibold text-dark dark:text-white">Category Scores (1 - 5)</p>
+                <p className="text-xs font-semibold text-foreground">Category Scores (1 - 5)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <FormInput
                     label="Quality of Work"

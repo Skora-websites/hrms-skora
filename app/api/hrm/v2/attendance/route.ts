@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAttendanceRecords, getAttendanceById, markAttendance, updateAttendance, deleteAttendance, getAttendanceDashboard, getAttendanceStats, calculateAttendanceStats } from "@/services/hrm/attendance";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
-import { getDb } from "@/lib/db/mongo-helper";
+import { getDb } from "@/lib/db/mysql";
 import { ObjectId } from "@/lib/db/mysql";
 
 async function getManagerDepartmentUserIds(userId: string, tenantId: string): Promise<string[]> {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
-import { getDb } from "@/lib/db/mongo-helper";
+import { getDb } from "@/lib/db/mysql";
 import { ObjectId } from "@/lib/db/mysql";
 
 export async function GET() {

@@ -111,7 +111,7 @@ export default function ProbationPage() {
             <ClipboardList className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-dark dark:text-white">{p.name}</p>
+            <p className="text-sm font-semibold text-foreground">{p.name}</p>
             <p className="text-xs text-muted capitalize">{REVIEW_FREQ.find((f) => f.value === p.reviewFrequency)?.label || p.reviewFrequency || "—"} reviews</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function ProbationPage() {
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
             <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
-            <p className="text-2xl font-bold text-dark dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>
           </div>
         ))}

@@ -1,138 +1,166 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { WifiOff, Download, X, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
- * PWA Provider — Registers service worker and adds iOS Install Prompt
- * Works on iOS (Add to Home Screen), Android (Install Banner), and Desktop
+ * PWA Provider — Service Worker registration, offline connectivity monitoring,
+ * and native-styled mobile install banner.
  */
 export function PWAProvider() {
-  useEffect(() => {
-    // Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((reg) => {
-          console.log("[PWA] Service Worker registered:", reg.scope);
+  const [isOffline, setIsOffline] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
 
-          // Check for updates periodically
-          setInterval(() => {
-            reg.update();
-          }, 60 * 60 * 1000); // Every hour
-        })
-        .catch((err) => {
-          console.error("[PWA] Service Worker registration failed:", err);
+  useEffect(() => {
+    // 1. Service Worker lifecycle
+    if ("serviceWorker" in navigator) {
+      if (process.env.NODE_ENV === "development") {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister();
+          }
         });
+        if ("caches" in window) {
+          caches.keys().then((names) => {
+            for (const name of names) {
+              caches.delete(name);
+            }
+          });
+        }
+      } else {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => {
+            console.log("[PWA] Service Worker active:", reg.scope);
+            // Periodic update check
+            setInterval(() => {
+              reg.update();
+            }, 60 * 60 * 1000);
+          })
+          .catch((err) => {
+            console.warn("[PWA] SW registration skipped:", err);
+          });
+      }
     }
 
-    // iOS "Add to Home Screen" prompt
-    let deferredPrompt: any = null;
+    // 2. Offline / Online Connectivity listeners
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
 
-    window.addEventListener("beforeinstallprompt", (e) => {
+    if (typeof window !== "undefined") {
+      setIsOffline(!navigator.onLine);
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+    }
+
+    // 3. Check standalone mode (already installed as PWA)
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    // 4. iOS detection
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(isIOSDevice);
+
+    // 5. Native install prompt (Android / Chrome / Edge)
+    const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      deferredPrompt = e;
+      setDeferredPrompt(e);
+      const dismissed = localStorage.getItem("pwa-install-dismissed");
+      if (!dismissed && !isStandalone) {
+        // Show subtle install banner after 10 seconds
+        setTimeout(() => setShowInstallPrompt(true), 10000);
+      }
+    };
 
-      // Show custom install button/banner after 30 seconds
-      setTimeout(() => {
-        if (deferredPrompt) {
-          showInstallBanner(deferredPrompt);
-        }
-      }, 30000);
-    });
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
     window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
-      console.log("[PWA] App installed successfully");
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+      localStorage.setItem("pwa-installed", "true");
     });
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+    };
   }, []);
 
-  return null; // No UI — just registers SW
-}
-
-// ── Install Banner ─────────────────────────────────────────
-function showInstallBanner(deferredPrompt: any) {
-  // Don't show if already dismissed or installed
-  if (localStorage.getItem("pwa-install-dismissed")) return;
-  if (window.matchMedia("(display-mode: standalone)").matches) return;
-
-  const banner = document.createElement("div");
-  banner.id = "pwa-install-banner";
-  banner.innerHTML = `
-    <div style="
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 9999;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      font-family: system-ui, -apple-system, sans-serif;
-    ">
-      <div>
-        <div style="font-weight: 700; font-size: 14px;">Install Skora HRMS</div>
-        <div style="font-size: 12px; opacity: 0.9;">Add to home screen for quick access</div>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button id="pwa-install-btn" style="
-          background: white;
-          color: #6366f1;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-        ">Install</button>
-        <button id="pwa-dismiss-btn" aria-label="Dismiss" style="
-          background: rgba(255,255,255,0.2);
-          color: white;
-          border: none;
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 16px;
-          line-height: 1;
-          cursor: pointer;
-        ">&times;</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(banner);
-
-  document.getElementById("pwa-install-btn")?.addEventListener("click", async () => {
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log("[PWA] Install outcome:", outcome);
-    deferredPrompt = null;
-    banner.remove();
-  });
-
-  document.getElementById("pwa-dismiss-btn")?.addEventListener("click", () => {
-    localStorage.setItem("pwa-install-dismissed", "true");
-    banner.remove();
-  });
-
-  // Auto-dismiss after 30 seconds
-  setTimeout(() => {
-    if (banner.parentElement) {
-      localStorage.setItem("pwa-install-dismissed", "true");
-      banner.remove();
+    if (outcome === "accepted") {
+      localStorage.setItem("pwa-installed", "true");
     }
-  }, 30000);
-}
+    setDeferredPrompt(null);
+    setShowInstallPrompt(false);
+  };
 
-// ── iOS Install Instructions ───────────────────────────────
-export function getIOSInstallInstructions(): string {
-  return `To install Skora HRMS on iOS:
-1. Open this page in Safari
-2. Tap the Share button (↗)
-3. Scroll down and tap "Add to Home Screen"
-4. Tap "Add" in the top right
+  const handleDismissInstall = () => {
+    localStorage.setItem("pwa-install-dismissed", "true");
+    setShowInstallPrompt(false);
+  };
 
-The app will appear on your home screen!`;
+  return (
+    <>
+      {/* Offline Status Pill Bar */}
+      {isOffline && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed top-0 inset-x-0 z-50 bg-amber-600 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-md"
+        >
+          <div className="flex items-center gap-2 max-w-lg mx-auto w-full">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span className="truncate">
+              Offline mode — You are disconnected. Punches will sync once reconnected.
+            </span>
+          </div>
+        </aside>
+      )}
+
+      {/* Modern PWA Install Banner */}
+      {showInstallPrompt && (
+        <aside
+          aria-label="Install App"
+          className="fixed bottom-18 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 z-50 bg-card/95 backdrop-blur-xl border border-border/80 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shrink-0">
+              <Download className="w-5 h-5" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-foreground">Install Skora HRMS</p>
+              <p className="text-[11px] text-muted-foreground">Add to Home Screen for fast mobile access</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              className="h-8 text-xs font-semibold rounded-xl bg-primary text-white hover:bg-primary/90"
+              onClick={handleInstallClick}
+            >
+              Install
+            </Button>
+            <button
+              onClick={handleDismissInstall}
+              className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted"
+              aria-label="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </aside>
+      )}
+    </>
+  );
 }

@@ -58,7 +58,7 @@ export function OnboardingCountdown({
     return (
       <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400">
         <AlertTriangle className="h-4 w-4 shrink-0" />
-        <span className="font-bold">Deadline expired — Escalated to Super Admin</span>
+        <span className="font-bold">Deadline expired: Escalated to Super Admin</span>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export function OnboardingCountdown({
         ? "bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20"
         : "bg-yellow-50 dark:bg-yellow-500/5 border-yellow-200 dark:border-yellow-500/20"
     }`}>
-      <Clock className={`h-4 w-4 shrink-0 ${isUrgent ? "text-red-500 animate-pulse" : "text-yellow-500"}`} />
+      <Clock className={`h-4 w-4 shrink-0 ${isUrgent ? "text-red-500 motion-safe:animate-pulse motion-reduce:animate-none" : "text-yellow-500"}`} />
       <div>
         <span className={`font-bold ${isUrgent ? "text-red-600 dark:text-red-400" : "text-yellow-600 dark:text-yellow-400"}`}>
           Time Remaining:
@@ -90,7 +90,7 @@ export function OnboardingCountdown({
         {isUrgent && (
           <span className="text-[10px] text-red-500 dark:text-red-400 mt-1 flex items-center gap-1 font-semibold">
             <AlertTriangle className="h-3 w-3 shrink-0" />
-            <span>Less than 12 hours remaining — upload immediately!</span>
+            <span>Less than 12 hours remaining: upload immediately!</span>
           </span>
         )}
       </div>

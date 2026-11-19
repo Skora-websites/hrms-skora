@@ -14,6 +14,14 @@ import {
   extendNoticePeriod,
   getExitDashboard,
 } from "@/services/hrm/exit";
+import {
+  calculateFnFSettlement,
+  createExitSettlement,
+  getExitSettlements,
+  getExitSettlementById,
+  updateExitSettlement,
+  disburseExitSettlement,
+} from "@/services/hrm/exit/settlement";
 import { requireAuth, requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { getDb } from "@/lib/db/mongo-helper";
 import { ObjectId } from "@/lib/db/mysql";
@@ -32,6 +40,34 @@ export async function GET(request: NextRequest) {
     const dashboard = searchParams.get("dashboard");
     const settings = searchParams.get("settings");
     const noticePeriod = searchParams.get("noticePeriod");
+    const settlement = searchParams.get("settlement");
+
+    if (settlement === "true") {
+      if (id) {
+        const item = await getExitSettlementById(id);
+        if (!item) return NextResponse.json({ error: "Settlement record not found" }, { status: 404 });
+        if (auth.role === "employee" && item.userId !== auth.userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        return NextResponse.json({ data: item });
+      }
+
+      if (searchParams.get("calculate") === "true" && userId) {
+        if (auth.role === "employee" && userId !== auth.userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        const resignDate = searchParams.get("resignationDate") || new Date().toISOString().slice(0, 10);
+        const lwd = searchParams.get("lastWorkingDate") || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+        const calculation = await calculateFnFSettlement(tenantId, userId, resignDate, lwd);
+        return NextResponse.json({ data: calculation });
+      }
+
+      const list = await getExitSettlements(tenantId, (status as any) || undefined);
+      if (auth.role === "employee") {
+        return NextResponse.json({ data: list.filter((s) => s.userId === auth.userId) });
+      }
+      return NextResponse.json({ data: list });
+    }
 
     if (dashboard === "true") {
       if (auth.role === "employee") {
@@ -148,6 +184,51 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Notice period not found" }, { status: 404 });
       }
       return NextResponse.json({ data: period });
+    }
+
+    // ── F&F Settlement Actions ─────────────────────────
+    if (action === "settlement_calculate") {
+      if (!body.userId || !body.resignationDate || !body.lastWorkingDate) {
+        return NextResponse.json({ error: "userId, resignationDate, and lastWorkingDate are required" }, { status: 400 });
+      }
+      const calculation = await calculateFnFSettlement(
+        tenantId,
+        body.userId,
+        body.resignationDate,
+        body.lastWorkingDate,
+        body.overrides
+      );
+      return NextResponse.json({ data: calculation });
+    }
+
+    if (action === "settlement_create") {
+      if (!body.userId) {
+        return NextResponse.json({ error: "userId is required" }, { status: 400 });
+      }
+      const settlement = await createExitSettlement(tenantId, body);
+      return NextResponse.json({ data: settlement }, { status: 201 });
+    }
+
+    if (action === "settlement_update") {
+      if (!body.id) {
+        return NextResponse.json({ error: "id is required" }, { status: 400 });
+      }
+      const updated = await updateExitSettlement(body.id, body.data || body);
+      if (!updated) {
+        return NextResponse.json({ error: "Settlement record not found" }, { status: 404 });
+      }
+      return NextResponse.json({ data: updated });
+    }
+
+    if (action === "settlement_disburse") {
+      if (!body.id) {
+        return NextResponse.json({ error: "id is required" }, { status: 400 });
+      }
+      const settled = await disburseExitSettlement(body.id, auth.userId);
+      if (!settled) {
+        return NextResponse.json({ error: "Settlement record not found" }, { status: 404 });
+      }
+      return NextResponse.json({ data: settled });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

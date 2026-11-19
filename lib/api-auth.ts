@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getDb } from "@/lib/db/mongo-helper";
+import { getDb } from "@/lib/db/mysql";
 import { verifyCookieValue } from "@/lib/edge-cookies";
 import { normalizeRole, hasPermission, type PermissionKey } from "@/lib/rbac";
 import { ObjectId } from "@/lib/db/mysql";

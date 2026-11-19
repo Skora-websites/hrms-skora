@@ -51,6 +51,13 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
+  // Never intercept in local development
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return;
+
+  // Never intercept Next.js chunks, build artifacts, or dev HMR
+  if (url.pathname.startsWith("/_next/")) return;
+  if (url.pathname.startsWith("/__nextjs")) return;
+
   // Skip API calls (always go to network)
   if (url.pathname.startsWith("/api/")) return;
 

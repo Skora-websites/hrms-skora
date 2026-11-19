@@ -464,11 +464,17 @@ export interface EmployeeAttendance extends BaseEntity {
   shiftId?: string;
   weeklyOffId?: string;
   workdayType: "regular" | "weekly_off" | "holiday" | "absent";
-  status: "present" | "absent" | "half_day" | "late" | "week_off" | "holiday" | "on_leave";
+  status: "present" | "absent" | "half_day" | "late" | "week_off" | "holiday" | "on_leave" | "incomplete";
   totalHours?: number;
   overtimeHours?: number;
+  effectiveWorkMinutes?: number;
+  totalBreakMinutes?: number;
   isLate: boolean;
   isEarlyDeparture: boolean;
+  isAutoClosed?: boolean;
+  requiresRegularization?: boolean;
+  geofenceStatus?: "verified" | "drift_exception" | "outside_geofence" | "network_verified";
+  distanceMeters?: number;
   notes?: string;
   source?: "manual" | "geo" | "teamlogger" | "regularization";
 }
@@ -691,8 +697,15 @@ export interface PayrollTransaction extends BaseEntity {
   netPay: number;
   earnings: { [componentCode: string]: number };
   deductions: { [componentCode: string]: number };
-  status: "pending" | "paid" | "failed";
+  status: "pending" | "paid" | "failed" | "batched";
   paidAt?: Timestamp;
+  periodMonth?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  payoutStatus?: "pending" | "batched" | "paid" | "failed";
+  bankUtr?: string;
+  failureReason?: string;
+  disbursementBatchId?: string;
 }
 
 export interface PayslipTemplate extends BaseEntity {
@@ -1318,6 +1331,8 @@ export interface Expense extends BaseEntity {
   employeeName: string;
   employeeEmail: string;
   department?: string;
+  managerId?: string;
+  managerName?: string;
   category: string;
   amount: number;
   currency: string;
@@ -1326,11 +1341,17 @@ export interface Expense extends BaseEntity {
   description?: string;
   receiptUrl?: string;
   receiptName?: string;
-  status: "pending" | "approved" | "rejected" | "reimbursed";
+  status: "pending" | "pending_manager" | "manager_approved" | "approved" | "rejected" | "reimbursed";
+  managerApprovedBy?: string;
+  managerApprovedByName?: string;
+  managerApprovedAt?: Timestamp | null;
   approvedBy?: string;
   approvedByName?: string;
   approvedAt?: Timestamp | null;
   rejectionReason?: string;
+  payoutMethod?: "payroll" | "direct_transfer";
+  paymentReference?: string;
+  paymentMode?: string;
   reimbursedAt?: Timestamp | null;
   payrollRunId?: string;
 }
@@ -1416,5 +1437,255 @@ export interface KudosLike {
   userId: string;
   userName: string;
   createdAt?: Timestamp;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Enterprise Modules Extensions
+// ══════════════════════════════════════════════════════════════════
+
+export type WorkflowEventType =
+  | "employee.created"
+  | "employee.onboarded"
+  | "leave.submitted"
+  | "leave.approved"
+  | "leave.rejected"
+  | "attendance.missed_punch"
+  | "probation.milestone"
+  | "document.expiring"
+  | "resignation.submitted"
+  | "expense.submitted";
+
+export interface WorkflowCondition {
+  field: string;
+  operator: "equals" | "not_equals" | "greater_than" | "less_than" | "contains";
+  value: any;
+}
+
+export interface WorkflowAction {
+  actionType: "create_task" | "send_notification" | "send_email" | "create_ticket" | "initiate_clearance" | "generate_letter";
+  params: Record<string, any>;
+}
+
+export interface WorkflowRule extends BaseEntity {
+  name: string;
+  description?: string;
+  eventName: WorkflowEventType | string;
+  conditions: WorkflowCondition[];
+  actions: WorkflowAction[];
+  isActive: boolean;
+  priority?: number;
+}
+
+export interface WorkflowExecutionLog extends BaseEntity {
+  ruleId: string;
+  ruleName: string;
+  eventName: string;
+  entityId?: string;
+  entityType?: string;
+  payload?: Record<string, any>;
+  status: "success" | "failed" | "skipped";
+  actionsExecuted: number;
+  errorMessage?: string;
+}
+
+export interface ShiftSwapRequest extends BaseEntity {
+  requesterId: string;
+  requesterName: string;
+  requesterShiftId: string;
+  requesterShiftName?: string;
+  targetUserId: string;
+  targetUserName: string;
+  targetShiftId?: string;
+  shiftDate: string;
+  reason: string;
+  peerStatus: "pending" | "accepted" | "declined";
+  managerStatus: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: Timestamp | null;
+}
+
+export interface ExitSettlement extends BaseEntity {
+  userId: string;
+  employeeName: string;
+  employeeCode?: string;
+  department?: string;
+  designation?: string;
+  resignationDate: string;
+  lastWorkingDate: string;
+  noticePeriodRequiredDays: number;
+  noticePeriodServedDays: number;
+  noticeShortfallDays: number;
+  workedDaysSalary: number;
+  leaveEncashmentDays: number;
+  leaveEncashmentAmount: number;
+  gratuityAmount: number;
+  bonusAmount: number;
+  totalEarnings: number;
+  noticeShortfallDeduction: number;
+  outstandingSalaryAdvance: number;
+  assetDeductions: number;
+  taxTdsDeduction: number;
+  totalDeductions: number;
+  netPayable: number;
+  netSettlementAmount?: number;
+  status: "draft" | "clearance_pending" | "approved" | "disbursed";
+  clearances?: {
+    itAssetsCleared: boolean;
+    financeCleared: boolean;
+    departmentCleared: boolean;
+    hrCleared: boolean;
+  };
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: Timestamp;
+  settledBy?: string;
+  settledAt?: Timestamp;
+  remarks?: string;
+}
+
+export interface DocumentLetterTemplate extends BaseEntity {
+  templateCode: string;
+  title: string;
+  subject: string;
+  tokenVariables: string[];
+  contentHtml: string;
+  isActive?: boolean;
+}
+
+export interface GeneratedEmployeeLetter extends BaseEntity {
+  templateId: string;
+  templateCode: string;
+  templateTitle: string;
+  userId: string;
+  employeeName: string;
+  employeeEmail: string;
+  subject: string;
+  contentHtml: string;
+  renderedHtml?: string;
+  tokensData?: Record<string, any>;
+  isAcknowledged?: boolean;
+  generatedBy: string;
+  generatedByName?: string;
+  status: "draft" | "issued" | "revoked";
+  issuedAt?: Timestamp;
+}
+
+export interface StatutoryConfig extends BaseEntity {
+  pfEnabled: boolean;
+  pfEmployeePercent: number;
+  pfEmployerPercent: number;
+  pfWageCeiling: number;
+  esiEnabled: boolean;
+  esiEmployeePercent: number;
+  esiEmployerPercent: number;
+  esiWageLimit: number;
+  ptEnabled: boolean;
+  tdsEnabled: boolean;
+}
+
+export interface EmployeeTaxDeclaration extends BaseEntity {
+  userId: string;
+  employeeName: string;
+  financialYear: string;
+  regime: "old" | "new";
+  taxRegime?: "old" | "new";
+  section80C?: number;
+  sec80CDeclared?: number;
+  section80D?: number;
+  sec80DDeclared?: number;
+  hraRentPaidAnnual?: number;
+  hraRentPaidAnnually?: number;
+  homeLoanInterest80EEA?: number;
+  sec24HomeLoanInterest?: number;
+  metroCity?: boolean;
+  otherExemptions?: number;
+  otherDeductions?: number;
+  status: "draft" | "submitted" | "verified" | "rejected";
+  verifiedBy?: string;
+  verifiedAt?: Timestamp;
+}
+
+export interface PayrollDisbursementBatch extends BaseEntity {
+  month: string;
+  year: number;
+  periodMonth?: string;
+  totalEmployees: number;
+  employeeCount?: number;
+  totalGross: number;
+  totalDeductions: number;
+  totalNet: number;
+  totalAmount?: number;
+  bankName: string;
+  bankFormat?: string;
+  status: "created" | "processing" | "completed" | "failed" | "generated" | "partially_failed";
+  batchHash?: string;
+  reconciliationSummary?: { successful: number; failed: number };
+  generatedBy?: string;
+  disbursedAt?: Timestamp;
+}
+
+export interface Performance360Review extends BaseEntity {
+  employeeId: string;
+  employeeName: string;
+  reviewerId: string;
+  reviewerName: string;
+  relationship: "manager" | "peer" | "direct_report" | "self";
+  reviewCycle: string;
+  ratings: Record<string, number>;
+  feedback: string;
+  feedbackStrengths?: string;
+  feedbackImprovements?: string;
+  overallRating?: number;
+  status: "pending" | "submitted" | "completed";
+  submittedAt?: Timestamp;
+}
+
+export interface DepartmentHeadcountPlan extends BaseEntity {
+  departmentId?: string;
+  departmentName: string;
+  financialYear: string;
+  currentHeadcount?: number;
+  activeHeadcount?: number;
+  approvedHeadcount?: number;
+  budgetedHeadcount?: number;
+  budgetAllocated: number;
+  budgetSpent?: number;
+  budgetUtilized?: number;
+  openPositions: number;
+}
+
+export interface InternalJobPosting extends BaseEntity {
+  title: string;
+  jobTitle?: string;
+  department: string;
+  location: string;
+  experienceRequired?: string;
+  experienceYearsRequired?: number;
+  openingsCount?: number;
+  description: string;
+  requirements?: string[];
+  skillsRequired?: string[];
+  status: "open" | "closed";
+  closingDate?: string;
+}
+
+export interface CustomReportDefinition extends BaseEntity {
+  name?: string;
+  reportName?: string;
+  description?: string;
+  baseDomain: "employees" | "attendance" | "leaves" | "payroll" | "expenses" | "performance";
+  columns?: any;
+  selectedColumns?: any;
+  filters?: Array<{ field: string; operator: string; value: any }>;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  sortDirection?: "asc" | "desc";
+  isScheduled?: boolean;
+  scheduleFrequency?: string;
+  recipients?: string[];
+  createdBy?: string;
+  createdByName?: string;
 }
 
