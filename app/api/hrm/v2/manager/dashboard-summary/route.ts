@@ -313,11 +313,36 @@ export async function GET(request: NextRequest) {
       policyAlert: e.receiptUrl ? "Receipt attached" : "No receipt attached — policy review needed",
     }));
 
+    // Pending Ticket Transfers routed to this department
+    const pendingTransfers = department
+      ? await db
+          .collection("ticket_transfers")
+          .find({
+            tenantId: auth.tenantId,
+            toDepartment: department,
+            status: "pending",
+          })
+          .toArray()
+      : [];
+
+    const teamTransfers = (pendingTransfers || []).map((t: any) => ({
+      id: t._id.toString(),
+      category: "ticket_transfer" as const,
+      employeeId: String(t.fromUserId),
+      employeeName: t.fromUserName || "Staff",
+      type: `Ticket Transfer (${(t.priority || "medium").toUpperCase()})`,
+      dates: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : todayStr,
+      reason: t.note || `Inter-department transfer to ${t.toDepartment}`,
+      createdAt: t.createdAt,
+      policyAlert: `Target: ${t.direction === "manager" ? "Direct to Manager" : t.toUserName || "Any agent"}`,
+    }));
+
     const unifiedApprovals = [
       ...teamLeaves,
       ...teamRegularizations,
       ...teamOvertime,
       ...teamExpenses,
+      ...teamTransfers,
     ];
 
     // 7. Team Velocity & Performance
@@ -361,6 +386,7 @@ export async function GET(request: NextRequest) {
           regularizationCount: teamRegularizations.length,
           overtimeCount: teamOvertime.length,
           expenseCount: teamExpenses.length,
+          ticketTransferCount: teamTransfers.length,
           items: unifiedApprovals,
         },
         teamVelocity: {

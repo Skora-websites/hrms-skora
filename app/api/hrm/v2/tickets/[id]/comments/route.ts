@@ -21,6 +21,11 @@ export async function GET(
       return NextResponse.json({ error: "Database not available" }, { status: 503 });
     }
 
+    const userDoc = await db.collection("users").findOne({
+      _id: ObjectId.isValid(auth.userId) ? new ObjectId(auth.userId) : auth.userId,
+    });
+    const userDept = userDoc?.department || userDoc?.departmentName || "General";
+
     const ticket = await db.collection("tickets").findOne({
       tenantId: auth.tenantId,
       _id: ObjectId.isValid(id) ? new ObjectId(id) : id,
@@ -30,12 +35,25 @@ export async function GET(
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
+    const isSuperAdmin = auth.role === "super_admin" || auth.role === "admin";
     const isRequester = ticket.requesterId === auth.userId;
+    const isAssignee = ticket.assigneeId === auth.userId;
+    const isInDept = Boolean(userDept && ticket.department === userDept);
+
+    if (!isSuperAdmin && !isRequester && !isAssignee && !isInDept) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to view this ticket's comments" },
+        { status: 403 }
+      );
+    }
+
+    const isStaff = isSuperAdmin || isAssignee || isInDept;
 
     const comments = await getTicketComments(auth.tenantId, id, {
       userId: auth.userId,
       role: auth.role,
       isRequester,
+      isStaff,
     });
 
     return NextResponse.json({ success: true, data: comments });
@@ -75,6 +93,32 @@ export async function POST(
     });
     const userName = userDoc?.displayName || userDoc?.name || userDoc?.email || "User";
     const userEmail = userDoc?.email || "";
+    const userDept = userDoc?.department || userDoc?.departmentName || "General";
+
+    const ticket = await db.collection("tickets").findOne({
+      tenantId: auth.tenantId,
+      _id: ObjectId.isValid(id) ? new ObjectId(id) : id,
+    });
+
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+
+    const isSuperAdmin = auth.role === "super_admin" || auth.role === "admin";
+    const isRequester = ticket.requesterId === auth.userId;
+    const isAssignee = ticket.assigneeId === auth.userId;
+    const isInDept = Boolean(userDept && ticket.department === userDept);
+
+    if (!isSuperAdmin && !isRequester && !isAssignee && !isInDept) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to post comments to this ticket" },
+        { status: 403 }
+      );
+    }
+
+    const isStaff = isSuperAdmin || isAssignee || isInDept;
+    // Only staff can author internal staff-only notes
+    const visibility = isStaff && body.visibility === "internal" ? "internal" : "public";
 
     const comment = await addTicketComment(auth.tenantId, {
       ticketId: id,
@@ -84,7 +128,7 @@ export async function POST(
       authorRole: auth.role,
       body: (body.body || "").trim(),
       kind: body.kind || "message",
-      visibility: body.visibility || "public",
+      visibility,
       attachments: body.attachments || [],
     });
 

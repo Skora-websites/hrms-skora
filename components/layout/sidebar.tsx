@@ -33,6 +33,7 @@ import {
   Receipt,
   CreditCard,
   Zap,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
@@ -82,6 +83,7 @@ const iconMap: Record<string, React.ElementType> = {
   CreditCard,
   Sparkles,
   Zap,
+  GraduationCap,
 };
 
 const roleSettingsMap: Record<string, string> = {

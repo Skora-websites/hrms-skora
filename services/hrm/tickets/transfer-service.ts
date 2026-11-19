@@ -1,5 +1,6 @@
 import "server-only";
 import { getDb, ObjectId } from "@/lib/db/mysql";
+import { notifyDepartmentManagers, notifyTicketUser } from "./ticket-notifications";
 import type { TicketTransfer, TicketPriority, TransferDirection } from "./types";
 
 export interface CreateTransferInput {
@@ -73,6 +74,15 @@ export async function createTicketTransfer(
     visibility: "internal",
     createdAt: new Date().toISOString(),
   } as any);
+
+  // Notify receiving department managers
+  notifyDepartmentManagers(
+    tenantId,
+    input.toDepartment,
+    `Ticket Transfer Request: #${ticket.ticketNumber}`,
+    `${input.fromUserName} requested transfer of "${ticket.title}" from ${ticket.department} to ${input.toDepartment}. Priority: ${input.priority.toUpperCase()}.`,
+    input.ticketId
+  ).catch(() => {});
 
   return {
     id: transferId,
@@ -160,6 +170,36 @@ export async function decideTicketTransfer(
       visibility: "internal",
       createdAt: nowIso,
     } as any);
+
+    // Trigger non-blocking notifications
+    if (decision === "approved") {
+      notifyTicketUser({
+        tenantId,
+        userId: transfer.fromUserId,
+        title: `Transfer Approved: #${ticket.ticketNumber}`,
+        body: `Your transfer of ticket "${ticket.title}" to ${transfer.toDepartment} was approved by ${decidedBy.userName}.`,
+        ticketId: transfer.ticketId,
+      }).catch(() => {});
+
+      if (ticket.requesterId) {
+        notifyTicketUser({
+          tenantId,
+          userId: ticket.requesterId,
+          userEmail: ticket.requesterEmail,
+          title: `Ticket Transferred: #${ticket.ticketNumber}`,
+          body: `Your ticket "${ticket.title}" has been transferred to ${transfer.toDepartment} by ${decidedBy.userName}.`,
+          ticketId: transfer.ticketId,
+        }).catch(() => {});
+      }
+    } else {
+      notifyTicketUser({
+        tenantId,
+        userId: transfer.fromUserId,
+        title: `Transfer Rejected: #${ticket.ticketNumber}`,
+        body: `Transfer of "${ticket.title}" to ${transfer.toDepartment} was rejected by ${decidedBy.userName}. Reason: ${rejectionReason || "None provided"}`,
+        ticketId: transfer.ticketId,
+      }).catch(() => {});
+    }
   }
 
   return {

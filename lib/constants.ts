@@ -54,6 +54,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Performance", href: "/hrms/performance", icon: "TrendingUp", group: "hrm" },
   { title: "Tasks", href: "/hrms/tasks", icon: "ClipboardList", group: "hrm" },
   { title: "Tickets", href: "/hrms/tickets", icon: "MessageSquare", group: "hrm" },
+  { title: "Assessments", href: "/hrms/tests", icon: "GraduationCap", group: "hrm" },
   // ── System ──
   { title: "Automation", href: "/hrms/workflow", icon: "Zap", group: "system" },
   { title: "Settings", href: "/hrms/settings", icon: "Settings", group: "system" },
@@ -111,6 +112,7 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "Team Attendance", href: "/hrms/attendance", icon: "Clock", group: "hrm" },
     { title: "Kudos Wall", href: "/hrms/engage/kudos", icon: "Sparkles", group: "operations" },
     { title: "Tickets", href: "/hrms/tickets", icon: "MessageSquare", group: "operations" },
+    { title: "Assessments", href: "/hrms/tests", icon: "GraduationCap", group: "operations" },
     { title: "Settings", href: "/hrms/manager/settings", icon: "Settings", group: "system" },
   ],
   employee: [
@@ -124,6 +126,8 @@ export const NAV_ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: "My Performance", href: "/hrms/employee/performance", icon: "TrendingUp", group: "hrm" },
     { title: "My Assets", href: "/hrms/employee/assets", icon: "Package", group: "lifecycle" },
     { title: "My Documents", href: "/hrms/documents/my", icon: "FolderOpen", group: "lifecycle" },
+    { title: "Tickets", href: "/hrms/tickets", icon: "MessageSquare", group: "operations" },
+    { title: "Assessments", href: "/hrms/tests", icon: "GraduationCap", group: "operations" },
     { title: "Settings", href: "/hrms/employee/settings", icon: "Settings", group: "system" },
   ],
   finance_admin: [

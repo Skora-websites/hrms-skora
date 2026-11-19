@@ -1,6 +1,7 @@
 import "server-only";
 import { getDb, ObjectId } from "@/lib/db/mysql";
 import { evaluateRoutingRules } from "./routing-service";
+import { notifyDepartmentManagers, notifyTicketUser } from "./ticket-notifications";
 import type { Ticket, TicketStatus, TicketPriority, TicketAttachment } from "./types";
 
 export interface CreateTicketInput {
@@ -93,6 +94,25 @@ export async function createTicket(
     createdAt: nowIso,
   } as any);
 
+  // Trigger non-blocking notifications
+  notifyDepartmentManagers(
+    tenantId,
+    finalDepartment,
+    `New Ticket: #${ticketNumber}`,
+    `${input.requesterName} raised "${input.title}" for ${finalDepartment}.`,
+    ticketId
+  ).catch(() => {});
+
+  if (assigneeId) {
+    notifyTicketUser({
+      tenantId,
+      userId: assigneeId,
+      title: `Ticket Assigned: #${ticketNumber}`,
+      body: `You were auto-assigned ticket "${input.title}".`,
+      ticketId,
+    }).catch(() => {});
+  }
+
   return {
     id: ticketId,
     ...ticketDoc,
@@ -145,7 +165,15 @@ export async function getTickets(
     query.category = filter.category;
   }
   if (filter.department && filter.department !== "all") {
-    query.department = filter.department;
+    if (isSuperAdmin) {
+      query.department = filter.department;
+    } else if (filter.department === userDept) {
+      query.department = userDept;
+    } else {
+      // Non-admins filtering by external department can only see tickets they raised or are assigned to
+      query.department = filter.department;
+      query.$or = [{ requesterId: caller.userId }, { assigneeId: caller.userId }];
+    }
   }
 
   const list = await db.collection("tickets").find(query).sort({ updatedAt: -1 }).toArray();
@@ -304,6 +332,28 @@ export async function updateTicket(
       visibility: "public",
       createdAt: nowIso,
     } as any);
+  }
+
+  // Trigger non-blocking notifications
+  if (updates.status && (updates.status === "resolved" || updates.status === "closed")) {
+    notifyTicketUser({
+      tenantId,
+      userId: ticket.requesterId,
+      userEmail: ticket.requesterEmail,
+      title: `Ticket #${ticket.ticketNumber} ${updates.status.toUpperCase()}`,
+      body: `Your ticket "${ticket.title}" has been marked as ${updates.status} by ${updatedBy.userName}.`,
+      ticketId,
+    }).catch(() => {});
+  }
+
+  if (updates.assigneeId && updates.assigneeId !== ticket.assigneeId) {
+    notifyTicketUser({
+      tenantId,
+      userId: updates.assigneeId,
+      title: `Ticket Assigned: #${ticket.ticketNumber}`,
+      body: `You were assigned ticket "${ticket.title}" by ${updatedBy.userName}.`,
+      ticketId,
+    }).catch(() => {});
   }
 
   return {

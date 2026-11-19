@@ -1,5 +1,6 @@
 import "server-only";
 import { getDb, ObjectId } from "@/lib/db/mysql";
+import { notifyTicketUser, notifyDepartmentManagers } from "./ticket-notifications";
 import type { TicketComment, CommentKind, CommentVisibility, TicketAttachment } from "./types";
 
 export interface CreateCommentInput {
@@ -54,6 +55,43 @@ export async function addTicketComment(
     { $set: { updatedAt: nowIso } }
   );
 
+  // Trigger non-blocking notifications for public messages
+  if (commentDoc.visibility !== "internal") {
+    const isRequester = input.authorId === ticket.requesterId;
+    const preview = (input.body || "Attachment uploaded").slice(0, 120);
+
+    if (!isRequester && ticket.requesterId) {
+      // Staff replied -> notify requester
+      notifyTicketUser({
+        tenantId,
+        userId: ticket.requesterId,
+        userEmail: ticket.requesterEmail,
+        title: `New Reply on Ticket #${ticket.ticketNumber}`,
+        body: `${input.authorName} replied: "${preview}"`,
+        ticketId: input.ticketId,
+      }).catch(() => {});
+    } else if (isRequester) {
+      // Requester replied -> notify assignee or department managers
+      if (ticket.assigneeId) {
+        notifyTicketUser({
+          tenantId,
+          userId: ticket.assigneeId,
+          title: `Requester Replied on Ticket #${ticket.ticketNumber}`,
+          body: `${input.authorName}: "${preview}"`,
+          ticketId: input.ticketId,
+        }).catch(() => {});
+      } else if (ticket.department) {
+        notifyDepartmentManagers(
+          tenantId,
+          ticket.department,
+          `Requester Replied on Ticket #${ticket.ticketNumber}`,
+          `${input.authorName}: "${preview}"`,
+          input.ticketId
+        ).catch(() => {});
+      }
+    }
+  }
+
   return {
     id: res.insertedId.toString(),
     ...commentDoc,
@@ -63,7 +101,7 @@ export async function addTicketComment(
 export async function getTicketComments(
   tenantId: string = "default",
   ticketId: string,
-  caller: { userId: string; role: string; isRequester: boolean }
+  caller: { userId: string; role: string; isRequester: boolean; isStaff?: boolean }
 ): Promise<TicketComment[]> {
   const db = await getDb();
   if (!db) return [];
@@ -73,9 +111,10 @@ export async function getTicketComments(
     ticketId,
   };
 
-  // If caller is purely the requester (and not manager/super_admin/agent), hide internal staff notes
-  const isStaff = caller.role === "super_admin" || caller.role === "manager" || caller.role === "admin" || !caller.isRequester;
-  if (!isStaff) {
+  // If caller is not staff (e.g. requester, employee outside department), hide internal notes
+  const isSuperAdmin = caller.role === "super_admin" || caller.role === "admin";
+  const canSeeInternal = isSuperAdmin || (Boolean(caller.isStaff) && !caller.isRequester);
+  if (!canSeeInternal) {
     filter.visibility = "public";
   }
 

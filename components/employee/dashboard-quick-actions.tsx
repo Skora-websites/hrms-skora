@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   MessageSquare,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -307,6 +308,15 @@ export function DashboardQuickActions({
         >
           <MessageSquare className="w-4 h-4 text-primary" />
           <span>Raise Ticket</span>
+        </Link>
+
+        {/* 7. Assessments */}
+        <Link
+          href="/hrms/tests"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border/80 text-xs font-semibold text-foreground hover:bg-muted/60 active:scale-95 transition-all shadow-xs shrink-0"
+        >
+          <GraduationCap className="w-4 h-4 text-emerald-500" />
+          <span>Assessments</span>
         </Link>
       </div>
 

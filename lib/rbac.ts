@@ -351,6 +351,7 @@ export const ROUTE_ACCESS: Record<string, Role[]> = {
   "/hrms/engage": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/tasks": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/tickets": ["super_admin", "hr_admin", "admin", "manager", "employee"],
+  "/hrms/tests": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/recruitment": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/performance": ["super_admin", "hr_admin", "admin", "manager", "employee"],
   "/hrms/reports": ["super_admin", "hr_admin", "admin", "manager", "employee"],

@@ -19,6 +19,22 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/zip",
 ]);
 
+const ALLOWED_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".gif",
+  ".pdf",
+  ".txt",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".zip",
+  ".csv",
+]);
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAuth();
@@ -42,14 +58,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const ext = path.extname(file.name).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return NextResponse.json(
+        { error: `File extension '${ext}' is not permitted for security.` },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
     // Sanitize filename & create unique name
-    const ext = path.extname(file.name).toLowerCase() || ".dat";
     const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);
     const uniqueId = crypto.randomBytes(8).toString("hex");
-    const safeFilename = `${uniqueId}_${baseName}${ext}`;
+    const safeFilename = `${uniqueId}_${baseName}${ext || ".dat"}`;
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "tickets");
     await fs.mkdir(uploadDir, { recursive: true });

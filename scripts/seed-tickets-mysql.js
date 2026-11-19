@@ -56,6 +56,69 @@ async function main() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`tickets\` (
+        \`id\` bigint(20) NOT NULL AUTO_INCREMENT,
+        \`legacyId\` char(24) DEFAULT NULL,
+        \`tenantId\` varchar(64) NOT NULL DEFAULT 'default',
+        \`status\` varchar(32) DEFAULT NULL,
+        \`priority\` varchar(32) DEFAULT NULL,
+        \`department\` varchar(64) DEFAULT NULL,
+        \`requesterId\` varchar(64) DEFAULT NULL,
+        \`assigneeId\` varchar(64) DEFAULT NULL,
+        \`ticketNumber\` varchar(64) DEFAULT NULL,
+        \`createdAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        \`deletedAt\` datetime(3) DEFAULT NULL,
+        \`payload\` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`uq_tickets_legacyId\` (\`legacyId\`),
+        KEY \`ix_tickets_tenantId\` (\`tenantId\`),
+        KEY \`ix_tickets_dept_status\` (\`tenantId\`, \`department\`, \`status\`),
+        KEY \`ix_tickets_requester\` (\`tenantId\`, \`requesterId\`),
+        KEY \`ix_tickets_assignee\` (\`tenantId\`, \`assigneeId\`),
+        KEY \`ix_tickets_number\` (\`ticketNumber\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`ticket_comments\` (
+        \`id\` bigint(20) NOT NULL AUTO_INCREMENT,
+        \`legacyId\` char(24) DEFAULT NULL,
+        \`tenantId\` varchar(64) NOT NULL DEFAULT 'default',
+        \`ticketId\` varchar(64) DEFAULT NULL,
+        \`authorId\` varchar(64) DEFAULT NULL,
+        \`visibility\` varchar(32) DEFAULT 'public',
+        \`createdAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        \`deletedAt\` datetime(3) DEFAULT NULL,
+        \`payload\` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`uq_ticket_comments_legacyId\` (\`legacyId\`),
+        KEY \`ix_ticket_comments_tenantId\` (\`tenantId\`),
+        KEY \`ix_ticket_comments_ticket\` (\`tenantId\`, \`ticketId\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`ticket_transfers\` (
+        \`id\` bigint(20) NOT NULL AUTO_INCREMENT,
+        \`legacyId\` char(24) DEFAULT NULL,
+        \`tenantId\` varchar(64) NOT NULL DEFAULT 'default',
+        \`ticketId\` varchar(64) DEFAULT NULL,
+        \`toDepartment\` varchar(64) DEFAULT NULL,
+        \`status\` varchar(32) DEFAULT 'pending',
+        \`createdAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        \`deletedAt\` datetime(3) DEFAULT NULL,
+        \`payload\` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`uq_ticket_transfers_legacyId\` (\`legacyId\`),
+        KEY \`ix_ticket_transfers_tenantId\` (\`tenantId\`),
+        KEY \`ix_ticket_transfers_dept\` (\`tenantId\`, \`toDepartment\`, \`status\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    `);
+
     // 2. Default Categories
     const categories = [
       { name: "IT Support", code: "it_support", description: "Hardware, software, VPN, access requests", color: "#3b82f6", isActive: true },

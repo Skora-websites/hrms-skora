@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ApprovalItem {
   id: string;
-  category: "leave" | "regularization" | "overtime" | "expense";
+  category: "leave" | "regularization" | "overtime" | "expense" | "ticket_transfer";
   employeeId: string;
   employeeName: string;
   type: string;
@@ -39,13 +39,14 @@ interface ApprovalHubProps {
     regularizationCount: number;
     overtimeCount: number;
     expenseCount: number;
+    ticketTransferCount?: number;
     items: ApprovalItem[];
   };
   onRefresh: () => void;
 }
 
 export function ManagerApprovalHub({ approvals, onRefresh }: ApprovalHubProps) {
-  const [activeTab, setActiveTab] = useState<"all" | "leave" | "regularization" | "overtime" | "expense">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "leave" | "regularization" | "overtime" | "expense" | "ticket_transfer">("all");
   const [search, setSearch] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [bulkApproving, setBulkApproving] = useState(false);
@@ -91,6 +92,12 @@ export function ManagerApprovalHub({ approvals, onRefresh }: ApprovalHubProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: item.id, action: "manager_approve" }),
         });
+      } else if (item.category === "ticket_transfer") {
+        await fetch("/api/hrm/v2/tickets/transfers", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transferId: item.id, decision: "approved" }),
+        });
       }
       setFeedback({ type: "success", text: `Approved ${item.employeeName}'s ${item.type}.` });
       setTimeout(() => setFeedback(null), 3000);
@@ -129,6 +136,16 @@ export function ManagerApprovalHub({ approvals, onRefresh }: ApprovalHubProps) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: item.id, action: "reject", reason: "Manager rejected claim" }),
+        });
+      } else if (item.category === "ticket_transfer") {
+        await fetch("/api/hrm/v2/tickets/transfers", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            transferId: item.id,
+            decision: "rejected",
+            rejectionReason: "Manager declined transfer",
+          }),
         });
       }
       setFeedback({ type: "success", text: `Rejected ${item.employeeName}'s ${item.type}.` });
@@ -208,6 +225,7 @@ export function ManagerApprovalHub({ approvals, onRefresh }: ApprovalHubProps) {
             { id: "regularization", label: `Regularizations (${approvals.regularizationCount})` },
             { id: "overtime", label: `Overtime (${approvals.overtimeCount})` },
             { id: "expense", label: `Expenses (${approvals.expenseCount})` },
+            { id: "ticket_transfer", label: `Transfers (${approvals.ticketTransferCount || 0})` },
           ].map((tab) => (
             <button
               key={tab.id}

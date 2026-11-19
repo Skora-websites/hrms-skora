@@ -42,6 +42,7 @@ scripts/backup-cleanup.json
 
 # External sub-projects
 /ticket/
+/test-portal/
 
 # Markdown Documentation & AGENTS Rules (NEVER EXPOSE)
 *.md

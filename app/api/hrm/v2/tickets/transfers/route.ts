@@ -54,6 +54,27 @@ export async function POST(request: NextRequest) {
       _id: ObjectId.isValid(auth.userId) ? new ObjectId(auth.userId) : auth.userId,
     });
     const userName = userDoc?.displayName || userDoc?.name || userDoc?.email || "Staff";
+    const userDept = userDoc?.department || userDoc?.departmentName || "";
+
+    const ticket = await db.collection("tickets").findOne({
+      tenantId: auth.tenantId,
+      _id: ObjectId.isValid(body.ticketId) ? new ObjectId(body.ticketId) : body.ticketId,
+    });
+
+    if (!ticket) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+
+    const isSuperAdmin = auth.role === "super_admin" || auth.role === "admin";
+    const isAssignee = ticket.assigneeId === auth.userId;
+    const isDeptStaff = Boolean(userDept && ticket.department === userDept);
+
+    if (!isSuperAdmin && !isAssignee && !isDeptStaff) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to transfer this ticket" },
+        { status: 403 }
+      );
+    }
 
     const transfer = await createTicketTransfer(auth.tenantId, {
       ticketId: body.ticketId,
@@ -94,10 +115,35 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Database not available" }, { status: 503 });
     }
 
+    const transfer = await db.collection("ticket_transfers").findOne({
+      tenantId: auth.tenantId,
+      _id: ObjectId.isValid(body.transferId) ? new ObjectId(body.transferId) : body.transferId,
+    });
+
+    if (!transfer) {
+      return NextResponse.json({ error: "Transfer request not found" }, { status: 404 });
+    }
+
     const userDoc = await db.collection("users").findOne({
       _id: ObjectId.isValid(auth.userId) ? new ObjectId(auth.userId) : auth.userId,
     });
     const userName = userDoc?.displayName || userDoc?.name || userDoc?.email || "Manager";
+    const userDept = userDoc?.department || userDoc?.departmentName || "";
+
+    const isSuperAdmin = auth.role === "super_admin" || auth.role === "admin";
+    const isDeptManager =
+      auth.role === "manager" &&
+      (userDept === transfer.toDepartment || userDept === transfer.fromDepartment);
+
+    if (!isSuperAdmin && !isDeptManager) {
+      return NextResponse.json(
+        {
+          error:
+            "Forbidden: Only receiving or source department managers can approve or reject ticket transfers",
+        },
+        { status: 403 }
+      );
+    }
 
     const result = await decideTicketTransfer(
       auth.tenantId,

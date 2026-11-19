@@ -59,6 +59,21 @@ const nextConfig: NextConfig = {
         destination: "/hrms/tickets",
         permanent: true,
       },
+      {
+        source: "/test-portal",
+        destination: "/hrms/tests",
+        permanent: true,
+      },
+      {
+        source: "/test-portal/:path*",
+        destination: "/hrms/tests",
+        permanent: true,
+      },
+      {
+        source: "/tests",
+        destination: "/hrms/tests",
+        permanent: true,
+      },
     ];
   },
 };

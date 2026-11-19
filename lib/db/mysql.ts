@@ -188,6 +188,12 @@ export const COLLECTION_TABLE_MAP: Record<string, string> = {
   ticket_routing_rules: "ticket_routing_rules",
   ticket_read_states: "ticket_read_states",
   cron_job_logs: "cron_job_logs",
+  test_definitions: "test_definitions",
+  test_questions: "test_questions",
+  test_attempts: "test_attempts",
+  test_answers: "test_answers",
+  test_evaluations: "test_evaluations",
+  test_results: "test_results",
 };
 
 // Cache table columns
@@ -242,6 +248,67 @@ const HIGH_FREQUENCY_SCHEMAS: Record<string, string> = {
     \`startDate\` varchar(32) DEFAULT NULL,
     \`endDate\` varchar(32) DEFAULT NULL,
     KEY \`ix_leave_user_status\` (\`tenantId\`, \`userId\`, \`status\`),
+  `,
+  tickets: `
+    \`status\` varchar(32) DEFAULT NULL,
+    \`priority\` varchar(32) DEFAULT NULL,
+    \`department\` varchar(64) DEFAULT NULL,
+    \`requesterId\` varchar(64) DEFAULT NULL,
+    \`assigneeId\` varchar(64) DEFAULT NULL,
+    \`ticketNumber\` varchar(64) DEFAULT NULL,
+    KEY \`ix_tickets_dept_status\` (\`tenantId\`, \`department\`, \`status\`),
+    KEY \`ix_tickets_requester\` (\`tenantId\`, \`requesterId\`),
+    KEY \`ix_tickets_assignee\` (\`tenantId\`, \`assigneeId\`),
+    KEY \`ix_tickets_number\` (\`ticketNumber\`),
+  `,
+  ticket_comments: `
+    \`ticketId\` varchar(64) DEFAULT NULL,
+    \`authorId\` varchar(64) DEFAULT NULL,
+    \`visibility\` varchar(32) DEFAULT 'public',
+    KEY \`ix_ticket_comments_ticket\` (\`tenantId\`, \`ticketId\`),
+  `,
+  ticket_transfers: `
+    \`ticketId\` varchar(64) DEFAULT NULL,
+    \`toDepartment\` varchar(64) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT 'pending',
+    KEY \`ix_ticket_transfers_dept\` (\`tenantId\`, \`toDepartment\`, \`status\`),
+  `,
+  test_definitions: `
+    \`title\` varchar(255) DEFAULT NULL,
+    \`department\` varchar(64) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT 'draft',
+    \`createdBy\` varchar(64) DEFAULT NULL,
+    KEY \`ix_tests_dept_status\` (\`tenantId\`, \`department\`, \`status\`),
+  `,
+  test_questions: `
+    \`type\` varchar(32) DEFAULT 'MCQ',
+    \`topic\` varchar(100) DEFAULT 'General',
+    \`status\` varchar(32) DEFAULT 'ACTIVE',
+    KEY \`ix_questions_topic_status\` (\`tenantId\`, \`topic\`, \`status\`),
+  `,
+  test_attempts: `
+    \`testId\` varchar(64) DEFAULT NULL,
+    \`userId\` varchar(64) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT 'in_progress',
+    KEY \`ix_attempts_user_test\` (\`tenantId\`, \`userId\`, \`testId\`),
+    KEY \`ix_attempts_test_status\` (\`tenantId\`, \`testId\`, \`status\`),
+  `,
+  test_answers: `
+    \`attemptId\` varchar(64) DEFAULT NULL,
+    \`questionId\` varchar(64) DEFAULT NULL,
+    KEY \`ix_answers_attempt_q\` (\`tenantId\`, \`attemptId\`, \`questionId\`),
+  `,
+  test_evaluations: `
+    \`attemptId\` varchar(64) DEFAULT NULL,
+    \`evaluatorId\` varchar(64) DEFAULT NULL,
+    \`status\` varchar(32) DEFAULT 'pending',
+    KEY \`ix_evals_attempt_status\` (\`tenantId\`, \`attemptId\`, \`status\`),
+  `,
+  test_results: `
+    \`testId\` varchar(64) DEFAULT NULL,
+    \`userId\` varchar(64) DEFAULT NULL,
+    \`grade\` varchar(32) DEFAULT NULL,
+    KEY \`ix_results_user_test\` (\`tenantId\`, \`userId\`, \`testId\`),
   `,
 };
 
