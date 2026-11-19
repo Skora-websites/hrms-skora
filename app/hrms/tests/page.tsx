@@ -199,6 +199,11 @@ export default function AssessmentPortalPage() {
     maxMarks: 2,
   });
 
+  // Question selection filters in Author Test modal
+  const [questionSearchQuery, setQuestionSearchQuery] = useState("");
+  const [questionTypeFilter, setQuestionTypeFilter] = useState<"ALL" | "MCQ" | "DESCRIPTIVE">("ALL");
+  const [questionTopicFilter, setQuestionTopicFilter] = useState<string>("ALL");
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -420,6 +425,26 @@ export default function AssessmentPortalPage() {
       alert(err.message || "Failed to finalize evaluation");
     }
   };
+
+  const availableTopics = Array.from(new Set(questions.map((q) => q.topic).filter(Boolean)));
+  const qMap = new Map(questions.map((q) => [q.id, q]));
+  const totalSelectedMarks = newTest.selectedQuestionIds.reduce(
+    (sum, qId) => sum + (qMap.get(qId)?.maxMarks || 2),
+    0
+  );
+  const passMarksRequired = Math.ceil(
+    (totalSelectedMarks * (newTest.passPercentage || 60)) / 100
+  );
+
+  const filteredBankQuestions = questions.filter((q) => {
+    const matchesSearch =
+      !questionSearchQuery.trim() ||
+      q.text.toLowerCase().includes(questionSearchQuery.toLowerCase().trim()) ||
+      q.topic.toLowerCase().includes(questionSearchQuery.toLowerCase().trim());
+    const matchesType = questionTypeFilter === "ALL" || q.type === questionTypeFilter;
+    const matchesTopic = questionTopicFilter === "ALL" || q.topic === questionTopicFilter;
+    return matchesSearch && matchesType && matchesTopic;
+  });
 
   return (
     <div className="space-y-6">
@@ -989,7 +1014,7 @@ export default function AssessmentPortalPage() {
       {/* Modal: Author Assessment */}
       {showCreateTestModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card border border-border/80 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+          <div className="bg-card border border-border/80 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-xs">
             <div className="flex items-center justify-between border-b border-border/80 pb-3">
               <h3 className="font-bold text-sm text-foreground">Author New Assessment</h3>
               <button
@@ -1243,18 +1268,106 @@ export default function AssessmentPortalPage() {
                 </div>
               </div>
 
-              {/* Select Questions */}
-              <div className="space-y-1">
-                <label className="font-medium text-muted-foreground">
-                  Select Questions from Bank ({newTest.selectedQuestionIds.length} chosen) *
-                </label>
-                <div className="max-h-40 overflow-y-auto border border-border/80 rounded-xl p-2 space-y-1.5 bg-background">
-                  {questions.length === 0 ? (
-                    <p className="text-muted-foreground p-2">
-                      No questions in bank. Create questions first.
-                    </p>
+              {/* Enhanced Select Questions from Bank */}
+              <div className="space-y-2.5 p-3.5 rounded-2xl bg-muted/20 border border-border/80">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <FileQuestion className="w-3.5 h-3.5 text-primary" />
+                      Select Questions from Bank:
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className={`text-[10px] font-bold ${
+                        newTest.selectedQuestionIds.length > 0
+                          ? "bg-primary/10 text-primary border border-primary/30"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {newTest.selectedQuestionIds.length} Chosen
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const filteredIds = filteredBankQuestions.map((q) => q.id);
+                        setNewTest((prev) => ({
+                          ...prev,
+                          selectedQuestionIds: Array.from(
+                            new Set([...prev.selectedQuestionIds, ...filteredIds])
+                          ),
+                        }));
+                      }}
+                      className="px-2 py-0.5 rounded-lg border border-border/80 bg-background text-muted-foreground hover:text-foreground font-medium"
+                    >
+                      Select All Filtered ({filteredBankQuestions.length})
+                    </button>
+                    {newTest.selectedQuestionIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setNewTest((prev) => ({ ...prev, selectedQuestionIds: [] }))}
+                        className="px-2 py-0.5 rounded-lg text-rose-500 hover:bg-rose-500/10 font-medium"
+                      >
+                        Clear ({newTest.selectedQuestionIds.length})
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Filter and Search Toolbar */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="sm:col-span-6 relative">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search questions by text or keyword..."
+                      value={questionSearchQuery}
+                      onChange={(e) => setQuestionSearchQuery(e.target.value)}
+                      className="w-full h-8 pl-8 pr-2.5 rounded-xl bg-background border border-border/80 text-xs text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <select
+                      value={questionTypeFilter}
+                      onChange={(e) => setQuestionTypeFilter(e.target.value as any)}
+                      className="w-full h-8 px-2 rounded-xl bg-background border border-border/80 text-[11px] font-semibold text-foreground cursor-pointer"
+                    >
+                      <option value="ALL">All Types</option>
+                      <option value="MCQ">MCQ Only</option>
+                      <option value="DESCRIPTIVE">Descriptive Only</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <select
+                      value={questionTopicFilter}
+                      onChange={(e) => setQuestionTopicFilter(e.target.value)}
+                      className="w-full h-8 px-2 rounded-xl bg-background border border-border/80 text-[11px] font-semibold text-foreground cursor-pointer"
+                    >
+                      <option value="ALL">All Topics</option>
+                      {availableTopics.map((top) => (
+                        <option key={top} value={top}>
+                          {top}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Questions List */}
+                <div className="max-h-56 overflow-y-auto border border-border/80 rounded-2xl p-2 space-y-2 bg-background">
+                  {filteredBankQuestions.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground text-xs space-y-1">
+                      <p className="font-semibold">No questions matching your filters</p>
+                      <p className="text-[11px]">
+                        Try adjusting your search query, type filter, or add new questions to the Question Bank.
+                      </p>
+                    </div>
                   ) : (
-                    questions.map((q) => {
+                    filteredBankQuestions.map((q) => {
                       const isChosen = newTest.selectedQuestionIds.includes(q.id);
                       return (
                         <div
@@ -1267,20 +1380,77 @@ export default function AssessmentPortalPage() {
                                 : [...prev.selectedQuestionIds, q.id],
                             }));
                           }}
-                          className={`p-2 rounded-lg border text-[11px] cursor-pointer flex items-center justify-between ${
+                          className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all flex items-start gap-2.5 select-none ${
                             isChosen
-                              ? "bg-primary/10 border-primary text-foreground font-semibold"
-                              : "border-border/60 text-muted-foreground"
+                              ? "bg-primary/10 border-primary shadow-xs"
+                              : "border-border/60 text-muted-foreground hover:bg-muted/40 hover:border-border"
                           }`}
                         >
-                          <span className="line-clamp-1 flex-1">
-                            [{q.type}] {q.text}
-                          </span>
-                          <span className="font-mono ml-2 shrink-0">{q.maxMarks}m</span>
+                          <div
+                            className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                              isChosen
+                                ? "bg-primary border-primary text-primary-foreground"
+                                : "border-muted-foreground/40 bg-background"
+                            }`}
+                          >
+                            {isChosen && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Badge
+                                variant="secondary"
+                                className={`text-[9px] px-1.5 py-0 font-bold ${
+                                  q.type === "MCQ"
+                                    ? "bg-blue-500/10 text-blue-600"
+                                    : "bg-purple-500/10 text-purple-600"
+                                }`}
+                              >
+                                {q.type}
+                              </Badge>
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-medium">
+                                {q.topic}
+                              </Badge>
+                              <span className="text-[10px] font-mono text-muted-foreground ml-auto">
+                                {q.maxMarks} {q.maxMarks === 1 ? "Mark" : "Marks"}
+                              </span>
+                            </div>
+
+                            <p className="text-[11px] text-foreground font-medium line-clamp-2 leading-relaxed">
+                              {q.text}
+                            </p>
+
+                            {q.type === "MCQ" && q.options && (
+                              <div className="text-[10px] text-muted-foreground">
+                                {q.options.length} options{" "}
+                                {q.answerMode === "MULTIPLE"
+                                  ? "• Multi-select"
+                                  : "• Single choice"}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })
                   )}
+                </div>
+
+                {/* Live Marks & Passing Benchmark Bar */}
+                <div className="p-2.5 rounded-xl bg-muted/40 border border-border/70 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">Selected:</span>
+                    <strong className="text-foreground">{newTest.selectedQuestionIds.length} Questions</strong>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">Total Marks:</span>
+                    <strong className="text-primary font-bold">{totalSelectedMarks} Marks</strong>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">Passing ({newTest.passPercentage}%):</span>
+                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
+                      {passMarksRequired} Marks
+                    </strong>
+                  </div>
                 </div>
               </div>
 
