@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "cron": "node scripts/cron-runner.js",
     "lint": "eslint",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests"

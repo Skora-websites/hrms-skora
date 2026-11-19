@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
+import { CeoCronManagementConsole } from "@/components/superadmin/ceo-cron-management-console";
 import {
   Shield,
   CheckCircle2,
@@ -141,15 +142,18 @@ export default function SuperAdminSettingsPage() {
     <AppShell title="Super Admin Settings">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Platform Settings
+          Platform Settings & Automations
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Global platform security, API key management &amp; Firebase Auth sync
-          controls
+          Indian statutory background automations, aaPanel cron configuration, and global platform security
         </p>
       </div>
 
-      <form onSubmit={handleSave} className="max-w-3xl space-y-6">
+      <div className="space-y-8 max-w-4xl">
+        {/* Automated Background Engine & aaPanel Crons */}
+        <CeoCronManagementConsole />
+
+        <form onSubmit={handleSave} className="space-y-6">
         {saved && (
           <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
@@ -410,8 +414,9 @@ export default function SuperAdminSettingsPage() {
           {saving ? "Saving..." : "Save All Settings"}
         </Button>
       </form>
-    </AppShell>
-  );
+    </div>
+  </AppShell>
+);
 }
 
 // ── Helpers ─────────────────────────────────────────────

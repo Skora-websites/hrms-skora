@@ -273,6 +273,13 @@ export default function SuperadminOverviewPage() {
             <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </Button>
 
+          <Link href="/hrms/superadmin/settings">
+            <Button size="sm" variant="outline" className="text-xs flex items-center gap-1">
+              <span>Automations &amp; Crons</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+
           <Link href="/hrms/hr-admin">
             <Button size="sm" variant="outline" className="text-xs flex items-center gap-1">
               <span>HR Admin Desk</span>
