@@ -26,11 +26,20 @@ import {
   Eye,
   Info,
   Sparkles,
+  RotateCcw,
+  Calendar,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers/auth-provider";
-import type { TestDefinition, TestQuestion, TestResultSummary, TestAttempt } from "@/services/hrm/tests/types";
+import type {
+  TestDefinition,
+  TestQuestion,
+  TestResultSummary,
+  TestAttempt,
+  CandidateProgressItem,
+} from "@/services/hrm/tests/types";
 
 export default function AssessmentPortalPage() {
   const { user } = useAuth();
@@ -82,11 +91,72 @@ export default function AssessmentPortalPage() {
     }
   };
 
+  // Targeting & candidate progress state
+  const [availableUsers, setAvailableUsers] = useState<
+    Array<{ id: string; name: string; email: string; department: string }>
+  >([]);
+  const [candidateProgressTest, setCandidateProgressTest] = useState<TestDefinition | null>(null);
+  const [candidateProgressList, setCandidateProgressList] = useState<CandidateProgressItem[]>([]);
+  const [loadingCandidateProgress, setLoadingCandidateProgress] = useState(false);
+  const [grantingRetakeUserId, setGrantingRetakeUserId] = useState<string | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+
+  const handleOpenCandidateProgress = async (testItem: TestDefinition) => {
+    setCandidateProgressTest(testItem);
+    setLoadingCandidateProgress(true);
+    try {
+      const res = await fetch(`/api/hrm/v2/tests/${testItem.id}/candidates`);
+      const data = await res.json();
+      if (data.success) {
+        setCandidateProgressList(data.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to load candidate progress", err);
+    } finally {
+      setLoadingCandidateProgress(false);
+    }
+  };
+
+  const handleGrantRetake = async (testId: string, userId: string) => {
+    if (!confirm("Grant an additional attempt (+1 retake) to this candidate?")) return;
+    setGrantingRetakeUserId(userId);
+    try {
+      const res = await fetch(`/api/hrm/v2/tests/${testId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "grant_retake", userId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCandidateProgressList((prev) =>
+          prev.map((c) =>
+            c.userId === userId
+              ? { ...c, maxAttemptsAllowed: c.maxAttemptsAllowed + 1 }
+              : c
+          )
+        );
+        fetchData();
+        alert("Retake attempt granted successfully!");
+      } else {
+        alert(data.error || "Failed to grant retake");
+      }
+    } catch {
+      alert("Network error while granting retake");
+    } finally {
+      setGrantingRetakeUserId(null);
+    }
+  };
+
   // Form state for new test
   const [newTest, setNewTest] = useState({
     title: "",
     description: "",
     department: "",
+    targetType: "DEPARTMENT" as "DEPARTMENT" | "SPECIFIC_USERS",
+    targetUserIds: [] as string[],
+    startDate: "",
+    dueDate: "",
+    maxAttempts: 1,
     durationMinutes: 30,
     passPercentage: 60,
     selectedQuestionIds: [] as string[],
@@ -123,7 +193,7 @@ export default function AssessmentPortalPage() {
       const resJson = await resRes.json();
       if (resJson.success) setResults(resJson.data || []);
 
-      // 3. If staff, fetch questions and evaluations
+      // 3. If staff, fetch questions, evaluations, and candidates
       if (isStaff) {
         const qRes = await fetch("/api/hrm/v2/tests/questions");
         const qJson = await qRes.json();
@@ -132,6 +202,10 @@ export default function AssessmentPortalPage() {
         const evalRes = await fetch("/api/hrm/v2/tests/evaluations");
         const evalJson = await evalRes.json();
         if (evalJson.success) setEvaluations(evalJson.data || []);
+
+        const uRes = await fetch("/api/hrm/v2/tests/users");
+        const uJson = await uRes.json();
+        if (uJson.success) setAvailableUsers(uJson.data || []);
       }
     } catch (err) {
       console.error("Failed to load assessments data", err);
@@ -209,6 +283,10 @@ export default function AssessmentPortalPage() {
       alert("Please select at least one question for the test.");
       return;
     }
+    if (newTest.targetType === "SPECIFIC_USERS" && newTest.targetUserIds.length === 0) {
+      alert("Please select at least one specific employee for assignment.");
+      return;
+    }
 
     try {
       const payload = {
@@ -218,6 +296,11 @@ export default function AssessmentPortalPage() {
         durationMinutes: Number(newTest.durationMinutes),
         passPercentage: Number(newTest.passPercentage),
         questionIds: newTest.selectedQuestionIds,
+        targetType: newTest.targetType,
+        targetUserIds: newTest.targetType === "SPECIFIC_USERS" ? newTest.targetUserIds : [],
+        startDate: newTest.startDate ? new Date(newTest.startDate).toISOString() : null,
+        dueDate: newTest.dueDate ? new Date(newTest.dueDate).toISOString() : null,
+        maxAttempts: Math.max(1, Number(newTest.maxAttempts || 1)),
         proctoring: {
           requireFullscreen: newTest.requireFullscreen,
           maxViolationsAllowed: Number(newTest.maxViolationsAllowed),
@@ -238,6 +321,11 @@ export default function AssessmentPortalPage() {
           title: "",
           description: "",
           department: "",
+          targetType: "DEPARTMENT",
+          targetUserIds: [],
+          startDate: "",
+          dueDate: "",
+          maxAttempts: 1,
           durationMinutes: 30,
           passPercentage: 60,
           selectedQuestionIds: [],
@@ -427,53 +515,120 @@ export default function AssessmentPortalPage() {
                 No active assessments assigned to you right now. You are all caught up!
               </div>
             ) : (
-              tests.map((t) => (
-                <div
-                  key={t.id}
-                  className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs flex flex-col justify-between space-y-4 hover:border-primary/50 transition-colors"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        {t.department} • {t.category}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
-                        <Clock className="w-3 h-3" /> {t.durationMinutes}m
-                      </span>
+              tests.map((t) => {
+                const userResult = results.find((r) => r.testId === t.id);
+                const isOverdue = t.dueDate ? new Date(t.dueDate).getTime() < Date.now() : false;
+                const isUpcoming = t.startDate ? new Date(t.startDate).getTime() > Date.now() : false;
+                const extraGranted = (t.grantedRetakes && user?.id && t.grantedRetakes[user.id]) || 0;
+                const maxAttempts = (t.maxAttempts || 1) + extraGranted;
+
+                return (
+                  <div
+                    key={t.id}
+                    className="rounded-3xl border border-border/80 bg-card p-6 shadow-xs flex flex-col justify-between space-y-4 hover:border-primary/50 transition-colors"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px]">
+                            {t.targetType === "SPECIFIC_USERS" ? "🎯 Targeted to You" : `${t.department} • ${t.category || "General"}`}
+                          </Badge>
+                          {userResult && (
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] font-bold ${
+                                userResult.passed ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
+                              }`}
+                            >
+                              {userResult.passed ? `Passed (${userResult.percentage}%)` : `Failed (${userResult.percentage}%)`}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
+                          <Clock className="w-3 h-3" /> {t.durationMinutes}m
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-sm text-foreground">{t.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {t.description || "Comprehensive assessment covering core domain skills."}
+                      </p>
+
+                      {/* Deadlines & Attempt badges */}
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-mono">
+                        {t.dueDate && (
+                          <span
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border ${
+                              isOverdue
+                                ? "bg-rose-500/10 text-rose-600 border-rose-500/30"
+                                : "bg-muted/40 text-muted-foreground border-border/60"
+                            }`}
+                          >
+                            <Calendar className="w-3 h-3" />
+                            {isOverdue ? "Deadline Passed" : `Due: ${new Date(t.dueDate).toLocaleDateString()}`}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/40 text-muted-foreground border border-border/60">
+                          <RotateCcw className="w-3 h-3" /> Max Attempts: {maxAttempts}
+                        </span>
+                      </div>
                     </div>
 
-                    <h3 className="font-bold text-sm text-foreground">{t.title}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {t.description || "Comprehensive assessment covering core domain skills."}
-                    </p>
+                    <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="text-[11px] text-muted-foreground">
+                        <span>{t.questionIds?.length || 0} Questions • </span>
+                        <span>Pass: {t.passPercentage}%</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenPreviewModal(t)}
+                          className="rounded-xl h-8 text-xs font-semibold gap-1"
+                        >
+                          <Info className="w-3 h-3" /> Overview
+                        </Button>
+
+                        {isUpcoming ? (
+                          <Button
+                            size="sm"
+                            disabled
+                            className="rounded-xl h-8 text-xs font-semibold bg-muted text-muted-foreground"
+                          >
+                            Unlocks {new Date(t.startDate!).toLocaleDateString()}
+                          </Button>
+                        ) : isOverdue && !userResult ? (
+                          <Button
+                            size="sm"
+                            disabled
+                            className="rounded-xl h-8 text-xs font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/30"
+                          >
+                            Deadline Passed
+                          </Button>
+                        ) : userResult ? (
+                          <Button
+                            size="sm"
+                            onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
+                            className="rounded-xl h-8 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white gap-1"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Retake Test
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
+                            className="rounded-xl h-8 text-xs font-semibold bg-primary text-primary-foreground gap-1"
+                          >
+                            <Play className="w-3 h-3 fill-current" /> Start Test
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-2 flex-wrap">
-                    <div className="text-[11px] text-muted-foreground">
-                      <span>{t.questionIds?.length || 0} Questions • </span>
-                      <span>Pass: {t.passPercentage}%</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenPreviewModal(t)}
-                        className="rounded-xl h-8 text-xs font-semibold gap-1"
-                      >
-                        <Info className="w-3 h-3" /> Overview
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => router.push(`/hrms/tests/take/${t.id}`)}
-                        className="rounded-xl h-8 text-xs font-semibold bg-primary text-primary-foreground gap-1"
-                      >
-                        <Play className="w-3 h-3 fill-current" /> Start Test
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -561,12 +716,21 @@ export default function AssessmentPortalPage() {
                 key={t.id}
                 className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-xs text-foreground">{t.title}</span>
-                    <Badge variant="outline" className="text-[10px]">
-                      {t.department}
-                    </Badge>
+                    {t.targetType === "SPECIFIC_USERS" ? (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] text-indigo-600 border-indigo-500/30 font-semibold"
+                      >
+                        🎯 {t.targetUserIds?.length || 0} Targeted Candidates
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]">
+                        🏢 Dept: {t.department}
+                      </Badge>
+                    )}
                     <Badge
                       variant="secondary"
                       className="text-[10px] bg-emerald-500/10 text-emerald-600 font-semibold capitalize"
@@ -574,8 +738,10 @@ export default function AssessmentPortalPage() {
                       {t.status}
                     </Badge>
                   </div>
+
                   <p className="text-[11px] text-muted-foreground">{t.description}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-mono">
+
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-mono flex-wrap">
                     <span>{t.durationMinutes} mins</span>
                     <span>•</span>
                     <span>{t.questionIds?.length || 0} questions</span>
@@ -583,10 +749,30 @@ export default function AssessmentPortalPage() {
                     <span>Total Marks: {t.totalMarks}</span>
                     <span>•</span>
                     <span>Pass: {t.passPercentage}%</span>
+                    <span>•</span>
+                    <span>Max Attempts: {t.maxAttempts || 1}</span>
+                    {t.dueDate && (
+                      <>
+                        <span>•</span>
+                        <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> Due:{" "}
+                          {new Date(t.dueDate).toLocaleDateString()}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpenCandidateProgress(t)}
+                    className="h-8 text-xs rounded-xl gap-1.5 font-semibold hover:border-primary/50 hover:text-primary"
+                  >
+                    <Users className="w-3.5 h-3.5 text-primary" />
+                    <span>Candidate Progress</span>
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -801,17 +987,123 @@ export default function AssessmentPortalPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="font-medium text-muted-foreground">Target Dept</label>
-                  <input
-                    type="text"
-                    placeholder="Engineering"
-                    value={newTest.department}
-                    onChange={(e) => setNewTest({ ...newTest, department: e.target.value })}
-                    className="w-full h-8 px-2.5 rounded-xl bg-background border border-border/80"
-                  />
+              {/* Candidate Assignment Mode */}
+              <div className="space-y-2.5 p-3 rounded-2xl bg-muted/30 border border-border/70">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-foreground flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-primary" /> Candidate Assignment:
+                  </span>
+                  <div className="flex items-center gap-1 bg-background p-1 rounded-xl border border-border/80">
+                    <button
+                      type="button"
+                      onClick={() => setNewTest({ ...newTest, targetType: "DEPARTMENT" })}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                        newTest.targetType === "DEPARTMENT"
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Entire Department
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewTest({ ...newTest, targetType: "SPECIFIC_USERS" })}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                        newTest.targetType === "SPECIFIC_USERS"
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Specific Employees
+                    </button>
+                  </div>
                 </div>
+
+                {newTest.targetType === "DEPARTMENT" ? (
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-muted-foreground">Target Department *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Engineering, Sales, or All"
+                      value={newTest.department}
+                      onChange={(e) => setNewTest({ ...newTest, department: e.target.value })}
+                      className="w-full h-8 px-2.5 rounded-xl bg-background border border-border/80 text-xs"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <label className="text-muted-foreground">
+                        Select Employees ({newTest.targetUserIds.length} chosen) *
+                      </label>
+                      {newTest.targetUserIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setNewTest({ ...newTest, targetUserIds: [] })}
+                          className="text-rose-500 hover:underline text-[10px]"
+                        >
+                          Clear Selection
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search employees by name, email, or dept..."
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      className="w-full h-7 px-2.5 rounded-lg bg-background border border-border/80 text-xs"
+                    />
+                    <div className="max-h-32 overflow-y-auto border border-border/80 rounded-xl p-1.5 space-y-1 bg-background">
+                      {availableUsers
+                        .filter(
+                          (u) =>
+                            !userSearchQuery.trim() ||
+                            u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                            u.email.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                            u.department.toLowerCase().includes(userSearchQuery.toLowerCase())
+                        )
+                        .map((u) => {
+                          const isSelected = newTest.targetUserIds.includes(u.id);
+                          return (
+                            <div
+                              key={u.id}
+                              onClick={() =>
+                                setNewTest((prev) => ({
+                                  ...prev,
+                                  targetUserIds: isSelected
+                                    ? prev.targetUserIds.filter((id) => id !== u.id)
+                                    : [...prev.targetUserIds, u.id],
+                                }))
+                              }
+                              className={`p-1.5 rounded-lg border text-[11px] cursor-pointer flex items-center justify-between ${
+                                isSelected
+                                  ? "bg-primary/10 border-primary text-foreground font-semibold"
+                                  : "border-border/60 text-muted-foreground hover:bg-muted/30"
+                              }`}
+                            >
+                              <div>
+                                <span className="font-semibold text-foreground">{u.name}</span>
+                                <span className="text-[10px] text-muted-foreground ml-1.5">
+                                  ({u.department})
+                                </span>
+                              </div>
+                              <div
+                                className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                                  isSelected ? "bg-primary border-primary text-white" : "border-border"
+                                }`}
+                              >
+                                {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Duration, Pass % and Max Attempts */}
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="font-medium text-muted-foreground">Duration (mins)</label>
                   <input
@@ -835,6 +1127,47 @@ export default function AssessmentPortalPage() {
                       setNewTest({ ...newTest, passPercentage: Number(e.target.value) })
                     }
                     className="w-full h-8 px-2.5 rounded-xl bg-background border border-border/80"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-medium text-muted-foreground flex items-center gap-1">
+                    <RotateCcw className="w-3 h-3 text-muted-foreground" /> Max Attempts
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={newTest.maxAttempts}
+                    onChange={(e) =>
+                      setNewTest({ ...newTest, maxAttempts: Math.max(1, Number(e.target.value)) })
+                    }
+                    className="w-full h-8 px-2.5 rounded-xl bg-background border border-border/80 text-center font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Schedule: Start Date & Due Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-2xl bg-muted/30 border border-border/70">
+                <div className="space-y-1">
+                  <label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-muted-foreground" /> Start Date (Unlock)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newTest.startDate}
+                    onChange={(e) => setNewTest({ ...newTest, startDate: e.target.value })}
+                    className="w-full h-8 px-2 rounded-xl bg-background border border-border/80 text-[11px]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-muted-foreground" /> Due Date (Deadline)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newTest.dueDate}
+                    onChange={(e) => setNewTest({ ...newTest, dueDate: e.target.value })}
+                    className="w-full h-8 px-2 rounded-xl bg-background border border-border/80 text-[11px]"
                   />
                 </div>
               </div>
@@ -1245,6 +1578,154 @@ export default function AssessmentPortalPage() {
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>{isStaff ? "Launch Interactive Candidate Preview" : "Start Assessment"}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Drawer / Modal: Candidate Progress & Retakes */}
+      {candidateProgressTest && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-border/80 rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+            <div className="flex items-center justify-between border-b border-border/80 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">
+                    Candidate Progress &amp; Retakes
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Assessment:{" "}
+                    <span className="font-semibold text-foreground">
+                      {candidateProgressTest.title}
+                    </span>{" "}
+                    • Max Attempts: {candidateProgressTest.maxAttempts || 1}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCandidateProgressTest(null)}
+                className="text-muted-foreground hover:text-foreground text-sm font-bold p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingCandidateProgress ? (
+              <div className="py-12 text-center space-y-2">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
+                <span className="text-xs text-muted-foreground">
+                  Loading candidate progress...
+                </span>
+              </div>
+            ) : candidateProgressList.length === 0 ? (
+              <div className="p-8 text-center border border-dashed rounded-2xl text-muted-foreground text-xs">
+                No targeted candidates found for this assessment.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1">
+                  <span>
+                    Total Assigned: <strong>{candidateProgressList.length}</strong> • Completed:{" "}
+                    <strong>
+                      {candidateProgressList.filter((c) => c.status === "evaluated").length}
+                    </strong>
+                  </span>
+                  <span>Highest score is automatically recorded</span>
+                </div>
+
+                <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                  {candidateProgressList.map((c) => (
+                    <div
+                      key={c.userId}
+                      className="p-3.5 rounded-2xl border border-border/80 bg-background flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs text-foreground">{c.name}</span>
+                          <span className="text-[10px] text-muted-foreground">({c.email})</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {c.department}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <span>
+                            Attempts Used:{" "}
+                            <strong className="text-foreground">
+                              {c.attemptsUsed} / {c.maxAttemptsAllowed}
+                            </strong>
+                          </span>
+                          {c.bestScore !== undefined && (
+                            <>
+                              <span>•</span>
+                              <span>
+                                Best Score:{" "}
+                                <strong className="text-foreground font-mono">
+                                  {c.bestScore} / {c.maxScore} ({c.percentage}%)
+                                </strong>
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] font-semibold capitalize ${
+                            c.status === "evaluated"
+                              ? c.passed
+                                ? "bg-emerald-500/10 text-emerald-600"
+                                : "bg-rose-500/10 text-rose-600"
+                              : c.status === "in_progress"
+                              ? "bg-blue-500/10 text-blue-600"
+                              : c.status === "submitted"
+                              ? "bg-purple-500/10 text-purple-600"
+                              : c.status === "overdue"
+                              ? "bg-rose-500/10 text-rose-600"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {c.status === "evaluated"
+                            ? c.passed
+                              ? "Passed"
+                              : "Failed"
+                            : c.status.replace("_", " ")}
+                        </Badge>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={grantingRetakeUserId === c.userId}
+                          onClick={() =>
+                            handleGrantRetake(candidateProgressTest.id, c.userId)
+                          }
+                          className="rounded-xl h-7 text-[11px] gap-1 font-semibold hover:border-primary hover:text-primary"
+                          title="Grant 1 additional attempt to this employee"
+                        >
+                          {grantingRetakeUserId === c.userId ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-3 h-3 text-primary" />
+                          )}
+                          <span>+1 Retake</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-3 border-t border-border/80">
+              <Button
+                variant="outline"
+                onClick={() => setCandidateProgressTest(null)}
+                className="rounded-xl h-8 text-xs"
+              >
+                Close
               </Button>
             </div>
           </div>

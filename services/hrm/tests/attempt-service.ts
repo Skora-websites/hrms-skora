@@ -21,6 +21,19 @@ export async function startAttempt(
   if (!test) throw new Error("Test not found");
   if (test.status !== "active") throw new Error("Test is not currently active");
 
+  // Schedule & Deadline Validation
+  const now = new Date();
+  if (test.startDate && new Date(test.startDate).getTime() > now.getTime()) {
+    throw new Error(
+      `This assessment is scheduled to unlock on ${new Date(test.startDate).toLocaleString()}`
+    );
+  }
+  if (test.dueDate && new Date(test.dueDate).getTime() < now.getTime()) {
+    throw new Error(
+      "The deadline for this assessment has passed. Contact your manager for an extension."
+    );
+  }
+
   // Check if candidate already has an active attempt
   const existing = await db.collection("test_attempts").findOne({
     tenantId,
@@ -30,9 +43,9 @@ export async function startAttempt(
   });
 
   if (existing) {
-    const now = new Date().getTime();
+    const nowTime = now.getTime();
     const expiry = new Date(existing.expiresAt).getTime();
-    if (now < expiry) {
+    if (nowTime < expiry) {
       return {
         id: existing._id ? existing._id.toString() : String(existing.id),
         ...existing,
@@ -46,7 +59,28 @@ export async function startAttempt(
     }
   }
 
-  const now = new Date();
+  // Attempt & Retake Limit Validation
+  const completedAttempts = await db
+    .collection("test_attempts")
+    .find({
+      tenantId,
+      testId,
+      userId: user.userId,
+      status: { $in: ["submitted", "evaluated", "timed_out"] },
+    })
+    .toArray();
+
+  const baseMax = test.maxAttempts || 1;
+  const extraGranted = (test.grantedRetakes && test.grantedRetakes[user.userId]) || 0;
+  const totalAllowed = baseMax + extraGranted;
+
+  if (completedAttempts.length >= totalAllowed) {
+    throw new Error(
+      `Maximum attempt limit (${totalAllowed}) reached for this assessment. Please request a retake from your manager.`
+    );
+  }
+
+  const attemptNumber = completedAttempts.length + 1;
   const expiresAt = new Date(now.getTime() + test.durationMinutes * 60 * 1000);
 
   const attemptDoc = {
@@ -58,6 +92,7 @@ export async function startAttempt(
     userEmail: user.userEmail,
     department: user.department || "General",
     status: "in_progress" as AttemptStatus,
+    attemptNumber,
     startedAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
     answers: {},
@@ -262,26 +297,61 @@ export async function submitAttempt(
 
   await db.collection("test_attempts").updateOne({ _id: attempt._id }, { $set: patch });
 
-  // If pure MCQ (no descriptive questions to grade), insert into test_results immediately
+  // If pure MCQ (no descriptive questions to grade), write to test_results preserving highest score
   if (!hasDescriptive) {
-    const grade = percentage >= 90 ? "A+" : percentage >= 80 ? "A" : percentage >= 65 ? "B" : percentage >= 50 ? "C" : "F";
-    await db.collection("test_results").insertOne({
+    const grade =
+      percentage >= 90
+        ? "A+"
+        : percentage >= 80
+        ? "A"
+        : percentage >= 65
+        ? "B"
+        : percentage >= 50
+        ? "C"
+        : "F";
+
+    const existingResult = await db.collection("test_results").findOne({
       tenantId,
-      attemptId,
       testId: attempt.testId,
-      testTitle: attempt.testTitle,
       userId: attempt.userId,
-      userName: attempt.userName,
-      userEmail: attempt.userEmail,
-      department: attempt.department,
-      totalScore,
-      maxScore,
-      percentage,
-      passed,
-      grade,
-      completedAt: nowIso,
-      createdAt: nowIso,
-    } as any);
+    });
+
+    if (existingResult) {
+      if (totalScore >= (existingResult.totalScore || 0)) {
+        await db.collection("test_results").updateOne(
+          { _id: existingResult._id },
+          {
+            $set: {
+              attemptId,
+              totalScore,
+              maxScore,
+              percentage,
+              passed,
+              grade,
+              completedAt: nowIso,
+            },
+          }
+        );
+      }
+    } else {
+      await db.collection("test_results").insertOne({
+        tenantId,
+        attemptId,
+        testId: attempt.testId,
+        testTitle: attempt.testTitle,
+        userId: attempt.userId,
+        userName: attempt.userName,
+        userEmail: attempt.userEmail,
+        department: attempt.department,
+        totalScore,
+        maxScore,
+        percentage,
+        passed,
+        grade,
+        completedAt: nowIso,
+        createdAt: nowIso,
+      } as any);
+    }
   }
 
   return {

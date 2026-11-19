@@ -169,7 +169,7 @@ export async function finalizeEvaluation(
     }
   );
 
-  // Write to test_results
+  // Write to test_results preserving highest score
   const resultDoc = {
     tenantId,
     attemptId,
@@ -188,10 +188,38 @@ export async function finalizeEvaluation(
     createdAt: nowIso,
   };
 
-  const res = await db.collection("test_results").insertOne(resultDoc as any);
+  const existingResult = await db.collection("test_results").findOne({
+    tenantId,
+    testId: attempt.testId,
+    userId: attempt.userId,
+  });
+
+  let resultId = "";
+  if (existingResult) {
+    resultId = existingResult._id?.toString() || String(existingResult.id);
+    if (totalScore >= (existingResult.totalScore || 0)) {
+      await db.collection("test_results").updateOne(
+        { _id: existingResult._id },
+        {
+          $set: {
+            attemptId,
+            totalScore,
+            maxScore,
+            percentage,
+            passed,
+            grade,
+            completedAt: nowIso,
+          },
+        }
+      );
+    }
+  } else {
+    const res = await db.collection("test_results").insertOne(resultDoc as any);
+    resultId = res.insertedId.toString();
+  }
 
   return {
-    id: res.insertedId.toString(),
+    id: resultId,
     ...resultDoc,
   };
 }
