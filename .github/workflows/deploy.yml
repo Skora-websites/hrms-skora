@@ -57,7 +57,11 @@ jobs:
           script_stop: true
           script: |
             echo "🚀 Starting SKORA HRMS aaPanel Deployment..."
-            PROJECT_DIR="/www/wwwroot/hrms-skora"
+            if [ -d "/www/wwwroot/hrms.skorainfotech.com" ]; then
+              PROJECT_DIR="/www/wwwroot/hrms.skorainfotech.com"
+            else
+              PROJECT_DIR="/www/wwwroot/hrms-skora"
+            fi
             if [ -d "$PROJECT_DIR" ]; then
               cd "$PROJECT_DIR"
               git fetch origin main && git reset --hard origin/main
