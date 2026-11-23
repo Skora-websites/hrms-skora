@@ -21,10 +21,12 @@ const mysql = require("mysql2/promise");
 
 // 1. Lightweight Zero-Dependency .env Loader
 function loadEnv() {
-  const envFiles = [".env.production", ".env.local", ".env"];
+  const envFiles = [".env", ".env.production", ".env.local"];
+  const loaded = [];
   for (const file of envFiles) {
     const fullPath = path.resolve(process.cwd(), file);
     if (fs.existsSync(fullPath)) {
+      loaded.push(file);
       const content = fs.readFileSync(fullPath, "utf8");
       content.split(/\r?\n/).forEach((line) => {
         const trimmed = line.trim();
@@ -39,13 +41,16 @@ function loadEnv() {
           ) {
             val = val.slice(1, -1);
           }
-          if (!process.env[key]) {
-            process.env[key] = val;
-          }
+          process.env[key] = val;
         }
       });
-      break; // Stop after first existing environment file
     }
+  }
+
+  if (loaded.length > 0) {
+    console.log(`📁 Loaded environment from: ${loaded.join(", ")}`);
+  } else {
+    console.warn(`⚠️ Warning: No .env, .env.production, or .env.local found in ${process.cwd()}!`);
   }
 }
 
@@ -152,7 +157,13 @@ async function main() {
   try {
     conn = await mysql.createConnection(dbConfig);
   } catch (err) {
-    console.error(`❌ Could not connect to MySQL:`, err.message);
+    console.error(`\n❌ Could not connect to MySQL:`, err.message);
+    console.error(`💡 Tip: Make sure your .env file exists in "${process.cwd()}" with valid aaPanel MySQL credentials:`);
+    console.error(`   MYSQL_HOST=${dbConfig.host}`);
+    console.error(`   MYSQL_PORT=${dbConfig.port}`);
+    console.error(`   MYSQL_USER=${dbConfig.user}`);
+    console.error(`   MYSQL_PASSWORD=${dbConfig.password ? "********" : "(empty)"}`);
+    console.error(`   MYSQL_DATABASE=${dbConfig.database}\n`);
     process.exit(1);
   }
 
