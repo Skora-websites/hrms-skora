@@ -16,13 +16,10 @@ module.exports = {
       name: "hrms-skora",
       script: "node_modules/next/dist/bin/next",
       args: "start -p 3000",
-      instances: "max", // Utilizes all available CPU cores on aaPanel VPS
-      exec_mode: "cluster",
+      instances: 1,
+      exec_mode: "fork",
       watch: false,
       max_memory_restart: "1G",
-      kill_timeout: 5000,
-      wait_ready: true,
-      listen_timeout: 10000,
       env: {
         NODE_ENV: "production",
         PORT: 3000,
