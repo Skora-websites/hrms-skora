@@ -60,7 +60,13 @@ jobs:
             PROJECT_DIR="/www/wwwroot/hrms-skora"
             if [ -d "$PROJECT_DIR" ]; then
               cd "$PROJECT_DIR"
-              bash scripts/deploy-aapanel.sh
+              git fetch origin main && git reset --hard origin/main
+              npm install --production=false --legacy-peer-deps
+              npm run db:migrate
+              npm run build
+              chown -R www:www "$PROJECT_DIR/.next" 2>/dev/null || true
+              chmod -R 755 "$PROJECT_DIR/.next" 2>/dev/null || true
+              pm2 reload hrms-skora || pm2 restart hrms-skora || pm2 start ecosystem.config.js
             else
               echo "❌ Error: Project directory $PROJECT_DIR does not exist!"
               exit 1
