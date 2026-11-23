@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata = {
@@ -12,7 +11,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         {children}
-        <Analytics />
       </body>
     </html>
   );

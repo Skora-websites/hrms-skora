@@ -2,9 +2,9 @@
 // Skora HRMS — Service Worker (PWA)
 // ══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = "skora-hrms-v2";
-const STATIC_CACHE = "skora-hrms-static-v2";
-const DYNAMIC_CACHE = "skora-hrms-dynamic-v2";
+const CACHE_NAME = "skora-hrms-v3";
+const STATIC_CACHE = "skora-hrms-static-v3";
+const DYNAMIC_CACHE = "skora-hrms-dynamic-v3";
 
 // Assets to pre-cache (app shell)
 const PRE_CACHE_URLS = [
@@ -46,17 +46,22 @@ self.addEventListener("activate", (event) => {
 // ── Fetch Event — Network-first with cache fallback ────────
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
+  const url = new URL(request.url);
+
+  // Skip chrome-extension, moz-extension, or any non-http(s) schemes
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
   // Never intercept in local development
   if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return;
 
-  // Never intercept Next.js chunks, build artifacts, or dev HMR
+  // Never intercept Next.js chunks, build artifacts, dev HMR, or Vercel analytics
   if (url.pathname.startsWith("/_next/")) return;
   if (url.pathname.startsWith("/__nextjs")) return;
+  if (url.pathname.startsWith("/_vercel")) return;
 
   // Skip API calls (always go to network)
   if (url.pathname.startsWith("/api/")) return;
@@ -65,40 +70,46 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/admin")) return;
 
   // Strategy: Network-first for HTML pages, stale-while-revalidate for assets.
-if (request.headers.get("accept")?.includes("text/html")) {
+  if (request.headers.get("accept")?.includes("text/html")) {
     // HTML pages — network first, fallback to cache
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(request, responseClone).catch(() => {});
+            });
+          }
           return response;
         })
-        .catch(() => {
-          return caches.match(request).then((cached) => {
-            return cached || caches.match("/hrms/login");
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const loginFallback = await caches.match("/hrms/login");
+          if (loginFallback) return loginFallback;
+          return new Response("Offline. Please reconnect to the network.", {
+            status: 503,
+            statusText: "Service Unavailable",
+            headers: new Headers({ "Content-Type": "text/plain" }),
           });
         })
     );
   } else {
-    // Static assets — stale-while-revalidate: serve the cached copy
-    // immediately, but always refresh the cache in the background so the
-    // NEXT load gets the fresh asset. (Plain cache-first left users on
-    // stale JS chunks forever after a deploy.)
+    // Static assets — stale-while-revalidate
     event.respondWith(
       caches.open(DYNAMIC_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
-        const networkFetch = fetch(request)
-          .then((response) => {
-            if (response.status === 200) {
-              cache.put(request, response.clone());
-            }
-            return response;
-          })
-          .catch(() => cached);
-        return cached || networkFetch;
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(request, networkResponse.clone()).catch(() => {});
+          }
+          return networkResponse;
+        } catch {
+          if (cached) return cached;
+          return new Response("", { status: 404, statusText: "Not Found" });
+        }
       })
     );
   }
@@ -147,7 +158,7 @@ self.addEventListener("notificationclick", (event) => {
           return client.focus();
         }
       }
-      // Otherwise open new window
+      // Open new window if not open
       if (clients.openWindow) {
         return clients.openWindow(url);
       }
