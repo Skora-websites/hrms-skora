@@ -4,11 +4,29 @@ import crypto from "crypto";
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
-const MYSQL_HOST = process.env.MYSQL_HOST || "localhost";
-const MYSQL_PORT = Number(process.env.MYSQL_PORT || 3306);
-const MYSQL_USER = process.env.MYSQL_USER || "root";
-const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD ?? "";
-const MYSQL_DATABASE = process.env.MYSQL_DATABASE || "hrms";
+function parseDbUrl(url: string | undefined) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return {
+      host: parsed.hostname || "localhost",
+      port: Number(parsed.port) || 3306,
+      user: decodeURIComponent(parsed.username || "root"),
+      password: decodeURIComponent(parsed.password || ""),
+      database: parsed.pathname.replace(/^\//, "") || "hrms",
+    };
+  } catch {
+    return null;
+  }
+}
+
+const parsedFromUrl = parseDbUrl(process.env.DATABASE_URL || process.env.MYSQL_URL);
+
+const MYSQL_HOST = parsedFromUrl?.host || process.env.MYSQL_HOST || "localhost";
+const MYSQL_PORT = parsedFromUrl?.port || Number(process.env.MYSQL_PORT || 3306);
+const MYSQL_USER = parsedFromUrl?.user || process.env.MYSQL_USER || "root";
+const MYSQL_PASSWORD = parsedFromUrl ? parsedFromUrl.password : (process.env.MYSQL_PASSWORD ?? "");
+const MYSQL_DATABASE = parsedFromUrl?.database || process.env.MYSQL_DATABASE || "hrms";
 
 const globalForMySQL = globalThis as unknown as { mysqlPool: Pool | null };
 let globalPool: Pool | null = globalForMySQL.mysqlPool || null;
