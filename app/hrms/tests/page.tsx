@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileQuestion,
@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/components/providers/auth-provider";
-import { useToast } from "@/hooks/use-toast";
+import { toast, useToast } from "@/hooks/use-toast";
 import { Toast, ToastPortal } from "@/components/ui/toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { TestPreviewDialog } from "@/components/tests/test-preview-dialog";
@@ -140,6 +140,8 @@ export default function AssessmentPortalPage() {
     return () => clearInterval(interval);
   }, [showCreateTestModal, showCreateQuestionModal, previewTest, candidateProgressTest, finalizeAttemptId]);
 
+  const metadataFetchedRef = useRef(false);
+
   // Fetch all assessment data
   const fetchData = useCallback(async () => {
     try {
@@ -166,10 +168,12 @@ export default function AssessmentPortalPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
-  // Fetch users and departments for authoring targeting
+  // Fetch users and departments for authoring targeting (only once)
   const fetchMetadata = useCallback(async () => {
+    if (metadataFetchedRef.current) return;
+    metadataFetchedRef.current = true;
     try {
       const [usersRes, deptsRes] = await Promise.all([
         fetch("/api/hrm/v2/tests/users"),
