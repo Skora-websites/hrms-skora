@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
@@ -10,15 +10,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
-  Maximize2,
   ShieldAlert,
   Loader2,
   Bookmark,
   Check,
   ArrowLeft,
   Eye,
-  Info,
-  HelpCircle,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

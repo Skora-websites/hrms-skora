@@ -1,5 +1,6 @@
 import "server-only";
-export { calculateSandwichLeave } from "./sandwich";
+import { calculateSandwichLeave } from "./sandwich";
+export { calculateSandwichLeave };
 export type { SandwichLeaveCalculationParams, SandwichLeaveResult, DayLeaveDetail } from "./sandwich";
 import {
   leavePlansService,
@@ -197,12 +198,18 @@ export async function applyLeave(
     attachmentURL?: string;
   }
 ): Promise<LeaveRequest> {
-  const diffTime = data.toDate.getTime() - data.fromDate.getTime();
-  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
   // Check balance
   const leaveType = await leaveTypesService.findById(data.leaveTypeId);
   if (!leaveType) throw new Error("Leave type not found");
+
+  // Calculate actual deduction days with sandwich rule evaluation
+  const isSandwichConfigured = Boolean((leaveType as any)?.sandwichRule ?? true);
+  const sandwichResult = calculateSandwichLeave({
+    startDate: data.fromDate,
+    endDate: data.toDate,
+    sandwichRuleEnabled: isSandwichConfigured,
+  });
+  const totalDays = sandwichResult.totalDeductionDays;
 
   const currentYear = data.fromDate.getFullYear();
   const balance = await getLeaveBalance(tenantId, data.userId, data.leaveTypeId, currentYear);
@@ -238,6 +245,8 @@ export async function applyLeave(
   const request = await leaveRequestsService.create({
     ...data,
     totalDays,
+    sandwichedOffDays: sandwichResult.sandwichedOffDays,
+    sandwichedHolidays: sandwichResult.sandwichedHolidays,
     status: "pending",
     tenantId,
   } as any);

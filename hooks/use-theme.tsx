@@ -15,6 +15,7 @@ export interface ThemeColorPalette {
 }
 
 export const THEME_COLORS: Record<string, ThemeColorPalette> = {
+  "#2563eb": { primary: "#2563eb", primaryDark: "#1d4ed8", primaryLight: "#eff6ff", ring: "rgba(37,99,235,0.3)" },
   "#5e72e4": { primary: "#5e72e4", primaryDark: "#825ee4", primaryLight: "#f0f1fe", ring: "rgba(94,114,228,0.3)" },
   "#344767": { primary: "#344767", primaryDark: "#212529", primaryLight: "#f0f1f4", ring: "rgba(52,71,103,0.3)" },
   "#11cdef": { primary: "#11cdef", primaryDark: "#1171ef", primaryLight: "#e8faff", ring: "rgba(17,205,239,0.3)" },
@@ -31,7 +32,7 @@ export const THEME_COLORS: Record<string, ThemeColorPalette> = {
 function syncPrimaryColorToDOM(color: string) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  const palette = THEME_COLORS[color] || THEME_COLORS["#5e72e4"];
+  const palette = THEME_COLORS[color] || THEME_COLORS["#2563eb"];
 
   // Set the main primary colour — this overrides the :root value
   // from @theme, making all `text-primary` / `bg-primary` / etc. dynamic.
@@ -71,7 +72,7 @@ const defaultConfig: ThemeConfig = {
   isSidebarMini: false,
   sidebarMini: false,
   navbarFixed: true,
-  primaryColor: "#5e72e4",
+  primaryColor: "#2563eb",
   sidebarType: "bg-white",
 };
 

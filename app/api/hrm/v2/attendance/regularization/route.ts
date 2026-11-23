@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
-import { withErrorHandler, badRequest } from "@/lib/api-handler";
-import { getRegularizationRequests, createRegularizationRequest } from "@/services/hrm/attendance";
+import { withErrorHandler, badRequest, forbidden, notFound } from "@/lib/api-handler";
+import { getRegularizationRequests, createRegularizationRequest, reviewRegularizationRequest } from "@/services/hrm/attendance";
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const auth = await requireAuth();
@@ -46,3 +46,47 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   } as any);
   return NextResponse.json({ data: row }, { status: 201 });
 }, { label: "Regularization Create" });
+
+async function handleReview(request: NextRequest) {
+  const auth = await requireAuth();
+  if (isErrorResponse(auth)) return auth;
+
+  if (auth.role === "employee") {
+    return forbidden("Only managers and HR administrators can review regularization requests");
+  }
+
+  const body = await request.json().catch(() => null);
+  if (!body) return badRequest("Request body must be valid JSON");
+
+  const id = body.id || body.requestId;
+  if (!id) return badRequest("Regularization ID is required");
+
+  const rawStatus = (body.status || body.action || "").toLowerCase();
+  const decision: "approved" | "rejected" =
+    rawStatus === "approved" || rawStatus === "approve"
+      ? "approved"
+      : rawStatus === "rejected" || rawStatus === "reject"
+      ? "rejected"
+      : ("" as any);
+
+  if (!decision) {
+    return badRequest("Valid status ('approved' or 'rejected') is required");
+  }
+
+  const notes = body.notes || body.reason || body.rejectionReason || (decision === "approved" ? "Approved by manager" : "Rejected");
+  const updated = await reviewRegularizationRequest(id, decision, auth.userId, notes);
+
+  if (!updated) {
+    return notFound("Regularization request not found");
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: updated,
+    message: `Regularization request ${decision} successfully`,
+  });
+}
+
+export const PUT = withErrorHandler(handleReview, { label: "Regularization Review PUT" });
+export const PATCH = withErrorHandler(handleReview, { label: "Regularization Review PATCH" });
+

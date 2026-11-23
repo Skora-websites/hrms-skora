@@ -8,7 +8,17 @@ import {
   payslipTemplatesService,
   employeeSalariesService,
   employeeSalaryHistoryService,
+  attendanceService,
+  salaryAdvancesService,
 } from "@/lib/hrm/firestore";
+import {
+  getStatutoryConfig,
+  calculateEarnedSalary,
+  calculatePF,
+  calculateESI,
+  calculatePT,
+  calculateNewRegimeTax,
+} from "@/services/hrm/payroll/statutory";
 import type {
   PayGroup,
   PayGroupComponent,
@@ -239,12 +249,18 @@ export async function processPayroll(
   let totalDeductions = 0;
   let totalNetPay = 0;
 
+  // Fetch statutory compliance config for tenant
+  const statutoryConfig = await getStatutoryConfig(tenantId);
+  const startStr = periodStart.toISOString().slice(0, 10);
+  const endStr = periodEnd.toISOString().slice(0, 10);
+  const totalDaysInPeriod = Math.max(1, Math.round((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
   // 4. Process each employee
   for (const emp of employees) {
     const salaryDoc = await employeeSalariesService.findOne("userId", emp.id);
 
-    let grossPay = 0;
-    let totalDeduct = 0;
+    let masterGross = 0;
+    let masterBasic = 0;
     let earnings: Record<string, number> = {};
     let deductions: Record<string, number> = {};
 
@@ -252,37 +268,112 @@ export async function processPayroll(
       for (const comp of salaryDoc.components) {
         if (comp.type === "earning") {
           earnings[comp.name] = comp.amount;
-          grossPay += comp.amount;
-        } else {
-          deductions[comp.name] = comp.amount;
-          totalDeduct += comp.amount;
+          masterGross += comp.amount;
+          if (comp.name.toLowerCase().includes("basic") || !masterBasic) {
+            masterBasic += comp.amount;
+          }
         }
       }
+      if (!masterBasic) masterBasic = Math.round(masterGross * 0.5);
     } else {
       // Standard baseline package based on designation / role
       const e = emp as any;
       const isManager = (e.role || "").includes("manager") || (e.role || "").includes("admin");
-      const basePay = isManager ? 85000 : 55000;
-      const hra = Math.round(basePay * 0.4);
+      masterBasic = isManager ? 85000 : 55000;
+      const hra = Math.round(masterBasic * 0.4);
       const specialAllowance = isManager ? 25000 : 15000;
-      const pf = Math.round(basePay * 0.12);
-      const tax = isManager ? 7500 : 3500;
 
       earnings = {
-        "Basic Salary": basePay,
+        "Basic Salary": masterBasic,
         "House Rent Allowance (HRA)": hra,
         "Special Allowance": specialAllowance,
       };
-      deductions = {
-        "Provident Fund (PF)": pf,
-        "Professional Tax": 200,
-        "Income Tax (TDS)": tax,
-      };
-      grossPay = basePay + hra + specialAllowance;
-      totalDeduct = pf + 200 + tax;
+      masterGross = masterBasic + hra + specialAllowance;
     }
 
-    const netPay = grossPay - totalDeduct;
+    // Attendance & Loss of Pay (LOP) Proration
+    let lopDays = 0;
+    try {
+      const attendanceRecords = await attendanceService.findManyInTenant(tenantId, {
+        where: [{ field: "userId", op: "==", value: emp.id }],
+      });
+      const periodAttendance = attendanceRecords.filter((a) => {
+        const d = (a as any).date;
+        return d && typeof d === "string" && d >= startStr && d <= endStr;
+      });
+      lopDays = periodAttendance.filter((a) => (a as any).status === "absent").length;
+    } catch {
+      lopDays = 0;
+    }
+
+    const earned = calculateEarnedSalary({
+      masterBasic,
+      masterGross,
+      totalDaysInMonth: totalDaysInPeriod,
+      lopDays,
+    });
+    const proration = earned.prorationFactor;
+
+    // Prorate earnings based on actual attendance
+    const earnedEarnings: Record<string, number> = {};
+    for (const [name, amt] of Object.entries(earnings)) {
+      if (name.toLowerCase().includes("basic")) {
+        earnedEarnings[name] = earned.earnedBasic;
+      } else {
+        earnedEarnings[name] = Math.round(amt * proration);
+      }
+    }
+    const grossPay = Object.values(earnedEarnings).reduce((s, a) => s + a, 0);
+
+    // Statutory Calculations
+    const pfResult = calculatePF(earned.earnedBasic, statutoryConfig);
+    const esiResult = calculateESI(grossPay, statutoryConfig);
+    const pt = calculatePT(grossPay, (emp as any).state || "Karnataka");
+    const taxMonthly = Math.round(calculateNewRegimeTax(grossPay * 12).annualTax / 12);
+
+    if (pfResult.employeePF > 0) {
+      deductions["Provident Fund (PF)"] = pfResult.employeePF;
+    }
+    if (esiResult.isEligible && esiResult.employeeESI > 0) {
+      deductions["Employee State Insurance (ESIC)"] = esiResult.employeeESI;
+    }
+    if (pt > 0) {
+      deductions["Professional Tax"] = pt;
+    }
+    if (taxMonthly > 0) {
+      deductions["Income Tax (TDS)"] = taxMonthly;
+    }
+
+    // Salary Advance Recoveries
+    try {
+      const advances = await salaryAdvancesService.findManyInTenant(tenantId, {
+        where: [{ field: "userId", op: "==", value: emp.id }],
+      });
+      let advanceRecovery = 0;
+      for (const adv of advances) {
+        if ((adv.status === "approved" || adv.status === "disbursed") && !(adv as any).recovered) {
+          const advAmt = Number(adv.requestedAmount || (adv as any).amount || 0);
+          if (advAmt > 0) {
+            advanceRecovery += advAmt;
+            await salaryAdvancesService.update(adv.id, {
+              status: "deducted",
+              recovered: true,
+              deductedPayrollMonth: periodStart.toISOString().slice(0, 7),
+              recoveredInPayrollRunId: payrollRun.id,
+              recoveredAt: new Date(),
+            } as any);
+          }
+        }
+      }
+      if (advanceRecovery > 0) {
+        deductions["Salary Advance Deduction"] = advanceRecovery;
+      }
+    } catch {
+      // Fall through if advances service unavailable
+    }
+
+    const totalDeduct = Object.values(deductions).reduce((s, a) => s + a, 0);
+    const netPay = Math.max(0, grossPay - totalDeduct);
     totalGrossPay += grossPay;
     totalDeductions += totalDeduct;
     totalNetPay += netPay;
@@ -301,7 +392,7 @@ export async function processPayroll(
       grossPay,
       totalDeductions: totalDeduct,
       netPay,
-      earnings,
+      earnings: earnedEarnings,
       deductions,
       status: "completed",
       tenantId,

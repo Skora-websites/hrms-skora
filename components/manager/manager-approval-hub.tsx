@@ -84,7 +84,7 @@ export function ManagerApprovalHub({ approvals, onRefresh }: ApprovalHubProps) {
         await fetch("/api/hrm/v2/attendance/overtime", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: item.id, status: "credited" }),
+          body: JSON.stringify({ id: item.id, action: "approve", status: "credited" }),
         });
       } else if (item.category === "expense") {
         await fetch("/api/hrm/v2/expenses", {
@@ -129,7 +129,7 @@ export function ManagerApprovalHub({ approvals, onRefresh }: ApprovalHubProps) {
         await fetch("/api/hrm/v2/attendance/overtime", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: item.id, status: "rejected" }),
+          body: JSON.stringify({ id: item.id, action: "reject", rejectionReason: "Manager rejected request" }),
         });
       } else if (item.category === "expense") {
         await fetch("/api/hrm/v2/expenses", {

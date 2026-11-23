@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export type ToastVariant = "success" | "error" | "warning" | "info";
 
@@ -12,65 +12,92 @@ export interface ToastItem {
 }
 
 let toastIdCounter = 0;
+let memoryToasts: ToastItem[] = [];
+const listeners: Set<(toasts: ToastItem[]) => void> = new Set();
+const activeTimers: Map<string, NodeJS.Timeout> = new Map();
+
+function broadcast() {
+  listeners.forEach((listener) => listener([...memoryToasts]));
+}
+
+export function toast(variant: ToastVariant, message: string, description?: string, duration = 4000) {
+  const id = `toast-${++toastIdCounter}`;
+  const item: ToastItem = { id, variant, message, description };
+  memoryToasts.push(item);
+  broadcast();
+
+  const timer = setTimeout(() => {
+    memoryToasts = memoryToasts.filter((t) => t.id !== id);
+    activeTimers.delete(id);
+    broadcast();
+  }, duration);
+  activeTimers.set(id, timer);
+
+  return id;
+}
+
+toast.success = (message: string, description?: string) => toast("success", message, description);
+toast.error = (message: string, description?: string) => toast("error", message, description);
+toast.warning = (message: string, description?: string) => toast("warning", message, description);
+toast.info = (message: string, description?: string) => toast("info", message, description);
 
 export function useToast() {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const timersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const [toasts, setToasts] = useState<ToastItem[]>(memoryToasts);
+
+  useEffect(() => {
+    listeners.add(setToasts);
+    return () => {
+      listeners.delete(setToasts);
+    };
+  }, []);
 
   const addToast = useCallback(
     (variant: ToastVariant, message: string, description?: string, duration = 4000) => {
-      const id = `toast-${++toastIdCounter}`;
-      const toast: ToastItem = { id, variant, message, description };
-      setToasts((prev) => [...prev, toast]);
-
-      const timer = setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-        timersRef.current.delete(id);
-      }, duration);
-      timersRef.current.set(id, timer);
-
-      return id;
+      return toast(variant, message, description, duration);
     },
     []
   );
 
   const success = useCallback(
-    (message: string, description?: string) => addToast("success", message, description),
-    [addToast]
+    (message: string, description?: string) => toast("success", message, description),
+    []
   );
 
   const error = useCallback(
-    (message: string, description?: string) => addToast("error", message, description),
-    [addToast]
+    (message: string, description?: string) => toast("error", message, description),
+    []
   );
 
   const warning = useCallback(
-    (message: string, description?: string) => addToast("warning", message, description),
-    [addToast]
+    (message: string, description?: string) => toast("warning", message, description),
+    []
   );
 
   const info = useCallback(
-    (message: string, description?: string) => addToast("info", message, description),
-    [addToast]
+    (message: string, description?: string) => toast("info", message, description),
+    []
   );
 
   const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-    const timer = timersRef.current.get(id);
+    const timer = activeTimers.get(id);
     if (timer) {
       clearTimeout(timer);
-      timersRef.current.delete(id);
+      activeTimers.delete(id);
     }
+    memoryToasts = memoryToasts.filter((t) => t.id !== id);
+    broadcast();
   }, []);
 
   const clearAll = useCallback(() => {
-    timersRef.current.forEach((timer) => clearTimeout(timer));
-    timersRef.current.clear();
-    setToasts([]);
+    activeTimers.forEach((t) => clearTimeout(t));
+    activeTimers.clear();
+    memoryToasts = [];
+    broadcast();
   }, []);
 
   return {
     toasts,
+    addToast,
     success,
     error,
     warning,

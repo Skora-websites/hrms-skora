@@ -1,5 +1,6 @@
 import "server-only";
 import bcrypt from "bcryptjs";
+import { getDb } from "@/lib/db/mysql";
 import {
   hrmUsersService,
   employeeJobsService,
@@ -86,6 +87,11 @@ const EMPLOYEE_SEARCH_FIELDS = [
   "departmentName", "designationName", "phone",
 ];
 
+/** Escape regex metacharacters for safe SQL regex queries */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function getEmployeesPaginated(
   tenantId: string,
   options: GetEmployeesOptions = {}
@@ -98,50 +104,73 @@ export async function getEmployeesPaginated(
     sortDir = "asc",
   } = options;
 
-  // Fetch all employees for the tenant, excluding Super Admin / CEO
-  const allUsers = await hrmUsersService.findManyInTenant(tenantId);
-  const all = allUsers.filter((u: any) => {
-    const r = (u.role || "").toLowerCase();
-    return r !== "super_admin" && r !== "superadmin" && r !== "ceo";
-  });
-
-  // ── Search filter (case-insensitive substring match) ──
-  let filtered = all;
-  if (search.trim()) {
-    const q = search.toLowerCase().trim();
-    filtered = all.filter((emp) =>
-      EMPLOYEE_SEARCH_FIELDS.some((field) => {
-        const val = (emp as any)[field];
-        return val != null && String(val).toLowerCase().includes(q);
-      })
-    );
+  const db = await getDb();
+  if (!db) {
+    return { data: [], totalItems: 0, page: 0, pageSize, totalPages: 1 };
   }
 
-  // ── Status filter ──
+  const usersCollection = db.collection("users");
+
+  // Base filter: scope to tenantId and exclude Super Admin / CEO accounts
+  const andConditions: any[] = [
+    { tenantId },
+    { role: { $nin: ["super_admin", "superadmin", "ceo"] } },
+  ];
+
+  // Status filter
   if (options.status) {
-    filtered = filtered.filter((emp) => emp.status === options.status);
+    andConditions.push({ status: options.status });
   }
 
-  // ── Sort — only allow known fields to prevent injection ──
-  const safeSortKey = EMPLOYEE_SORT_FIELDS.has(sortKey) ? sortKey : "displayName";
-  const dir = sortDir === "desc" ? -1 : 1;
+  // Search filter across relevant fields using SQL regex
+  const trimmedSearch = search.trim();
+  if (trimmedSearch) {
+    const escaped = escapeRegex(trimmedSearch);
+    andConditions.push({
+      $or: [
+        { displayName: { $regex: escaped } },
+        { name: { $regex: escaped } },
+        { email: { $regex: escaped } },
+        { employeeCode: { $regex: escaped } },
+        { departmentName: { $regex: escaped } },
+        { department: { $regex: escaped } },
+        { designationName: { $regex: escaped } },
+        { designation: { $regex: escaped } },
+        { firstName: { $regex: escaped } },
+        { lastName: { $regex: escaped } },
+        { phone: { $regex: escaped } },
+      ],
+    });
+  }
 
-  filtered.sort((a: any, b: any) => {
-    const va = a[safeSortKey];
-    const vb = b[safeSortKey];
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (typeof va === "string") return va.localeCompare(vb) * dir;
-    if (va instanceof Date && vb instanceof Date) return (va.getTime() - vb.getTime()) * dir;
-    return (va < vb ? -1 : va > vb ? 1 : 0) * dir;
-  });
+  const filter = andConditions.length === 1 ? andConditions[0] : { $and: andConditions };
 
-  // ── Paginate ──
-  const totalItems = filtered.length;
+  // ── Database COUNT query (native SELECT COUNT(*) ... at SQL level) ──
+  const totalItems = await usersCollection.countDocuments(filter);
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const safePage = Math.min(page, totalPages - 1);
-  const data = filtered.slice(safePage * pageSize, (safePage + 1) * pageSize).map((u) => sanitizeEmployee(u));
+  const safePage = Math.max(0, Math.min(page, totalPages - 1));
+
+  // ── Database Sort & Pagination (native LIMIT ? OFFSET ? at SQL level) ──
+  const safeSortKey = EMPLOYEE_SORT_FIELDS.has(sortKey) ? sortKey : "displayName";
+  const dir: 1 | -1 = sortDir === "desc" ? -1 : 1;
+
+  const rawUsers = await usersCollection
+    .find(filter)
+    .sort({ [safeSortKey]: dir })
+    .skip(safePage * pageSize)
+    .limit(pageSize)
+    .toArray();
+
+  const data = rawUsers.map((u: any) =>
+    sanitizeEmployee({
+      ...u,
+      id: u.id || u._id || "",
+      name: u.displayName || u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
+      displayName: u.displayName || u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email,
+      department: u.department || u.departmentName || "General",
+      designation: u.designation || u.designationName || "Staff",
+    })
+  );
 
   return { data, totalItems, page: safePage, pageSize, totalPages };
 }

@@ -1,0 +1,67 @@
+name: SKORA HRMS aaPanel Production CI/CD
+
+# Trigger deployment automatically on push to main or via manual dispatch
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: aapanel-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  # =========================================================================
+  # STAGE 1: Code Verification & Type Safety Gate
+  # =========================================================================
+  verify:
+    name: Code Verification & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Verify TypeScript Compilation
+        run: npx tsc --noEmit
+
+  # =========================================================================
+  # STAGE 2: Automated Production Deployment to aaPanel (Optional SSH Bridge)
+  # =========================================================================
+  deploy:
+    name: Deploy to aaPanel Production
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main' && vars.SERVER_HOST != ''
+
+    steps:
+      - name: Deploy to aaPanel Server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "🚀 Starting SKORA HRMS aaPanel Deployment..."
+            PROJECT_DIR="/www/wwwroot/hrms-skora"
+            if [ -d "$PROJECT_DIR" ]; then
+              cd "$PROJECT_DIR"
+              bash scripts/deploy-aapanel.sh
+            else
+              echo "❌ Error: Project directory $PROJECT_DIR does not exist!"
+              exit 1
+            fi

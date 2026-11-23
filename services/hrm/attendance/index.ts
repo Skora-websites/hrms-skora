@@ -316,12 +316,81 @@ export async function reviewRegularizationRequest(
   reviewerId: string,
   notes?: string
 ): Promise<RegularizationRequest | null> {
-  return regularizationRequestsService.update(id, {
+  const existing = await regularizationRequestsService.findById(id);
+  if (!existing) return null;
+
+  const updated = await regularizationRequestsService.update(id, {
     status,
     reviewedById: reviewerId,
     reviewedAt: new Date(),
     reviewerNotes: notes,
   } as any);
+
+  // Synchronize attendance record on approval
+  const rawDate = (existing as any).date;
+  if (status === "approved" && existing.userId && rawDate) {
+    try {
+      const tenantId = (existing as any).tenantId || "default";
+      const dateStr = typeof rawDate === "string"
+        ? rawDate.slice(0, 10)
+        : (rawDate instanceof Date ? rawDate.toISOString().slice(0, 10) : String(rawDate).slice(0, 10));
+
+      let att = existing.attendanceId ? await attendanceService.findById(existing.attendanceId) : null;
+      if (!att) {
+        const records = await attendanceService.findManyInTenant(tenantId, {
+          where: [
+            { field: "userId", op: "==", value: existing.userId },
+            { field: "date", op: "==", value: dateStr },
+          ],
+        });
+        att = records[0] || null;
+      }
+
+      const checkInDate = existing.requestedCheckIn
+        ? new Date(`${dateStr}T${existing.requestedCheckIn}`)
+        : new Date(`${dateStr}T09:30:00.000Z`);
+      const checkOutDate = existing.requestedCheckOut
+        ? new Date(`${dateStr}T${existing.requestedCheckOut}`)
+        : new Date(`${dateStr}T18:30:00.000Z`);
+      const diffHours = Math.max(8, Math.round(((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60)) * 10) / 10);
+
+      if (att && att.id) {
+        await attendanceService.update(att.id, {
+          status: "present",
+          isLate: false,
+          isEarlyDeparture: false,
+          requiresRegularization: false,
+          checkIn: checkInDate,
+          checkOut: checkOutDate,
+          totalHours: diffHours,
+          effectiveWorkMinutes: Math.round(diffHours * 60),
+          source: "regularization",
+          notes: `Regularized: ${notes || "Approved by manager"}`,
+        } as any);
+      } else {
+        await attendanceService.create({
+          tenantId,
+          userId: existing.userId,
+          date: dateStr,
+          workdayType: "regular",
+          status: "present",
+          checkIn: checkInDate,
+          checkOut: checkOutDate,
+          totalHours: diffHours,
+          effectiveWorkMinutes: Math.round(diffHours * 60),
+          isLate: false,
+          isEarlyDeparture: false,
+          requiresRegularization: false,
+          source: "regularization",
+          notes: `Regularized: ${notes || "Approved by manager"}`,
+        } as any);
+      }
+    } catch (err) {
+      console.error("[Regularization] Failed to sync attendance row:", err);
+    }
+  }
+
+  return updated;
 }
 
 // ── Dashboard ──────────────────────────────────────────

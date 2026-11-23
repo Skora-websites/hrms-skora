@@ -96,6 +96,8 @@ Toast.displayName = "Toast";
 
 // ── Portal ──────────────────────────────────────────────
 
+import { useToast } from "@/hooks/use-toast";
+
 interface ToastPortalProps {
   children: React.ReactNode;
 }
@@ -110,6 +112,26 @@ function ToastPortal({ children }: ToastPortalProps) {
   if (!mounted) return null;
 
   return <>{children}</>;
+}
+
+export function Toaster() {
+  const { toasts, dismissToast } = useToast();
+
+  if (!toasts || toasts.length === 0) return null;
+
+  return (
+    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none [&>*]:pointer-events-auto max-w-sm w-full">
+      {toasts.map((t) => (
+        <Toast
+          key={t.id}
+          variant={t.variant}
+          message={t.message}
+          description={t.description}
+          onClose={() => dismissToast(t.id)}
+        />
+      ))}
+    </div>
+  );
 }
 
 export { Toast, ToastPortal, toastVariants };

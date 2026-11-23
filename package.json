@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "cron": "node scripts/cron-runner.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:migrate:status": "node scripts/migrate.js --status",
+    "db:migrate:create": "node scripts/migrate.js --create",
+    "deploy:aapanel": "bash scripts/deploy-aapanel.sh",
     "lint": "eslint",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests"

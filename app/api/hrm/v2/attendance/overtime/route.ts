@@ -117,22 +117,31 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
   const auth = await requireAuth();
   if (isErrorResponse(auth)) return auth;
 
-  if (!isHrRole(auth.role)) {
-    return forbidden("Only HR and Admin can approve or reject overtime claims");
+  if (auth.role === "employee") {
+    return forbidden("Employees cannot approve or reject overtime claims");
   }
 
   const body = await request.json().catch(() => null);
   if (!body) return badRequest("Request body must be valid JSON");
 
-  const { id, action, rejectionReason } = body;
+  const id = body.id;
   if (!id) return badRequest("Overtime ID is required");
+
+  const rawAction = (body.action || body.status || "").toLowerCase();
+  const action =
+    rawAction === "approve" || rawAction === "credited" || rawAction === "approved"
+      ? "approve"
+      : rawAction === "reject" || rawAction === "rejected"
+      ? "reject"
+      : "";
+
   if (!action) return badRequest("Action is required ('approve', 'reject')");
 
   const existing = await getOvertimeRecordById(id);
   if (!existing) return notFound("Overtime record not found");
 
   const approver = await hrmUsersService.findById(auth.userId);
-  const approverName = approver?.displayName || approver?.email || "HR Admin";
+  const approverName = approver?.displayName || approver?.email || (auth.role === "manager" ? "Reporting Manager" : "HR Admin");
 
   if (action === "approve") {
     if (existing.status !== "pending") {
@@ -152,10 +161,8 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     if (existing.status !== "pending") {
       return badRequest(`Cannot reject an overtime record with status '${existing.status}'`);
     }
-    if (!rejectionReason || !rejectionReason.trim()) {
-      return badRequest("Rejection reason is required");
-    }
-    const updated = await rejectOvertime(id, auth.userId, approverName, rejectionReason.trim());
+    const reason = (body.rejectionReason || body.reason || "Rejected by manager").trim();
+    const updated = await rejectOvertime(id, auth.userId, approverName, reason);
     return NextResponse.json({ success: true, data: updated, message: "Overtime claim rejected" });
   }
 

@@ -28,13 +28,7 @@ export function AppShell({ children, title }: AppShellProps) {
         />
 
         <div
-          className={cn(
-            "flex flex-col min-h-screen",
-            isMobile ? "ml-0" : "ml-[var(--sidebar-width,270px)]"
-          )}
-          style={{
-            marginLeft: isMobile ? 0 : "var(--sidebar-width, 270px)",
-          }}
+          className="flex flex-col min-h-screen ml-0 md:ml-[var(--sidebar-width,270px)] transition-[margin-left] duration-200"
         >
           {/* Mobile Top Header */}
           <MobileHeader title={title} />

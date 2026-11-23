@@ -3,10 +3,11 @@ import { Providers } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { MobileStyles } from "@/components/mobile/mobile-layout";
 import { PWAProvider } from "@/components/mobile/pwa-provider";
+import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#6366f1",
+  themeColor: "#2563eb",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -108,6 +109,7 @@ export default function HrmsLayout({
           <MobileStyles />
           <PWAProvider />
           {children}
+          <Toaster />
         </AuthProvider>
       </Providers>
     </div>
