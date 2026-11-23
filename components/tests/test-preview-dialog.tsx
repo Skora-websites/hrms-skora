@@ -68,9 +68,10 @@ export function TestPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {testItem && (
-        <DialogContent size="lg" className="max-h-[90vh] flex flex-col p-6">
-        <DialogHeader className="border-b border-border/80 pb-4">
+      <DialogContent size="lg" className="max-h-[90vh] flex flex-col p-6">
+        {testItem ? (
+          <>
+            <DialogHeader className="border-b border-border/80 pb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Eye className="h-5 w-5" />
@@ -258,8 +259,11 @@ export function TestPreviewDialog({
             </span>
           </Button>
         </div>
+        </>
+        ) : (
+          <div className="p-8 text-center text-xs text-muted-foreground">Loading preview...</div>
+        )}
       </DialogContent>
-      )}
     </Dialog>
   );
 }

@@ -25,9 +25,9 @@ export const NAV_GROUP_ORDER: NavGroup[] = ["overview", "hrm", "operations", "li
 
 /**
  * Groups that should render as expandable/collapsible sub-menus.
- * Users can click the group header to toggle visibility of child items.
+ * Kept empty so all primary navigation items are always visible and accessible.
  */
-export const EXPANDABLE_GROUPS: NavGroup[] = ["hrm"];
+export const EXPANDABLE_GROUPS: NavGroup[] = [];
 
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", href: "/hrms/dashboard", icon: "LayoutDashboard", group: "overview" },

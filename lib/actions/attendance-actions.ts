@@ -1,6 +1,6 @@
 "use server";
 
-import { recordPunchIn, recordPunchOut, recordAUXChange, getAttendanceRecords, userDateQuery, type AUXState } from "@/lib/db/attendance";
+import { recordPunchIn, recordPunchOut, recordAUXChange, getAttendanceRecords, userDateQuery, type AUXState, type AttendanceRecord } from "@/lib/db/attendance";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db/mongo-helper";
 import { requireAuth } from "@/lib/api-auth";
@@ -178,7 +178,11 @@ export async function updateAUXStateAction(userId: string, dateStr: string, newS
   }
 }
 
-export async function fetchAttendanceRecordsAction(filter?: { userId?: string; date?: string }) {
+export async function fetchAttendanceRecordsAction(filter?: {
+  userId?: string;
+  date?: string;
+  department?: string;
+}) {
   try {
     const auth = await requireAuth();
     if (auth instanceof Response) return { success: false, records: [], error: "Unauthorized" };
@@ -186,12 +190,142 @@ export async function fetchAttendanceRecordsAction(filter?: { userId?: string; d
     if (auth.role === "employee" && requestedUserId && requestedUserId !== auth.userId) {
       return { success: false, records: [], error: "Forbidden" };
     }
-    const records = await getAttendanceRecords({
+
+    const db = await getDb();
+    if (!db) {
+      return { success: false, records: [], error: "Database not available" };
+    }
+
+    // 1. Fetch user department lookup map for enrichment
+    const allUsers = await db.collection("users").find({
+      status: { $nin: ["inactive", "disabled"] },
+    }).toArray();
+
+    const userDeptMap = new Map<string, string>();
+    for (const u of allUsers) {
+      const dept = String(u.departmentName || u.department || "").trim();
+      if (dept) {
+        if (u.id) userDeptMap.set(String(u.id), dept);
+        if (u._id) userDeptMap.set(String(u._id), dept);
+        if (u.legacyId) userDeptMap.set(String(u.legacyId), dept);
+        if (u.email) userDeptMap.set(String(u.email).toLowerCase(), dept);
+      }
+    }
+
+    // 2. Role-based scoping:
+    let allowedUserIds: Set<string> | null = null;
+    let allowedEmails: Set<string> | null = null;
+    let managerDept: string | null = null;
+
+    if (auth.role === "employee") {
+      allowedUserIds = new Set([String(auth.userId)]);
+    } else if (auth.role === "manager") {
+      // Find manager in users collection
+      const managerUser = allUsers.find(
+        (u) =>
+          String(u.id) === String(auth.userId) ||
+          String(u._id) === String(auth.userId) ||
+          String(u.legacyId) === String(auth.userId)
+      );
+
+      managerDept = managerUser?.departmentName || managerUser?.department || null;
+      const managerName = managerUser?.displayName || managerUser?.name || null;
+      const managerEmail = managerUser?.email ? String(managerUser.email).toLowerCase() : null;
+      const managerId = managerUser?.id ? String(managerUser.id) : String(auth.userId);
+      const managerLegacyId = managerUser?.legacyId ? String(managerUser.legacyId) : null;
+
+      // Filter team users
+      const teamUsers = allUsers.filter((u) => {
+        // Always include manager themselves
+        if (
+          String(u.id) === managerId ||
+          String(u._id) === String(auth.userId) ||
+          (managerLegacyId && String(u.legacyId) === managerLegacyId)
+        ) {
+          return true;
+        }
+
+        // Match department
+        const uDept = String(u.departmentName || u.department || "").toLowerCase();
+        if (managerDept && uDept === managerDept.toLowerCase()) {
+          return true;
+        }
+
+        // Match reporting manager
+        const rep = String(u.reportingManager || "").toLowerCase();
+        if (managerName && rep === managerName.toLowerCase()) return true;
+        if (managerEmail && rep === managerEmail) return true;
+        if (u.managerEmail && managerEmail && String(u.managerEmail).toLowerCase() === managerEmail) return true;
+        if (
+          u.managerId &&
+          (String(u.managerId) === managerId || (managerLegacyId && String(u.managerId) === managerLegacyId))
+        ) {
+          return true;
+        }
+
+        return false;
+      });
+
+      allowedUserIds = new Set();
+      allowedEmails = new Set();
+      for (const u of teamUsers) {
+        if (u.id) allowedUserIds.add(String(u.id));
+        if (u._id) allowedUserIds.add(String(u._id));
+        if (u.legacyId) allowedUserIds.add(String(u.legacyId));
+        if (u.email) allowedEmails.add(String(u.email).toLowerCase());
+      }
+
+      if (requestedUserId && !allowedUserIds.has(String(requestedUserId))) {
+        return { success: false, records: [], error: "Forbidden" };
+      }
+    }
+
+    const rawRecords = await getAttendanceRecords({
       userId: auth.role === "employee" ? auth.userId : requestedUserId,
       date: filter?.date,
       tenantId: auth.tenantId,
     });
-    return { success: true, records };
+
+    // 3. Enrich each record with department
+    let records: AttendanceRecord[] = rawRecords.map((r) => {
+      const dept =
+        r.department ||
+        userDeptMap.get(String(r.userId)) ||
+        (r.userEmail ? userDeptMap.get(r.userEmail.toLowerCase()) : undefined) ||
+        "";
+      return {
+        ...r,
+        department: dept,
+      };
+    });
+
+    // 4. Filter by manager team if manager
+    if (auth.role === "manager") {
+      const targetDept = (managerDept || "Development").toLowerCase().trim();
+      records = records.filter((r) => {
+        const rDept = String(r.department || "").toLowerCase().trim();
+        // If the record has a department that differs from manager's department, exclude it!
+        if (rDept && rDept !== targetDept) {
+          return false;
+        }
+        // If department matches manager's department, include it
+        if (rDept === targetDept) {
+          return true;
+        }
+        // Fallback: verify against team allowedUserIds and allowedEmails
+        if (allowedUserIds && allowedUserIds.has(String(r.userId))) return true;
+        if (allowedEmails && r.userEmail && allowedEmails.has(r.userEmail.toLowerCase())) return true;
+        return false;
+      });
+    }
+
+    // 5. Filter by department if passed (e.g. from HR Admin / Super Admin filter)
+    if (filter?.department && filter.department !== "All Departments") {
+      const targetDept = filter.department.toLowerCase().trim();
+      records = records.filter((r) => r.department && r.department.toLowerCase().trim() === targetDept);
+    }
+
+    return { success: true, records, managerDepartment: managerDept };
   } catch (error) {
     return { success: false, records: [], error: (error as Error).message };
   }

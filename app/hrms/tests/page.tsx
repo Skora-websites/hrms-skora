@@ -125,11 +125,19 @@ export default function AssessmentPortalPage() {
   const [finalizeAttemptId, setFinalizeAttemptId] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
 
-  // Ensure body pointer events remain unblocked
+  // Ensure body pointer events remain unblocked and never trapped by Radix UI
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.body.style.pointerEvents = "";
-    }
+    const unblockPointerEvents = () => {
+      if (typeof document !== "undefined" && document.body.style.pointerEvents === "none") {
+        const hasOpenModal = document.querySelector('[role="dialog"], [data-state="open"]');
+        if (!hasOpenModal) {
+          document.body.style.pointerEvents = "";
+        }
+      }
+    };
+    unblockPointerEvents();
+    const interval = setInterval(unblockPointerEvents, 250);
+    return () => clearInterval(interval);
   }, [showCreateTestModal, showCreateQuestionModal, previewTest, candidateProgressTest, finalizeAttemptId]);
 
   // Fetch all assessment data
@@ -352,7 +360,7 @@ export default function AssessmentPortalPage() {
           <div className="border-b border-border/80 pb-3">
             <TabsList className="h-auto min-h-10 flex-wrap items-center justify-start gap-1 p-1 bg-muted/60 rounded-xl border border-border/70 text-muted-foreground w-full sm:w-auto">
               {!isStaff && (
-                <TabsTrigger value="my_tests" className="gap-2">
+                <TabsTrigger value="my_tests" className="gap-2 cursor-pointer relative z-10">
                   <span>Available Tests</span>
                   <Badge variant="secondary" size="sm" className="pointer-events-none">
                     {tests.length}
@@ -361,35 +369,37 @@ export default function AssessmentPortalPage() {
               )}
 
               {isStaff && (
-                <>
-                  <TabsTrigger value="manage_tests" className="gap-2">
-                    <span>Manage Tests</span>
-                    <Badge variant="secondary" size="sm" className="pointer-events-none">
-                      {tests.length}
+                <TabsTrigger value="manage_tests" className="gap-2 cursor-pointer relative z-10">
+                  <span>Manage Tests</span>
+                  <Badge variant="secondary" size="sm" className="pointer-events-none">
+                    {tests.length}
+                  </Badge>
+                </TabsTrigger>
+              )}
+              {isStaff && (
+                <TabsTrigger value="question_bank" className="gap-2 cursor-pointer relative z-10">
+                  <span>Question Bank</span>
+                  <Badge variant="secondary" size="sm" className="pointer-events-none">
+                    {questions.length}
+                  </Badge>
+                </TabsTrigger>
+              )}
+              {isStaff && (
+                <TabsTrigger value="evaluations" className="gap-2 cursor-pointer relative z-10">
+                  <span>Review & Grading</span>
+                  {evaluations.length > 0 ? (
+                    <Badge variant="danger" size="sm" className="pointer-events-none">
+                      {evaluations.length}
                     </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="question_bank" className="gap-2">
-                    <span>Question Bank</span>
+                  ) : (
                     <Badge variant="secondary" size="sm" className="pointer-events-none">
-                      {questions.length}
+                      0
                     </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="evaluations" className="gap-2">
-                    <span>Review & Grading</span>
-                    {evaluations.length > 0 ? (
-                      <Badge variant="danger" size="sm" className="pointer-events-none">
-                        {evaluations.length}
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" size="sm" className="pointer-events-none">
-                        0
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                </>
+                  )}
+                </TabsTrigger>
               )}
 
-              <TabsTrigger value="results" className="gap-2">
+              <TabsTrigger value="results" className="gap-2 cursor-pointer relative z-10">
                 <span>{isStaff ? "Team Results" : "My Scorecard"}</span>
                 <Badge variant="secondary" size="sm" className="pointer-events-none">
                   {results.length}

@@ -39,6 +39,7 @@ import { useMutation } from "@/hooks/use-mutation";
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastPortal } from "@/components/ui/toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   calculateEmployeePerformance,
   calculateTeamOverview,
@@ -97,6 +98,10 @@ const EMPTY_GOAL_FORM = {
 // ── Component ───────────────────────────────────────────
 
 export default function PerformancePage() {
+  const { user } = useAuth();
+  const isManager = user?.role === "manager";
+  const managerDept = user?.department || "Development";
+
   const [activeTab, setActiveTab] = useState("employees");
   const [goals, setGoals] = useState<GoalItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -151,27 +156,52 @@ export default function PerformancePage() {
     fetchData();
   }, [fetchData]);
 
+  // Scope user directory based on role: managers see only their department team members
+  const scopedUsers = useMemo(() => {
+    if (!isManager) return users;
+    const targetDept = managerDept.toLowerCase().trim();
+    return users.filter((u) => {
+      const uDept = String(u.department || (u as any).departmentName || "").toLowerCase().trim();
+      if (uDept && uDept === targetDept) return true;
+      const rep = String((u as any).reportingManager || "").toLowerCase().trim();
+      const mName = String(user?.name || "").toLowerCase().trim();
+      const mEmail = String(user?.email || "").toLowerCase().trim();
+      if (mName && rep === mName) return true;
+      if (mEmail && rep === mEmail) return true;
+      if (u.id === user?.id || (u as any)._id === user?.id) return true;
+      return false;
+    });
+  }, [users, isManager, managerDept, user]);
+
   // Lookup map: user ID -> User Name / Display Name
   const userMap = useMemo(() => {
     const map = new Map<string, PerformanceUser>();
-    for (const u of users) {
+    for (const u of scopedUsers) {
       map.set(u.id, u);
     }
     return map;
-  }, [users]);
+  }, [scopedUsers]);
 
   // Employee dropdown options for creating goals
   const userSelectOptions = useMemo(() => {
-    return users.map((u) => ({
+    return scopedUsers.map((u) => ({
       value: u.id,
       label: u.displayName || u.name || u.email || u.id,
     }));
-  }, [users]);
+  }, [scopedUsers]);
+
+  // Scoped goals for managers
+  const scopedGoals = useMemo(() => {
+    if (!isManager) return goals;
+    const allowedIds = new Set(scopedUsers.map((u) => String(u.id)));
+    if (user?.id) allowedIds.add(String(user.id));
+    return goals.filter((g) => g.userId && allowedIds.has(String(g.userId)));
+  }, [goals, isManager, scopedUsers, user?.id]);
 
   // Computed employee performance summaries & team overview
   const employeeSummaries = useMemo(() => {
-    return calculateEmployeePerformance(users, goals, reviews, kpis, feedbacks);
-  }, [users, goals, reviews, kpis, feedbacks]);
+    return calculateEmployeePerformance(scopedUsers, scopedGoals, reviews, kpis, feedbacks);
+  }, [scopedUsers, scopedGoals, reviews, kpis, feedbacks]);
 
   const teamOverview = useMemo(() => {
     return calculateTeamOverview(employeeSummaries);
@@ -350,10 +380,22 @@ export default function PerformancePage() {
       </ToastPortal>
 
       <PageHeader
-        title="Performance Hub"
-        description="Track goals, performance reviews, 360 feedback, and employee KPI scorecards."
+        title={isManager ? "Team Performance Hub" : "Performance Hub"}
+        description={
+          isManager
+            ? `Track goals, reviews, and scorecards for the ${managerDept} team.`
+            : "Track goals, performance reviews, 360 feedback, and employee KPI scorecards."
+        }
       >
         <div className="flex items-center gap-2">
+          {isManager && (
+            <Badge
+              variant="outline"
+              className="border-primary/40 bg-primary/10 text-primary font-semibold text-xs px-2.5 py-1"
+            >
+              {managerDept} Team
+            </Badge>
+          )}
           <Button
             className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             onClick={() => {
@@ -420,16 +462,16 @@ export default function PerformancePage() {
         <TabsList className="grid w-full grid-cols-2 sm:w-auto sm:inline-flex">
           <TabsTrigger value="employees" className="gap-2">
             <Users className="h-4 w-4" />
-            Employee Performance
+            {isManager ? "Team Performance" : "Employee Performance"}
             <span className="ml-1 rounded-full bg-primary/10 text-primary px-2 py-0.2 text-[10px] font-bold">
-              {users.length}
+              {scopedUsers.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="goals" className="gap-2">
             <Target className="h-4 w-4" />
-            All Goals & Milestones
+            {isManager ? "Team Goals" : "All Goals & Milestones"}
             <span className="ml-1 rounded-full bg-muted text-muted-foreground px-2 py-0.2 text-[10px] font-bold">
-              {goals.length}
+              {scopedGoals.length}
             </span>
           </TabsTrigger>
         </TabsList>
@@ -448,7 +490,7 @@ export default function PerformancePage() {
         <TabsContent value="goals" className="focus-visible:outline-none space-y-4">
           <DataTable
             columns={goalColumns}
-            data={goals}
+            data={scopedGoals}
             searchable
             searchPlaceholder="Search goals by title or employee..."
             searchKeys={["title", "userId"]}

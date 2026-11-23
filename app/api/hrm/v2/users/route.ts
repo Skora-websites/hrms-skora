@@ -9,6 +9,7 @@ import { ROLE_HIERARCHY } from "@/lib/rbac";
 import { parseBody, profileUpdateSchema } from "@/lib/validations";
 import { validatePasswordPolicy } from "@/lib/password-policy";
 import { getDb } from "@/lib/db/mongo-helper";
+import { ObjectId } from "@/lib/db/mysql";
 import { maskOnboardingDetails } from "@/lib/pii-masking";
 import crypto from "crypto";
 
@@ -112,6 +113,44 @@ export async function GET(request: NextRequest) {
           if (r === "super_admin" || r === "superadmin" || r === "ceo") return false;
           return true;
         });
+
+        // If caller is a manager, scope the returned users to their department & team
+        if (auth.role === "manager") {
+          const db = await getDb();
+          let managerDept: string | null = null;
+          let managerName: string | null = null;
+          let managerEmail: string | null = null;
+          if (db) {
+            const m = await db.collection("users").findOne({
+              $or: [
+                { _id: new ObjectId(auth.userId) },
+                { legacyId: auth.userId },
+                { id: isNaN(Number(auth.userId)) ? -1 : Number(auth.userId) },
+              ],
+            });
+            if (m) {
+              managerDept = String(m.departmentName || m.department || "").toLowerCase().trim();
+              managerName = String(m.displayName || m.name || "").toLowerCase().trim();
+              managerEmail = String(m.email || "").toLowerCase().trim();
+            }
+          }
+
+          filtered = filtered.filter((u: any) => {
+            const uId = String(u.id || u._id || "");
+            const uLegacyId = String(u.legacyId || "");
+            if (uId === auth.userId || uLegacyId === auth.userId) return true;
+
+            const uDept = String(u.departmentName || u.department || "").toLowerCase().trim();
+            if (managerDept && uDept === managerDept) return true;
+
+            const rep = String(u.reportingManager || "").toLowerCase().trim();
+            if (managerName && rep === managerName) return true;
+            if (managerEmail && rep === managerEmail) return true;
+            if (rep === auth.userId) return true;
+
+            return false;
+          });
+        }
         if (search) {
           const term = search.toLowerCase();
           filtered = filtered.filter(

@@ -107,9 +107,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [navSearch, setNavSearch] = useState("");
 
-  // Track which expandable groups are open/closed
+  // Track which expandable groups are open/closed (all expanded by default)
   const [expandedGroups, setExpandedGroups] = useState<Set<NavGroup>>(
-    () => new Set<NavGroup>(["hrm"])
+    () => new Set<NavGroup>(["overview", "hrm", "operations", "lifecycle", "crm", "system"])
   );
 
   // Load persisted expanded state from localStorage after mount
@@ -118,12 +118,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       const stored = localStorage.getItem("sidebar-expanded-groups");
       if (stored) {
         const parsed: NavGroup[] = JSON.parse(stored);
-        setExpandedGroups(new Set(parsed));
+        setExpandedGroups((prev) => new Set([...prev, ...parsed]));
       }
     } catch {
       // ignore
     }
   }, []);
+
+  // Ensure active route group is always expanded and visible
+  useEffect(() => {
+    if (!pathname) return;
+    for (const item of NAV_ITEMS) {
+      if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+        setExpandedGroups((prev) => new Set([...prev, item.group]));
+      }
+    }
+  }, [pathname]);
 
   const toggleGroup = (group: NavGroup) => {
     setExpandedGroups((prev) => {

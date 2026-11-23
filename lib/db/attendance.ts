@@ -3,7 +3,7 @@ import { getDb } from "./mongo-helper";
 export type AttendanceStatus = "PRESENT" | "LATE" | "HALF_DAY" | "ABSENT";
 export type AUXState = "active" | "on_break" | "meeting";
 export interface AUXEntry { state: AUXState; startTime: string; endTime?: string; }
-export interface AttendanceRecord { _id?: string; tenantId?: string; userId: string; userName: string; userEmail: string; employeeCode?: string; date: string; punchInTime: string; punchOutTime?: string; location?: string; status: AttendanceStatus; workHours?: number; managerId?: string; createdAt?: string; auxState?: AUXState; auxHistory?: AUXEntry[]; totalBreakMinutes?: number; effectiveWorkMinutes?: number; }
+export interface AttendanceRecord { _id?: string; tenantId?: string; userId: string; userName: string; userEmail: string; employeeCode?: string; department?: string; date: string; punchInTime: string; punchOutTime?: string; location?: string; status: AttendanceStatus; workHours?: number; managerId?: string; createdAt?: string; auxState?: AUXState; auxHistory?: AUXEntry[]; totalBreakMinutes?: number; effectiveWorkMinutes?: number; }
 
 /**
  * Date key used to bucket attendance records. Attendance is keyed by the

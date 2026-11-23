@@ -32,17 +32,54 @@ const HR_LEVEL_ROLES = new Set(["super_admin", "hr_admin", "admin"]);
 
 async function isDirectReportOf(managerId: string, employeeId: string): Promise<boolean> {
   try {
+    if (!managerId || !employeeId) return false;
+    if (String(managerId) === String(employeeId)) return true;
     const db = await getDb();
     if (!db) return false;
-    const employee = await db.collection("users").findOne({ _id: new ObjectId(employeeId) });
-    return (employee as any)?.reportingManager === managerId;
+
+    // Find manager record
+    const manager = await db.collection("users").findOne({
+      $or: [
+        { _id: new ObjectId(managerId) },
+        { legacyId: managerId },
+        { id: isNaN(Number(managerId)) ? -1 : Number(managerId) },
+      ],
+    });
+    if (!manager) return false;
+
+    // Find employee record
+    const employee = await db.collection("users").findOne({
+      $or: [
+        { _id: new ObjectId(employeeId) },
+        { legacyId: employeeId },
+        { id: isNaN(Number(employeeId)) ? -1 : Number(employeeId) },
+      ],
+    });
+    if (!employee) return false;
+
+    // Check manager department vs employee department
+    const managerDept = String(manager.departmentName || manager.department || "").toLowerCase().trim();
+    const employeeDept = String(employee.departmentName || employee.department || "").toLowerCase().trim();
+    if (managerDept && employeeDept && managerDept === employeeDept) {
+      return true;
+    }
+
+    // Check reportingManager field (may be manager displayName, email, or id)
+    const rep = String(employee.reportingManager || "").toLowerCase().trim();
+    const managerName = String(manager.displayName || manager.name || "").toLowerCase().trim();
+    const managerEmail = String(manager.email || "").toLowerCase().trim();
+    if (managerName && rep === managerName) return true;
+    if (managerEmail && rep === managerEmail) return true;
+    if (rep === String(manager.id) || rep === String(manager.legacyId) || rep === String(managerId)) return true;
+
+    return false;
   } catch {
     return false;
   }
 }
 
 /** Who may act on someone else's performance record: HR always, managers for
- *  their direct reports, everyone else never. */
+ *  their direct reports and departmental team, everyone else never. */
 async function canActOn(caller: { userId: string; role: string }, targetUserId: string): Promise<boolean> {
   if (caller.userId === targetUserId) return true;
   if (HR_LEVEL_ROLES.has(caller.role)) return true;

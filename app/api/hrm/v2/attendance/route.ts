@@ -7,11 +7,48 @@ import { ObjectId } from "@/lib/db/mysql";
 async function getManagerDepartmentUserIds(userId: string, tenantId: string): Promise<string[]> {
   const db = await getDb();
   if (!db) return [];
-  const manager = await db.collection("users").findOne({ _id: new ObjectId(userId), tenantId });
-  const department = manager?.department || manager?.departmentName;
-  if (!department) return [];
-  const users = await db.collection("users").find({ tenantId, $or: [{ department }, { departmentName: department }], status: { $nin: ["inactive", "disabled"] } }).project({ _id: 1 }).toArray();
-  return users.map(u => u._id.toString());
+  const manager = await db.collection("users").findOne({
+    $or: [
+      { _id: new ObjectId(userId) },
+      { legacyId: userId },
+      { id: isNaN(Number(userId)) ? -1 : Number(userId) },
+    ],
+  });
+  if (!manager) return [];
+  const department = manager.department || manager.departmentName;
+  const managerName = manager.displayName || manager.name;
+  const managerEmail = manager.email ? String(manager.email).toLowerCase() : null;
+  const managerId = String(manager.id || userId);
+  const managerLegacyId = manager.legacyId;
+
+  const teamConditions: any[] = [];
+  if (department) {
+    teamConditions.push({ department }, { departmentName: department });
+  }
+  if (managerName) {
+    teamConditions.push({ reportingManager: managerName });
+  }
+  if (managerEmail) {
+    teamConditions.push({ reportingManager: managerEmail }, { managerEmail });
+  }
+  if (managerId) teamConditions.push({ managerId });
+  if (managerLegacyId) teamConditions.push({ managerId: managerLegacyId });
+  teamConditions.push({ _id: new ObjectId(userId) });
+  if (managerLegacyId) teamConditions.push({ legacyId: managerLegacyId });
+
+  const users = await db.collection("users").find({
+    $or: teamConditions,
+    status: { $nin: ["inactive", "disabled"] },
+  }).toArray();
+
+  const idSet = new Set<string>();
+  for (const u of users) {
+    if (u.id) idSet.add(String(u.id));
+    if (u._id) idSet.add(String(u._id));
+    if (u.legacyId) idSet.add(String(u.legacyId));
+    if (u.email) idSet.add(String(u.email).toLowerCase());
+  }
+  return Array.from(idSet);
 }
 
 export async function GET(request: NextRequest) {
@@ -63,7 +100,13 @@ export async function GET(request: NextRequest) {
 
     const effectiveUserId = auth.role === "employee" ? auth.userId : requestedUserId || undefined;
     let records = await getAttendanceRecords(tenantId, { userId: effectiveUserId, date: date || undefined, status: status || undefined });
-    if (auth.role === "manager") records = records.filter((rec: any) => managerUserIds!.includes(String(rec.userId)));
+    if (auth.role === "manager") {
+      records = records.filter(
+        (rec: any) =>
+          managerUserIds!.includes(String(rec.userId)) ||
+          (rec.userEmail && managerUserIds!.includes(String(rec.userEmail).toLowerCase()))
+      );
+    }
 
     const enriched = records.map((rec: any) => ({
       _id: rec._id || rec.id, userId: rec.userId, userName: rec.userName || rec.userDisplayName || "", userEmail: rec.userEmail || "",
