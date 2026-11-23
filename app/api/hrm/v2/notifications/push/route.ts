@@ -18,15 +18,44 @@ export async function POST(request: NextRequest) {
     const auth = await requireAuth();
     if (isErrorResponse(auth)) return auth;
 
-    // Only admins and managers can send push notifications
+    const body = await request.json();
+
+    // 1. Device Push Subscription (available to all authenticated users)
+    if (body.action === "subscribe") {
+      const { subscription, deviceType } = body;
+      if (!subscription || !subscription.endpoint) {
+        return NextResponse.json({ error: "Invalid subscription payload" }, { status: 400 });
+      }
+
+      const db = await getDb();
+      if (!db) {
+        return NextResponse.json({ error: "Database not available" }, { status: 503 });
+      }
+
+      await db.collection("push_subscriptions").updateOne(
+        { userId: auth.userId, endpoint: subscription.endpoint },
+        {
+          $set: {
+            userId: auth.userId,
+            endpoint: subscription.endpoint,
+            subscription,
+            deviceType: deviceType || "mobile",
+            updatedAt: new Date(),
+          },
+          $setOnInsert: { createdAt: new Date() },
+        },
+        { upsert: true }
+      );
+      return NextResponse.json({ success: true, message: "Device subscribed successfully" });
+    }
+
+    // 2. Broadcast / Send Push Notification (requires manager/admin role)
     if (auth.role === "employee") {
       return NextResponse.json(
-        { error: "Forbidden" },
+        { error: "Forbidden: Only admins and managers can send push notifications" },
         { status: 403 }
       );
     }
-
-    const body = await request.json();
     const { userId, title, body: notificationBody, data, type } = body;
 
     if (!title || !notificationBody) {

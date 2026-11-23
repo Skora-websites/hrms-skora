@@ -33,6 +33,13 @@ import {
   Shield,
   HelpCircle,
   TrendingUp,
+  GraduationCap,
+  MessageSquare,
+  CreditCard,
+  CheckCircle2,
+  Zap,
+  BarChart3,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useTheme } from "@/hooks/use-theme";
@@ -52,6 +59,15 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
   const displayName = user?.name || user?.email?.split("@")[0] || "Employee";
   const initials = getInitials(displayName);
   const role = user?.role || "employee";
+
+  const isStaff =
+    role === "super_admin" ||
+    role === "hr_admin" ||
+    role === "admin" ||
+    role === "manager";
+
+  const isHRorSuperAdmin =
+    role === "super_admin" || role === "hr_admin" || role === "admin";
 
   // Role-based profile and settings
   const profileHref =
@@ -90,7 +106,7 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
 
   const menuGroups = [
     {
-      title: "Work & Pay",
+      title: "Work & Compensation",
       items: [
         {
           label: "Payslips & Salary",
@@ -99,11 +115,18 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
           badge: null,
         },
         {
+          label: "Salary Advance",
+          href: "/hrms/employee/salary-advance",
+          icon: CreditCard,
+          badge: "Instant",
+        },
+        {
           label: "Expense Claims",
-          href:
-            role === "hr_admin" || role === "super_admin"
-              ? "/hrms/hr-admin/expenses"
-              : "/hrms/employee/expenses",
+          href: isHRorSuperAdmin
+            ? "/hrms/hr-admin/expenses"
+            : role === "manager"
+            ? "/hrms/manager/expenses"
+            : "/hrms/employee/expenses",
           icon: Receipt,
           badge: null,
         },
@@ -114,31 +137,77 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
           badge: null,
         },
         {
+          label: "Timesheets",
+          href: role === "manager" ? "/hrms/manager/timesheets" : "/hrms/employee/timesheet",
+          icon: Clock,
+          badge: null,
+        },
+        {
+          label: "Overtime & Comp-Off",
+          href: isHRorSuperAdmin
+            ? "/hrms/hr-admin/attendance/overtime"
+            : "/hrms/attendance/overtime",
+          icon: Clock,
+          badge: null,
+        },
+        {
           label: "Holidays Calendar",
           href: "/hrms/holidays",
           icon: Sun,
           badge: null,
         },
+      ],
+    },
+    {
+      title: "Skills, Tasks & Helpdesk",
+      items: [
         {
-          label: "Overtime & Comp-Off",
-          href:
-            role === "hr_admin" || role === "super_admin"
-              ? "/hrms/hr-admin/attendance/overtime"
-              : "/hrms/attendance/overtime",
-          icon: Clock,
+          label: "Skill Assessments & Tests",
+          href: "/hrms/tests",
+          icon: GraduationCap,
+          badge: "Tests",
+        },
+        {
+          label: "Support Tickets & Helpdesk",
+          href: "/hrms/tickets",
+          icon: MessageSquare,
+          badge: "Support",
+        },
+        {
+          label: "My Tasks & Projects",
+          href: "/hrms/tasks",
+          icon: ListTodo,
+          badge: null,
+        },
+        {
+          label: "Performance & Goals",
+          href: role === "employee" ? "/hrms/employee/performance" : "/hrms/performance",
+          icon: TrendingUp,
+          badge: null,
+        },
+        {
+          label: "Company Documents & Letters",
+          href: "/hrms/documents/my",
+          icon: FileText,
+          badge: "Signed",
+        },
+        {
+          label: "Assigned Assets",
+          href: role === "employee" ? "/hrms/employee/assets" : "/hrms/assets",
+          icon: Package,
           badge: null,
         },
       ],
     },
     {
-      title: "Team & People",
+      title: "Team & Engagement",
       items: [
         {
-          label: role === "manager" ? "My Team" : "Employee Directory",
+          label: role === "manager" ? "My Team Overview" : "Employee Directory",
           href:
             role === "manager"
               ? "/hrms/manager/my-team"
-              : role === "hr_admin" || role === "super_admin"
+              : isHRorSuperAdmin
               ? "/hrms/hr-admin/employees"
               : "/hrms/employees",
           icon: Users,
@@ -156,50 +225,78 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
           icon: Sparkles,
           badge: "Points",
         },
-        {
-          label: "Performance Reviews",
-          href:
-            role === "employee"
-              ? "/hrms/employee/performance"
-              : "/hrms/performance",
-          icon: TrendingUp,
-          badge: null,
-        },
       ],
     },
-    {
-      title: "Company Assets & Documents",
-      items: [
-        {
-          label: "My Documents & Letters",
-          href: "/hrms/documents/my",
-          icon: FileText,
-          badge: "Signed",
-        },
-        {
-          label: "Assigned Assets",
-          href:
-            role === "employee"
-              ? "/hrms/employee/assets"
-              : "/hrms/assets",
-          icon: Package,
-          badge: null,
-        },
-        {
-          label: "Tasks & Workflow",
-          href: "/hrms/tasks",
-          icon: ListTodo,
-          badge: null,
-        },
-      ],
-    },
+    ...(isStaff
+      ? [
+          {
+            title: "Management & Admin Controls",
+            items: [
+              ...(role === "manager" || isHRorSuperAdmin
+                ? [
+                    {
+                      label: "Manager Approvals Hub",
+                      href: "/hrms/manager/approvals",
+                      icon: CheckCircle2,
+                      badge: "Action",
+                    },
+                  ]
+                : []),
+              ...(isHRorSuperAdmin
+                ? [
+                    {
+                      label: "Recruitment & Candidates",
+                      href: "/hrms/recruitment",
+                      icon: UserCheck,
+                      badge: "Hiring",
+                    },
+                    {
+                      label: "Payroll Master & Disbursal",
+                      href: "/hrms/hr-admin/payroll",
+                      icon: DollarSign,
+                      badge: null,
+                    },
+                    {
+                      label: "Leave Policies Configuration",
+                      href: "/hrms/hr-admin/leave-policies",
+                      icon: CalendarDays,
+                      badge: null,
+                    },
+                  ]
+                : []),
+              {
+                label: "Automated Workflows",
+                href: "/hrms/workflow",
+                icon: Zap,
+                badge: "Auto",
+              },
+              {
+                label: "Reports & Intelligence",
+                href: "/hrms/reports",
+                icon: BarChart3,
+                badge: null,
+              },
+              ...(role === "super_admin"
+                ? [
+                    {
+                      label: "System Audit Logs",
+                      href: "/hrms/superadmin/audit-logs",
+                      icon: Shield,
+                      badge: "Security",
+                    },
+                  ]
+                : []),
+            ],
+          },
+        ]
+      : []),
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size="md"
-        className="bottom-0 top-auto translate-y-0 rounded-t-3xl rounded-b-none border-x-0 border-b-0 border-t border-border/80 p-0 max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col shadow-[0_-12px_40px_rgba(0,0,0,0.2)] bg-card/95 backdrop-blur-2xl"
+        className="bottom-0 top-auto translate-y-0 rounded-t-3xl rounded-b-none border-x-0 border-b-0 border-t border-border/80 p-0 max-w-lg w-full max-h-[88vh] overflow-hidden flex flex-col shadow-[0_-12px_40px_rgba(0,0,0,0.2)] bg-card/95 backdrop-blur-2xl"
       >
         {/* Grab Handle */}
         <div className="pt-3 pb-1 shrink-0">
@@ -207,7 +304,7 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
         </div>
 
         {/* Scrollable Container with Safe-Area Inset Bottom */}
-        <div className="overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),24px)] space-y-5">
+        <div className="overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),28px)] space-y-5">
           {/* User Hero Header Card */}
           <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -250,69 +347,36 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
             </Button>
           </div>
 
-          {/* Quick Preference Switchers */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={toggleTheme}
-              className="p-3 rounded-2xl bg-muted/30 border border-border/60 flex items-center justify-between text-xs text-foreground hover:bg-muted/60 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                {theme === "dark" ? (
-                  <Moon className="w-4 h-4 text-primary" />
-                ) : (
-                  <Sun className="w-4 h-4 text-amber-500" />
-                )}
-                <span className="font-medium">
-                  {theme === "dark" ? "Dark Mode" : "Light Mode"}
-                </span>
-              </div>
-              <span className="text-[11px] text-muted-foreground capitalize">
-                {theme}
-              </span>
-            </button>
-
-            <button
-              onClick={() => handleNavigate(settingsHref)}
-              className="p-3 rounded-2xl bg-muted/30 border border-border/60 flex items-center justify-between text-xs text-foreground hover:bg-muted/60 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-primary" />
-                <span className="font-medium">Settings</span>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-          </div>
-
-          {/* Grouped Links */}
+          {/* Nav Categories */}
           {menuGroups.map((group) => (
             <div key={group.title} className="space-y-1.5">
-              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">
                 {group.title}
               </h4>
-              <div className="rounded-2xl border border-border/60 bg-muted/20 overflow-hidden divide-y divide-border/40">
+              <div className="rounded-2xl border border-border/70 bg-card overflow-hidden divide-y divide-border/50">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   return (
                     <button
-                      key={item.label}
+                      key={item.href}
                       onClick={() => handleNavigate(item.href)}
-                      className="w-full px-3.5 py-3 flex items-center justify-between hover:bg-muted/50 active:bg-muted/80 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3.5 hover:bg-muted/50 active:bg-muted transition-colors text-left"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-background border border-border/60 flex items-center justify-center text-primary shadow-xs">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                           <Icon className="w-4 h-4" />
                         </div>
-                        <span className="text-xs font-medium text-foreground">
+                        <span className="text-xs font-semibold text-foreground truncate">
                           {item.label}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {item.badge && (
                           <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
                             {item.badge}
                           </Badge>
                         )}
-                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
                       </div>
                     </button>
                   );
@@ -321,18 +385,61 @@ export function MobileMoreSheet({ open, onOpenChange }: MobileMoreSheetProps) {
             </div>
           ))}
 
-          {/* Sign Out Action */}
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full h-11 text-xs font-semibold rounded-2xl text-danger hover:bg-danger/10 hover:text-danger border-danger/30"
-              disabled={loggingOut}
-              onClick={handleSignOut}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              {loggingOut ? "Signing Out..." : "Sign Out of Skora HRMS"}
-            </Button>
+          {/* Quick Actions (Theme & Settings & Logout) */}
+          <div className="space-y-1.5 pt-1">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80 px-1">
+              Preferences
+            </h4>
+            <div className="rounded-2xl border border-border/70 bg-card overflow-hidden divide-y divide-border/50">
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-muted/50 active:bg-muted transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-foreground">
+                    {theme === "dark" ? (
+                      <Sun className="w-4 h-4 text-amber-500" />
+                    ) : (
+                      <Moon className="w-4 h-4 text-indigo-500" />
+                    )}
+                  </div>
+                  <span className="text-xs font-semibold text-foreground">
+                    {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                  </span>
+                </div>
+                <Badge variant="outline" className="text-[10px] capitalize">
+                  {theme}
+                </Badge>
+              </button>
+
+              <button
+                onClick={() => handleNavigate(settingsHref)}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-muted/50 active:bg-muted transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-foreground">
+                    <Settings className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-foreground">Account Settings</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
+              </button>
+
+              <button
+                onClick={handleSignOut}
+                disabled={loggingOut}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-danger/10 text-danger transition-colors text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-danger/10 flex items-center justify-center text-danger">
+                    <LogOut className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-semibold">
+                    {loggingOut ? "Signing Out..." : "Sign Out"}
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -82,6 +82,19 @@ export default function AssessmentPortalPage() {
     isStaff ? "manage_tests" : "my_tests"
   );
 
+  // Synchronize activeTab when authentication role resolves
+  useEffect(() => {
+    if (isStaff) {
+      if (activeTab === "my_tests") {
+        setActiveTab("manage_tests");
+      }
+    } else {
+      if (activeTab !== "my_tests" && activeTab !== "results") {
+        setActiveTab("my_tests");
+      }
+    }
+  }, [isStaff]);
+
   const [tests, setTests] = useState<TestDefinition[]>([]);
   const [questions, setQuestions] = useState<TestQuestion[]>([]);
   const [evaluations, setEvaluations] = useState<TestAttempt[]>([]);
@@ -111,6 +124,13 @@ export default function AssessmentPortalPage() {
   // Finalize confirmation dialog
   const [finalizeAttemptId, setFinalizeAttemptId] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
+
+  // Ensure body pointer events remain unblocked
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.body.style.pointerEvents = "";
+    }
+  }, [showCreateTestModal, showCreateQuestionModal, previewTest, candidateProgressTest, finalizeAttemptId]);
 
   // Fetch all assessment data
   const fetchData = useCallback(async () => {
@@ -330,11 +350,11 @@ export default function AssessmentPortalPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="border-b border-border/80 pb-3">
-            <TabsList className="h-10 flex-wrap justify-start">
+            <TabsList className="h-auto min-h-10 flex-wrap items-center justify-start gap-1 p-1 bg-muted/60 rounded-xl border border-border/70 text-muted-foreground w-full sm:w-auto">
               {!isStaff && (
                 <TabsTrigger value="my_tests" className="gap-2">
                   <span>Available Tests</span>
-                  <Badge variant="secondary" size="sm">
+                  <Badge variant="secondary" size="sm" className="pointer-events-none">
                     {tests.length}
                   </Badge>
                 </TabsTrigger>
@@ -344,24 +364,24 @@ export default function AssessmentPortalPage() {
                 <>
                   <TabsTrigger value="manage_tests" className="gap-2">
                     <span>Manage Tests</span>
-                    <Badge variant="secondary" size="sm">
+                    <Badge variant="secondary" size="sm" className="pointer-events-none">
                       {tests.length}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="question_bank" className="gap-2">
                     <span>Question Bank</span>
-                    <Badge variant="secondary" size="sm">
+                    <Badge variant="secondary" size="sm" className="pointer-events-none">
                       {questions.length}
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="evaluations" className="gap-2">
                     <span>Review & Grading</span>
                     {evaluations.length > 0 ? (
-                      <Badge variant="danger" size="sm">
+                      <Badge variant="danger" size="sm" className="pointer-events-none">
                         {evaluations.length}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" size="sm">
+                      <Badge variant="secondary" size="sm" className="pointer-events-none">
                         0
                       </Badge>
                     )}
@@ -371,7 +391,7 @@ export default function AssessmentPortalPage() {
 
               <TabsTrigger value="results" className="gap-2">
                 <span>{isStaff ? "Team Results" : "My Scorecard"}</span>
-                <Badge variant="secondary" size="sm">
+                <Badge variant="secondary" size="sm" className="pointer-events-none">
                   {results.length}
                 </Badge>
               </TabsTrigger>

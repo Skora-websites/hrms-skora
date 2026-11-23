@@ -36,6 +36,22 @@ export function PWAProvider() {
           .register("/sw.js")
           .then((reg) => {
             console.log("[PWA] Service Worker active:", reg.scope);
+            // Sync push subscription if notification permission is already granted
+            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+              reg.pushManager.getSubscription().then((sub) => {
+                if (sub) {
+                  fetch("/api/hrm/v2/notifications/push", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      action: "subscribe",
+                      subscription: sub.toJSON(),
+                      deviceType: isIOSDevice ? "ios" : "android",
+                    }),
+                  }).catch(() => {});
+                }
+              }).catch(() => {});
+            }
             // Periodic update check
             setInterval(() => {
               reg.update();
