@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
-import { getDb } from "@/lib/db/mysql";
+import { getDb, ObjectId } from "@/lib/db/mysql";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,6 +22,18 @@ export async function GET(request: NextRequest) {
     const department = searchParams.get("department");
     if (department && department !== "All" && department !== "General") {
       query.department = department;
+    } else if (auth.role === "manager") {
+      const userDoc = await db.collection("users").findOne({
+        $or: [
+          { _id: ObjectId.isValid(auth.userId) ? new ObjectId(auth.userId) : auth.userId },
+          { legacyId: auth.userId },
+          { id: isNaN(Number(auth.userId)) ? -1 : Number(auth.userId) },
+        ],
+      });
+      const userDept = userDoc?.department || userDoc?.departmentName;
+      if (userDept) {
+        query.$or = [{ department: userDept }, { departmentName: userDept }];
+      }
     }
 
     const docs = await db

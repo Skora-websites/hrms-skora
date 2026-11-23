@@ -71,6 +71,8 @@ async function isDirectReportOf(managerId: string, employeeId: string): Promise<
     if (managerName && rep === managerName) return true;
     if (managerEmail && rep === managerEmail) return true;
     if (rep === String(manager.id) || rep === String(manager.legacyId) || rep === String(managerId)) return true;
+    if (employee.managerEmail && managerEmail && String(employee.managerEmail).toLowerCase().trim() === managerEmail) return true;
+    if (employee.managerId && (String(employee.managerId) === String(manager.id) || String(employee.managerId) === String(manager.legacyId) || String(employee.managerId) === String(managerId))) return true;
 
     return false;
   } catch {
@@ -158,6 +160,59 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   // Dashboard stats
   if (dashboard) {
+    if (auth.role === "employee") {
+      const stats = await getDashboardStats(tenantId, auth.userId);
+      return NextResponse.json({ data: stats });
+    }
+    if (auth.role === "manager") {
+      if (userId) {
+        if (!(await canActOn(auth, userId))) {
+          return forbidden("You can only view dashboard stats for yourself or direct reports");
+        }
+        const stats = await getDashboardStats(tenantId, userId);
+        return NextResponse.json({ data: stats });
+      }
+      // Scoped team stats
+      const allGoals = await getGoals(tenantId);
+      const teamGoals: any[] = [];
+      for (const g of allGoals) {
+        if (await canActOn(auth, (g as any).userId)) teamGoals.push(g);
+      }
+      const allReviews = await getReviews(tenantId);
+      const teamReviews: any[] = [];
+      for (const r of allReviews) {
+        if (r.userId === auth.userId || r.reviewerId === auth.userId || (await isDirectReportOf(auth.userId, (r as any).userId))) {
+          teamReviews.push(r);
+        }
+      }
+      const allFeedback = await getFeedback(tenantId);
+      const teamFeedback: any[] = [];
+      for (const f of allFeedback) {
+        if (f.userId === auth.userId || (await isDirectReportOf(auth.userId, (f as any).userId))) {
+          teamFeedback.push(f);
+        }
+      }
+      const allKpis = await getKpis(tenantId);
+      const teamKpis: any[] = [];
+      for (const k of allKpis) {
+        if (k.userId === auth.userId || (await isDirectReportOf(auth.userId, (k as any).userId))) {
+          teamKpis.push(k);
+        }
+      }
+      return NextResponse.json({
+        data: {
+          totalGoals: teamGoals.length,
+          achievedGoals: teamGoals.filter((g) => g.status === "achieved").length,
+          activeReviews: teamReviews.filter((r) => r.status === "submitted" || r.status === "draft").length,
+          completedReviews: teamReviews.filter((r) => r.status === "completed").length,
+          averageKpiScore: teamKpis.length > 0
+            ? Math.round(teamKpis.reduce((sum, k) => sum + (k.actual / k.target) * 100, 0) / teamKpis.length)
+            : 0,
+          pendingFeedback: teamFeedback.filter((f) => f.status === "pending").length,
+        },
+      });
+    }
+
     const stats = await getDashboardStats(tenantId, userId || undefined);
     return NextResponse.json({ data: stats });
   }
