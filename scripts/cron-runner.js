@@ -4,9 +4,9 @@
  * -------------------------------------------------------------
  * Usage in aaPanel > Cron > Add Task (Shell Script):
  *
- * cd /www/wwwroot/hrms-skora && node scripts/cron-runner.js --job=auto-punchout
- * cd /www/wwwroot/hrms-skora && node scripts/cron-runner.js --job=leave-accrual
- * cd /www/wwwroot/hrms-skora && node scripts/cron-runner.js --job=late-deductions
+ * cd /www/wwwroot/hrms.skorainfotech.com && node scripts/cron-runner.js --job=auto-punchout
+ * cd /www/wwwroot/hrms.skorainfotech.com && node scripts/cron-runner.js --job=leave-accrual
+ * cd /www/wwwroot/hrms.skorainfotech.com && node scripts/cron-runner.js --job=late-deductions
  * -------------------------------------------------------------
  */
 
@@ -26,7 +26,7 @@ for (const arg of args) {
 }
 
 const CRON_SECRET = process.env.CRON_SECRET || "skora-hrms-cron-secret-2026";
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3010;
 const HOST = process.env.APP_HOST || "127.0.0.1";
 
 const postData = JSON.stringify({ job, force });
