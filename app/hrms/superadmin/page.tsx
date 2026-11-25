@@ -48,6 +48,54 @@ export default function SuperadminOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "finance" | "radar" | "governance" | "system" | "all">("overview");
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
+  const [syncRelativeTime, setSyncRelativeTime] = useState<string>("Synced just now");
+
+  const VALID_TABS = ["overview", "finance", "radar", "governance", "system", "all"] as const;
+
+  // URL deep-linking synchronization
+  useEffect(() => {
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
+    if (urlTab && (VALID_TABS as readonly string[]).includes(urlTab)) {
+      setActiveTab(urlTab as any);
+    }
+    const onPopState = () => {
+      const popTab = new URLSearchParams(window.location.search).get("tab");
+      if (popTab && (VALID_TABS as readonly string[]).includes(popTab)) {
+        setActiveTab(popTab as any);
+      } else {
+        setActiveTab("overview");
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const switchTab = (tab: "overview" | "finance" | "radar" | "governance" | "system" | "all") => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "overview") params.delete("tab");
+    else params.set("tab", tab);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    window.history.replaceState(null, "", `${window.location.pathname}${qs}`);
+  };
+
+  // Live freshness relative time counter
+  useEffect(() => {
+    const updateRelative = () => {
+      const diffSec = Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000);
+      if (diffSec < 45) {
+        setSyncRelativeTime("Synced just now");
+      } else if (diffSec < 3600) {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 60)}m ago`);
+      } else {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 3600)}h ago`);
+      }
+    };
+    updateRelative();
+    const interval = setInterval(updateRelative, 10000);
+    return () => clearInterval(interval);
+  }, [lastSyncedAt]);
 
   // Edit / Delete User Modal
   const [editingUser, setEditingUser] = useState<DirectoryUser | null>(null);
@@ -75,6 +123,7 @@ export default function SuperadminOverviewPage() {
       if (json?.data) {
         setData(json.data);
         setError(null);
+        setLastSyncedAt(new Date());
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load executive summary");
@@ -279,7 +328,12 @@ export default function SuperadminOverviewPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-muted/60 border border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="hidden xs:inline sm:inline">{syncRelativeTime}</span>
+              <span className="xs:hidden sm:hidden">Live</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -325,7 +379,7 @@ export default function SuperadminOverviewPage() {
       <div className="sticky top-0 z-30 -mx-3 sm:mx-0 px-3 sm:px-0 py-2.5 bg-background/90 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/40 rounded-2xl border border-border/60 overflow-x-auto scrollbar-none max-w-full">
           <button
-            onClick={() => setActiveTab("overview")}
+            onClick={() => switchTab("overview")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "overview"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -337,7 +391,7 @@ export default function SuperadminOverviewPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("finance")}
+            onClick={() => switchTab("finance")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "finance"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -349,7 +403,7 @@ export default function SuperadminOverviewPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("radar")}
+            onClick={() => switchTab("radar")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "radar"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -364,7 +418,7 @@ export default function SuperadminOverviewPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("governance")}
+            onClick={() => switchTab("governance")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "governance"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -381,7 +435,7 @@ export default function SuperadminOverviewPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("system")}
+            onClick={() => switchTab("system")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "system"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -393,7 +447,7 @@ export default function SuperadminOverviewPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("all")}
+            onClick={() => switchTab("all")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "all"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -410,7 +464,7 @@ export default function SuperadminOverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
         {/* Widget 1: Total Staff */}
         <div
-          onClick={() => setActiveTab("radar")}
+          onClick={() => switchTab("radar")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -430,7 +484,7 @@ export default function SuperadminOverviewPage() {
 
         {/* Widget 2: On Duty Today */}
         <div
-          onClick={() => setActiveTab("radar")}
+          onClick={() => switchTab("radar")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-emerald-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -450,7 +504,7 @@ export default function SuperadminOverviewPage() {
 
         {/* Widget 3: Projected Monthly Outflow */}
         <div
-          onClick={() => setActiveTab("finance")}
+          onClick={() => switchTab("finance")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-blue-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -470,7 +524,7 @@ export default function SuperadminOverviewPage() {
 
         {/* Widget 4: Governance Radar */}
         <div
-          onClick={() => setActiveTab("governance")}
+          onClick={() => switchTab("governance")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -490,7 +544,7 @@ export default function SuperadminOverviewPage() {
       </div>
 
       {/* ═══ VIEW MODE CONTENT ═══ */}
-      <div className="mt-5 space-y-5">
+      <div key={activeTab} className="mt-5 space-y-5 animate-in fade-in-50 slide-in-from-bottom-2 duration-200 ease-out">
         {/* ─── TAB 1: OVERVIEW (Mobile Native Executive Summary) ─── */}
         {activeTab === "overview" && (
           <div className="space-y-4">
@@ -507,7 +561,7 @@ export default function SuperadminOverviewPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setActiveTab("finance")}
+                  onClick={() => switchTab("finance")}
                   className="flex items-center gap-1 text-xs font-bold text-primary hover:underline shrink-0"
                 >
                   <span>Deep Dive</span>
@@ -590,7 +644,7 @@ export default function SuperadminOverviewPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setActiveTab("radar")}
+                  onClick={() => switchTab("radar")}
                   className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline shrink-0"
                 >
                   <span>Open Radar</span>
@@ -662,7 +716,7 @@ export default function SuperadminOverviewPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Governance Micro Card */}
               <div
-                onClick={() => setActiveTab("governance")}
+                onClick={() => switchTab("governance")}
                 className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -688,7 +742,7 @@ export default function SuperadminOverviewPage() {
 
               {/* System Engine Micro Card */}
               <div
-                onClick={() => setActiveTab("system")}
+                onClick={() => switchTab("system")}
                 className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-teal-500/40 transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-2">

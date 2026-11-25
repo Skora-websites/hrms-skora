@@ -37,6 +37,8 @@ import { HrIssueLetterModal } from "@/components/hr/hr-issue-letter-modal";
 
 type HrTab = "overview" | "payroll" | "attendance" | "lifecycle" | "roster" | "all";
 
+const VALID_TABS: readonly HrTab[] = ["overview", "payroll", "attendance", "lifecycle", "roster", "all"];
+
 export default function HrAdminDashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<any | null>(null);
@@ -44,6 +46,52 @@ export default function HrAdminDashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<HrTab>("overview");
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
+  const [syncRelativeTime, setSyncRelativeTime] = useState<string>("Synced just now");
+
+  // URL deep-linking synchronization
+  useEffect(() => {
+    const urlTab = new URLSearchParams(window.location.search).get("tab") as HrTab | null;
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+    const onPopState = () => {
+      const popTab = new URLSearchParams(window.location.search).get("tab") as HrTab | null;
+      if (popTab && VALID_TABS.includes(popTab)) {
+        setActiveTab(popTab);
+      } else {
+        setActiveTab("overview");
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const switchTab = (tab: HrTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "overview") params.delete("tab");
+    else params.set("tab", tab);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    window.history.replaceState(null, "", `${window.location.pathname}${qs}`);
+  };
+
+  // Live freshness relative time counter
+  useEffect(() => {
+    const updateRelative = () => {
+      const diffSec = Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000);
+      if (diffSec < 45) {
+        setSyncRelativeTime("Synced just now");
+      } else if (diffSec < 3600) {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 60)}m ago`);
+      } else {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 3600)}h ago`);
+      }
+    };
+    updateRelative();
+    const interval = setInterval(updateRelative, 10000);
+    return () => clearInterval(interval);
+  }, [lastSyncedAt]);
 
   // Modals
   const [showAddEmployee, setShowAddEmployee] = useState(false);
@@ -78,6 +126,7 @@ export default function HrAdminDashboardPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        setLastSyncedAt(new Date());
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load dashboard data");
@@ -204,7 +253,12 @@ export default function HrAdminDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-muted/60 border border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="hidden xs:inline sm:inline">{syncRelativeTime}</span>
+              <span className="xs:hidden sm:hidden">Live</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -266,7 +320,7 @@ export default function HrAdminDashboardPage() {
       <div className="sticky top-0 z-30 -mx-3 sm:mx-0 px-3 sm:px-0 py-2.5 bg-background/90 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/40 rounded-2xl border border-border/60 overflow-x-auto scrollbar-none max-w-full">
           <button
-            onClick={() => setActiveTab("overview")}
+            onClick={() => switchTab("overview")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "overview"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -278,7 +332,7 @@ export default function HrAdminDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("payroll")}
+            onClick={() => switchTab("payroll")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "payroll"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -290,7 +344,7 @@ export default function HrAdminDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("attendance")}
+            onClick={() => switchTab("attendance")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "attendance"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -302,7 +356,7 @@ export default function HrAdminDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("lifecycle")}
+            onClick={() => switchTab("lifecycle")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "lifecycle"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -319,7 +373,7 @@ export default function HrAdminDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("roster")}
+            onClick={() => switchTab("roster")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "roster"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -331,7 +385,7 @@ export default function HrAdminDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("all")}
+            onClick={() => switchTab("all")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "all"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -348,7 +402,7 @@ export default function HrAdminDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
         {/* Tile 1: Total Staff */}
         <div
-          onClick={() => setActiveTab("roster")}
+          onClick={() => switchTab("roster")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -368,7 +422,7 @@ export default function HrAdminDashboardPage() {
 
         {/* Tile 2: On Duty Today */}
         <div
-          onClick={() => setActiveTab("attendance")}
+          onClick={() => switchTab("attendance")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-emerald-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -388,7 +442,7 @@ export default function HrAdminDashboardPage() {
 
         {/* Tile 3: Estimated Gross Payout */}
         <div
-          onClick={() => setActiveTab("payroll")}
+          onClick={() => switchTab("payroll")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-blue-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -410,7 +464,7 @@ export default function HrAdminDashboardPage() {
 
         {/* Tile 4: Lifecycle Clearances */}
         <div
-          onClick={() => setActiveTab("lifecycle")}
+          onClick={() => switchTab("lifecycle")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -430,7 +484,7 @@ export default function HrAdminDashboardPage() {
       </div>
 
       {/* ═══ TIER 3: CONTEXTUAL WORKSPACES (Progressive Disclosure) ═══ */}
-      <div className="mt-5 space-y-6">
+      <div key={activeTab} className="mt-5 space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-200 ease-out">
         {/* ─── TAB 1: OVERVIEW (Strategic Summary) ─── */}
         {activeTab === "overview" && (
           <div className="space-y-6">
@@ -455,7 +509,7 @@ export default function HrAdminDashboardPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setActiveTab("attendance")}
+                      onClick={() => switchTab("attendance")}
                       className="flex items-center gap-1 text-xs font-bold text-primary hover:underline shrink-0"
                     >
                       <span>Full Radar</span>
@@ -507,7 +561,7 @@ export default function HrAdminDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Statutory Micro Box */}
               <div
-                onClick={() => setActiveTab("payroll")}
+                onClick={() => switchTab("payroll")}
                 className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-blue-500/40 transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -541,7 +595,7 @@ export default function HrAdminDashboardPage() {
 
               {/* Lifecycle Clearance Micro Box */}
               <div
-                onClick={() => setActiveTab("lifecycle")}
+                onClick={() => switchTab("lifecycle")}
                 className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-2">

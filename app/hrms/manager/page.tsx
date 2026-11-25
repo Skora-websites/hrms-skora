@@ -34,6 +34,8 @@ import { ManagerLiveRoster } from "@/components/manager/manager-live-roster";
 
 type ManagerTab = "overview" | "pulse" | "approvals" | "velocity" | "analytics" | "all";
 
+const VALID_TABS: readonly ManagerTab[] = ["overview", "pulse", "approvals", "velocity", "analytics", "all"];
+
 export default function ManagerDashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<any | null>(null);
@@ -41,6 +43,52 @@ export default function ManagerDashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ManagerTab>("overview");
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
+  const [syncRelativeTime, setSyncRelativeTime] = useState<string>("Synced just now");
+
+  // URL deep-linking synchronization
+  useEffect(() => {
+    const urlTab = new URLSearchParams(window.location.search).get("tab") as ManagerTab | null;
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+    const onPopState = () => {
+      const popTab = new URLSearchParams(window.location.search).get("tab") as ManagerTab | null;
+      if (popTab && VALID_TABS.includes(popTab)) {
+        setActiveTab(popTab);
+      } else {
+        setActiveTab("overview");
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const switchTab = (tab: ManagerTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "overview") params.delete("tab");
+    else params.set("tab", tab);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    window.history.replaceState(null, "", `${window.location.pathname}${qs}`);
+  };
+
+  // Live freshness relative time counter
+  useEffect(() => {
+    const updateRelative = () => {
+      const diffSec = Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000);
+      if (diffSec < 45) {
+        setSyncRelativeTime("Synced just now");
+      } else if (diffSec < 3600) {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 60)}m ago`);
+      } else {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 3600)}h ago`);
+      }
+    };
+    updateRelative();
+    const interval = setInterval(updateRelative, 10000);
+    return () => clearInterval(interval);
+  }, [lastSyncedAt]);
 
   const fetchDashboardSummary = useCallback(async (isBackground = false) => {
     if (!isBackground) setRefreshing(true);
@@ -54,6 +102,7 @@ export default function ManagerDashboardPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        setLastSyncedAt(new Date());
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load dashboard data");
@@ -125,7 +174,12 @@ export default function ManagerDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-muted/60 border border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="hidden xs:inline sm:inline">{syncRelativeTime}</span>
+              <span className="xs:hidden sm:hidden">Live</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -158,7 +212,7 @@ export default function ManagerDashboardPage() {
           </Link>
 
           <button
-            onClick={() => setActiveTab("approvals")}
+            onClick={() => switchTab("approvals")}
             className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-card hover:bg-muted/50 text-xs font-semibold text-foreground transition-colors shadow-2xs"
           >
             <FileCheck className="h-3.5 w-3.5 text-amber-500" />
@@ -176,7 +230,7 @@ export default function ManagerDashboardPage() {
       <div className="sticky top-0 z-30 -mx-3 sm:mx-0 px-3 sm:px-0 py-2.5 bg-background/90 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/40 rounded-2xl border border-border/60 overflow-x-auto scrollbar-none max-w-full">
           <button
-            onClick={() => setActiveTab("overview")}
+            onClick={() => switchTab("overview")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "overview"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -188,7 +242,7 @@ export default function ManagerDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("pulse")}
+            onClick={() => switchTab("pulse")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "pulse"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -203,7 +257,7 @@ export default function ManagerDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("approvals")}
+            onClick={() => switchTab("approvals")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "approvals"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -220,7 +274,7 @@ export default function ManagerDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("velocity")}
+            onClick={() => switchTab("velocity")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "velocity"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -232,7 +286,7 @@ export default function ManagerDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("analytics")}
+            onClick={() => switchTab("analytics")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "analytics"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -244,7 +298,7 @@ export default function ManagerDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("all")}
+            onClick={() => switchTab("all")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "all"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -261,7 +315,7 @@ export default function ManagerDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
         {/* Tile 1: Direct Reports */}
         <div
-          onClick={() => setActiveTab("pulse")}
+          onClick={() => switchTab("pulse")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -281,7 +335,7 @@ export default function ManagerDashboardPage() {
 
         {/* Tile 2: Present Today */}
         <div
-          onClick={() => setActiveTab("pulse")}
+          onClick={() => switchTab("pulse")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-emerald-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -301,7 +355,7 @@ export default function ManagerDashboardPage() {
 
         {/* Tile 3: Pending Approvals */}
         <div
-          onClick={() => setActiveTab("approvals")}
+          onClick={() => switchTab("approvals")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -321,7 +375,7 @@ export default function ManagerDashboardPage() {
 
         {/* Tile 4: Shift Exceptions */}
         <div
-          onClick={() => setActiveTab("pulse")}
+          onClick={() => switchTab("pulse")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-rose-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -341,7 +395,7 @@ export default function ManagerDashboardPage() {
       </div>
 
       {/* ═══ TIER 3: CONTEXTUAL WORKSPACES (Progressive Disclosure) ═══ */}
-      <div className="mt-5 space-y-6">
+      <div key={activeTab} className="mt-5 space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-200 ease-out">
         {/* ─── TAB 1: OVERVIEW (Daily Manager Command Hub) ─── */}
         {activeTab === "overview" && (
           <div className="space-y-6">
@@ -366,7 +420,7 @@ export default function ManagerDashboardPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setActiveTab("pulse")}
+                      onClick={() => switchTab("pulse")}
                       className="flex items-center gap-1 text-xs font-bold text-primary hover:underline shrink-0"
                     >
                       <span>Full Roster</span>
@@ -472,7 +526,7 @@ export default function ManagerDashboardPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setActiveTab("approvals")}
+                  onClick={() => switchTab("approvals")}
                   className="flex items-center gap-1 text-xs font-bold text-primary hover:underline shrink-0"
                 >
                   <span>Open Hub ({pendingApprovalsCount})</span>

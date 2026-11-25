@@ -22,6 +22,7 @@ import {
   HeartHandshake,
   CreditCard,
   ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
@@ -37,12 +38,60 @@ import { CultureKudosCard } from "@/components/employee/culture-kudos-card";
 
 type EmployeeTab = "shift" | "finance" | "leaves" | "culture" | "all";
 
+const VALID_TABS: readonly EmployeeTab[] = ["shift", "finance", "leaves", "culture", "all"];
+
 export default function EmployeeDashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<EmployeeTab>("shift");
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
+  const [syncRelativeTime, setSyncRelativeTime] = useState<string>("Synced just now");
+
+  // URL deep-linking synchronization
+  useEffect(() => {
+    const urlTab = new URLSearchParams(window.location.search).get("tab") as EmployeeTab | null;
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+    const onPopState = () => {
+      const popTab = new URLSearchParams(window.location.search).get("tab") as EmployeeTab | null;
+      if (popTab && VALID_TABS.includes(popTab)) {
+        setActiveTab(popTab);
+      } else {
+        setActiveTab("shift");
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const switchTab = (tab: EmployeeTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === "shift") params.delete("tab");
+    else params.set("tab", tab);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    window.history.replaceState(null, "", `${window.location.pathname}${qs}`);
+  };
+
+  // Live freshness relative time counter
+  useEffect(() => {
+    const updateRelative = () => {
+      const diffSec = Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000);
+      if (diffSec < 45) {
+        setSyncRelativeTime("Synced just now");
+      } else if (diffSec < 3600) {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 60)}m ago`);
+      } else {
+        setSyncRelativeTime(`Synced ${Math.floor(diffSec / 3600)}h ago`);
+      }
+    };
+    updateRelative();
+    const interval = setInterval(updateRelative, 10000);
+    return () => clearInterval(interval);
+  }, [lastSyncedAt]);
 
   // Document re-upload for rejected onboarding
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -60,6 +109,7 @@ export default function EmployeeDashboardPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        setLastSyncedAt(new Date());
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load dashboard data");
@@ -201,7 +251,12 @@ export default function EmployeeDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-muted/60 border border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="hidden xs:inline sm:inline">{syncRelativeTime}</span>
+              <span className="xs:hidden sm:hidden">Live</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -209,7 +264,7 @@ export default function EmployeeDashboardPage() {
               disabled={loading}
               className="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 rounded-xl border-border/80 shadow-2xs"
             >
-              <Loader2 className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">{loading ? "Syncing..." : "Sync"}</span>
             </Button>
           </div>
@@ -233,7 +288,7 @@ export default function EmployeeDashboardPage() {
       <div className="sticky top-0 z-30 -mx-3 sm:mx-0 px-3 sm:px-0 py-2.5 bg-background/90 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/40 rounded-2xl border border-border/60 overflow-x-auto scrollbar-none max-w-full">
           <button
-            onClick={() => setActiveTab("shift")}
+            onClick={() => switchTab("shift")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "shift"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -248,7 +303,7 @@ export default function EmployeeDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("finance")}
+            onClick={() => switchTab("finance")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "finance"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -260,7 +315,7 @@ export default function EmployeeDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("leaves")}
+            onClick={() => switchTab("leaves")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "leaves"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -277,7 +332,7 @@ export default function EmployeeDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("culture")}
+            onClick={() => switchTab("culture")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "culture"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -289,7 +344,7 @@ export default function EmployeeDashboardPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab("all")}
+            onClick={() => switchTab("all")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
               activeTab === "all"
                 ? "bg-background text-foreground shadow-xs border border-border/40"
@@ -306,7 +361,7 @@ export default function EmployeeDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
         {/* Tile 1: Shift Status */}
         <div
-          onClick={() => setActiveTab("shift")}
+          onClick={() => switchTab("shift")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -330,7 +385,7 @@ export default function EmployeeDashboardPage() {
 
         {/* Tile 2: Accrued Wage */}
         <div
-          onClick={() => setActiveTab("finance")}
+          onClick={() => switchTab("finance")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-blue-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -350,7 +405,7 @@ export default function EmployeeDashboardPage() {
 
         {/* Tile 3: Leave Balance */}
         <div
-          onClick={() => setActiveTab("leaves")}
+          onClick={() => switchTab("leaves")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -370,7 +425,7 @@ export default function EmployeeDashboardPage() {
 
         {/* Tile 4: Culture & Kudos */}
         <div
-          onClick={() => setActiveTab("culture")}
+          onClick={() => switchTab("culture")}
           className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-rose-500/40 transition-all cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -390,7 +445,7 @@ export default function EmployeeDashboardPage() {
       </div>
 
       {/* ═══ TIER 3: CONTEXTUAL WORKSPACES ═══ */}
-      <div className="mt-5 space-y-6">
+      <div key={activeTab} className="mt-5 space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-200 ease-out">
         {/* ─── TAB 1: TODAY'S SHIFT & PUNCH ─── */}
         {(activeTab === "shift" || activeTab === "all") && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
