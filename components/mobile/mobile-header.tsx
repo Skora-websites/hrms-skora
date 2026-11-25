@@ -199,13 +199,13 @@ export function MobileHeader({ title }: MobileHeaderProps) {
               </div>
             )}
 
-            <div className="truncate">
-              <h1 className="text-sm font-bold text-foreground truncate tracking-tight">
+            <div className="min-w-0 flex-1 truncate">
+              <h1 className="text-xs sm:text-sm font-bold text-foreground truncate tracking-tight leading-tight">
                 {pageLabel}
               </h1>
-              <p className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                SKORA HRMS
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium leading-none mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="truncate">SKORA HRMS</span>
               </p>
             </div>
           </div>

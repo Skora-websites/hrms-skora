@@ -17,6 +17,17 @@ import {
   X,
   ExternalLink,
   Loader2,
+  BarChart3,
+  Radio,
+  Server,
+  Layers,
+  Sliders,
+  ArrowRight,
+  ChevronRight,
+  TrendingUp,
+  Building2,
+  Sparkles,
+  Activity,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -36,6 +47,7 @@ export default function SuperadminOverviewPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "finance" | "radar" | "governance" | "system" | "all">("overview");
 
   // Edit / Delete User Modal
   const [editingUser, setEditingUser] = useState<DirectoryUser | null>(null);
@@ -245,130 +257,498 @@ export default function SuperadminOverviewPage() {
         </div>
       )}
 
-      {/* Executive Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-              Welcome back, {user?.name || "CEO"}
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
-              Executive
-            </span>
+      {/* ═══ EXECUTIVE HEADER (Mobile Application Style) ═══ */}
+      <div className="pb-4 border-b border-border/60">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center text-white font-black text-sm sm:text-base shadow-sm shrink-0">
+              {(user?.name || "CEO").charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-2xl font-black text-foreground tracking-tight truncate">
+                  Welcome back, {user?.name?.split(" ")[0] || "Executive"}
+                </h1>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0">
+                  CEO
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                Executive Command Center &bull; Real-time Org Pulse
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Real-time organizational governance, statutory financial burn & live operational control
-          </p>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              className="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 rounded-xl border-border/80 shadow-2xs"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">{refreshing ? "Refreshing..." : "Refresh"}</span>
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadData(true)}
-            disabled={refreshing}
-            className="text-xs flex items-center gap-1.5"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
-          </Button>
-
-          <Link href="/hrms/superadmin/settings">
-            <Button size="sm" variant="outline" className="text-xs flex items-center gap-1">
+        {/* Quick Actions Scroll Bar (Native App Style) */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 mt-3">
+          <Link href="/hrms/superadmin/settings" className="shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-card hover:bg-muted/50 text-xs font-semibold text-foreground transition-colors shadow-2xs">
+              <Sliders className="h-3.5 w-3.5 text-primary" />
               <span>Automations &amp; Crons</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Button>
+              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+            </div>
           </Link>
 
-          <Link href="/hrms/hr-admin">
-            <Button size="sm" variant="outline" className="text-xs flex items-center gap-1">
+          <Link href="/hrms/hr-admin" className="shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-card hover:bg-muted/50 text-xs font-semibold text-foreground transition-colors shadow-2xs">
+              <Users className="h-3.5 w-3.5 text-blue-500" />
               <span>HR Admin Desk</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Button>
+              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+            </div>
+          </Link>
+
+          <Link href="/hrms/superadmin/audit-logs" className="shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-card hover:bg-muted/50 text-xs font-semibold text-foreground transition-colors shadow-2xs">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Audit Logs</span>
+              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+            </div>
           </Link>
         </div>
       </div>
 
-      {/* Top Strategic KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>Total Active Staff</span>
-            <Users className="h-4 w-4 text-primary" />
+      {/* ═══ STICKY SEGMENTED CONTROL (Mobile App Navigation) ═══ */}
+      <div className="sticky top-0 z-30 -mx-3 sm:mx-0 px-3 sm:px-0 py-2.5 bg-background/90 backdrop-blur-md border-b border-border/40">
+        <div className="flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/40 rounded-2xl border border-border/60 overflow-x-auto scrollbar-none max-w-full">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+              activeTab === "overview"
+                ? "bg-background text-foreground shadow-xs border border-border/40"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <BarChart3 className="h-3.5 w-3.5 text-primary" />
+            <span>Overview</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("finance")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+              activeTab === "finance"
+                ? "bg-background text-foreground shadow-xs border border-border/40"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <DollarSign className="h-3.5 w-3.5 text-blue-500" />
+            <span>Finance</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("radar")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+              activeTab === "radar"
+                ? "bg-background text-foreground shadow-xs border border-border/40"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Radio className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Live Ops</span>
+            {(op.punchedIn ?? 0) > 0 && (
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("governance")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+              activeTab === "governance"
+                ? "bg-background text-foreground shadow-xs border border-border/40"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+            <span>Governance</span>
+            {((gq.totalUnassigned ?? 0) + (gq.totalEscalations ?? 0)) > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-rose-500 text-white">
+                {(gq.totalUnassigned ?? 0) + (gq.totalEscalations ?? 0)}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("system")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+              activeTab === "system"
+                ? "bg-background text-foreground shadow-xs border border-border/40"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Server className="h-3.5 w-3.5 text-teal-500" />
+            <span>System</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
+              activeTab === "all"
+                ? "bg-background text-foreground shadow-xs border border-border/40"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Layers className="h-3.5 w-3.5 text-slate-500" />
+            <span>All Pillars</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ TACTILE STRATEGIC KPI WIDGETS (Interactive Mobile App Cards) ═══ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
+        {/* Widget 1: Total Staff */}
+        <div
+          onClick={() => setActiveTab("radar")}
+          className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+            <span className="font-semibold text-[11px] sm:text-xs">Active Staff</span>
+            <div className="h-7 w-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Users className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-foreground tracking-tight">
-            {fb.activeEmployeeCount ?? 0}
+          <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center justify-between">
+            <span>{fb.activeEmployeeCount ?? 0}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Active organizational workforce
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+            Active workforce
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>On Duty Today</span>
-            <Clock className="h-4 w-4 text-emerald-500" />
+        {/* Widget 2: On Duty Today */}
+        <div
+          onClick={() => setActiveTab("radar")}
+          className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-emerald-500/40 transition-all cursor-pointer group active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+            <span className="font-semibold text-[11px] sm:text-xs">On Duty Today</span>
+            <div className="h-7 w-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Clock className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
-            {op.punchedIn ?? 0}
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight flex items-center justify-between">
+            <span>{op.punchedIn ?? 0}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {op.inOffice ?? 0} In Office &bull; {op.remote ?? 0} Remote
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+            {op.inOffice ?? 0} Office &bull; {op.remote ?? 0} Remote
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>Projected Monthly Outflow</span>
-            <DollarSign className="h-4 w-4 text-blue-500" />
+        {/* Widget 3: Projected Monthly Outflow */}
+        <div
+          onClick={() => setActiveTab("finance")}
+          className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-blue-500/40 transition-all cursor-pointer group active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+            <span className="font-semibold text-[11px] sm:text-xs">Monthly Outflow</span>
+            <div className="h-7 w-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <DollarSign className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-foreground tracking-tight truncate">
-            {formatCurrency(fb.totalProjectedBurn ?? 0)}
+          <div className="text-lg sm:text-2xl font-black text-foreground tracking-tight truncate flex items-center justify-between">
+            <span className="truncate">{formatCurrency(fb.totalProjectedBurn ?? 0)}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Wages + EPFO + ESIC + Claims
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+            Wages + Statutory
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>Governance Radar</span>
-            <ShieldAlert className="h-4 w-4 text-amber-500" />
+        {/* Widget 4: Governance Radar */}
+        <div
+          onClick={() => setActiveTab("governance")}
+          className="p-3.5 sm:p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+            <span className="font-semibold text-[11px] sm:text-xs">Governance</span>
+            <div className="h-7 w-7 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <ShieldAlert className="h-3.5 w-3.5" />
+            </div>
           </div>
-          <div className="text-2xl font-extrabold text-foreground tracking-tight">
-            {(gq.totalUnassigned ?? 0) + (gq.totalEscalations ?? 0)}
+          <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight flex items-center justify-between">
+            <span>{(gq.totalUnassigned ?? 0) + (gq.totalEscalations ?? 0)}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" />
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {gq.totalUnassigned ?? 0} Unassigned &bull; {gq.totalEscalations ?? 0} 48h Escalations
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+            {gq.totalUnassigned ?? 0} Unassigned &bull; {gq.totalEscalations ?? 0} Escalations
           </p>
         </div>
       </div>
 
-      {/* Strategic Pillar 1: Financial Burn & Statutory Outflows */}
-      <div className="mt-6">
-        <CeoFinancialBurnCard data={fb} />
-      </div>
+      {/* ═══ VIEW MODE CONTENT ═══ */}
+      <div className="mt-5 space-y-5">
+        {/* ─── TAB 1: OVERVIEW (Mobile Native Executive Summary) ─── */}
+        {activeTab === "overview" && (
+          <div className="space-y-4">
+            {/* Snapshot 1: Fiscal Runway Pulse */}
+            <div className="p-4 sm:p-6 rounded-2xl border border-border/80 bg-card shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Monthly Fiscal Burn</h3>
+                    <p className="text-[11px] text-muted-foreground">Statutory commitments &amp; gross base wages</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab("finance")}
+                  className="flex items-center gap-1 text-xs font-bold text-primary hover:underline shrink-0"
+                >
+                  <span>Deep Dive</span>
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
 
-      {/* Strategic Pillar 2: Organization Live Operations & AUX Radar */}
-      <div className="mt-6">
-        <CeoOperationsRadar data={op} />
-      </div>
+              <div className="p-3.5 rounded-xl bg-gradient-to-br from-primary/5 via-card to-card border border-primary/20 mb-3">
+                <div className="text-xs text-muted-foreground font-semibold">Total Projected Outflow</div>
+                <div className="text-2xl sm:text-3xl font-black text-foreground tracking-tight my-0.5">
+                  {formatCurrency(fb.totalProjectedBurn ?? 0)}
+                </div>
+                {/* Visual Ratio Bar */}
+                <div className="w-full bg-muted/60 h-2 rounded-full overflow-hidden mt-2.5 flex">
+                  <div
+                    className="bg-primary h-full rounded-l-full"
+                    style={{
+                      width: `${
+                        (fb.totalProjectedBurn || 0) > 0
+                          ? Math.min(100, Math.round(((fb.totalMonthlyGrossCommitment || 0) / (fb.totalProjectedBurn || 1)) * 100))
+                          : 100
+                      }%`,
+                    }}
+                    title="Base Wages"
+                  />
+                  <div
+                    className="bg-emerald-500 h-full rounded-r-full"
+                    style={{
+                      width: `${
+                        (fb.totalProjectedBurn || 0) > 0
+                          ? Math.min(100, Math.round((((fb.employerEpfo || 0) + (fb.employerEsic || 0)) / (fb.totalProjectedBurn || 1)) * 100))
+                          : 0
+                      }%`,
+                    }}
+                    title="Statutory Liabilities"
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1.5 font-medium">
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Base Wages: {formatCurrency(fb.totalMonthlyGrossCommitment ?? 0)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Statutory: {formatCurrency((fb.employerEpfo || 0) + (fb.employerEsic || 0))}
+                  </span>
+                </div>
+              </div>
 
-      {/* Strategic Pillar 3: Governance & Escalations Console */}
-      <div className="mt-6">
-        <CeoGovernanceConsole
-          unassigned={gq.unassignedManagers || []}
-          escalations={gq.onboardingEscalations || []}
-          availableManagers={gq.availableManagers || []}
-          directory={directory}
-          onAssignManager={handleAssignReportingManager}
-          onEditUser={handleOpenEditUser}
-        />
-      </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl border border-border/60 bg-muted/20">
+                  <div className="text-[10px] text-muted-foreground uppercase font-semibold">Avg / Staff</div>
+                  <div className="font-bold text-foreground text-sm mt-0.5">
+                    {formatCurrency(
+                      fb.activeEmployeeCount > 0
+                        ? Math.round((fb.totalProjectedBurn || 0) / fb.activeEmployeeCount)
+                        : 0
+                    )}
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-xl border border-border/60 bg-muted/20">
+                  <div className="text-[10px] text-muted-foreground uppercase font-semibold">Statutory Match</div>
+                  <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
+                    {fb.totalMonthlyGrossCommitment > 0
+                      ? `${((((fb.employerEpfo || 0) + (fb.employerEsic || 0)) / fb.totalMonthlyGrossCommitment) * 100).toFixed(1)}%`
+                      : "0%"} of Gross
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      {/* Strategic Pillar 4: Pure MySQL System Health & Audit Logs */}
-      <div className="mt-6 mb-12">
-        <CeoSystemHealthCard data={sh} />
+            {/* Snapshot 2: Operations Live Pulse */}
+            <div className="p-4 sm:p-6 rounded-2xl border border-border/80 bg-card shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Radio className="h-4 w-4 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Live Operations Pulse</h3>
+                    <p className="text-[11px] text-muted-foreground">Workforce presence &amp; real-time statuses</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab("radar")}
+                  className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline shrink-0"
+                >
+                  <span>Open Radar</span>
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+
+              {/* Status Chips Row */}
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                  <div className="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                    {op.punchedIn ?? 0}
+                  </div>
+                  <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">On Duty</div>
+                </div>
+                <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                  <div className="text-sm sm:text-base font-extrabold text-blue-600 dark:text-blue-400">
+                    {op.activeAux ?? 0}
+                  </div>
+                  <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-300">Active AUX</div>
+                </div>
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                  <div className="text-sm sm:text-base font-extrabold text-amber-600 dark:text-amber-400">
+                    {op.onBreak ?? 0}
+                  </div>
+                  <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">On Break</div>
+                </div>
+                <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-center">
+                  <div className="text-sm sm:text-base font-extrabold text-rose-600 dark:text-rose-400">
+                    {op.absent ?? 0}
+                  </div>
+                  <div className="text-[10px] font-semibold text-rose-700 dark:text-rose-300">Absent</div>
+                </div>
+              </div>
+
+              {/* Preview of Live Staff */}
+              <div className="space-y-1.5">
+                {(op.liveEmployees || []).slice(0, 3).map((emp: any) => (
+                  <div
+                    key={emp.userId}
+                    className="flex items-center justify-between p-2 rounded-xl border border-border/50 bg-muted/20 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-6 w-6 rounded-full bg-primary/10 text-primary font-bold text-[10px] flex items-center justify-center shrink-0">
+                        {emp.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 truncate">
+                        <span className="font-semibold text-foreground truncate block">{emp.name}</span>
+                        <span className="text-[10px] text-muted-foreground truncate block">
+                          {emp.designation}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0 ${
+                        emp.status === "punched_in"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {emp.status === "punched_in" ? "On Duty" : "Absent"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Snapshot 3: Governance & System Quick Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Governance Micro Card */}
+              <div
+                onClick={() => setActiveTab("governance")}
+                className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-amber-500/40 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-amber-500" />
+                    <span className="font-bold text-xs text-foreground">CEO Governance</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-amber-500 transition-colors" />
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span>Missing Managers:</span>
+                    <span className="font-bold text-foreground">
+                      {gq.totalUnassigned === 0 ? "0 (Intact)" : `${gq.totalUnassigned} Needed`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>48h Escalations:</span>
+                    <span className="font-bold text-foreground">{gq.totalEscalations ?? 0} Overdue</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* System Engine Micro Card */}
+              <div
+                onClick={() => setActiveTab("system")}
+                className="p-4 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-teal-500/40 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Server className="h-4 w-4 text-teal-500" />
+                    <span className="font-bold text-xs text-foreground">System Engine</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-teal-500 transition-colors" />
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span>Database:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      MySQL 8.0 &bull; {sh.pingLatencyMs || 51}ms
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Active Sessions:</span>
+                    <span className="font-bold text-foreground">{sh.activeSessions ?? 2} Web Sessions</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 2: FINANCIAL PILLAR DEEP DIVE ─── */}
+        {(activeTab === "finance" || activeTab === "all") && (
+          <div>
+            <CeoFinancialBurnCard data={fb} />
+          </div>
+        )}
+
+        {/* ─── TAB 3: LIVE OPERATIONS RADAR ─── */}
+        {(activeTab === "radar" || activeTab === "all") && (
+          <div>
+            <CeoOperationsRadar data={op} />
+          </div>
+        )}
+
+        {/* ─── TAB 4: CEO GOVERNANCE & ESCALATION CONSOLE ─── */}
+        {(activeTab === "governance" || activeTab === "all") && (
+          <div>
+            <CeoGovernanceConsole
+              unassigned={gq.unassignedManagers || []}
+              escalations={gq.onboardingEscalations || []}
+              availableManagers={gq.availableManagers || []}
+              directory={directory}
+              onAssignManager={handleAssignReportingManager}
+              onEditUser={handleOpenEditUser}
+            />
+          </div>
+        )}
+
+        {/* ─── TAB 5: SYSTEM HEALTH & SECURITY AUDIT STREAM ─── */}
+        {(activeTab === "system" || activeTab === "all") && (
+          <div className="mb-12">
+            <CeoSystemHealthCard data={sh} />
+          </div>
+        )}
       </div>
 
       {/* ═══ CEO USER EDIT MODAL ═══ */}

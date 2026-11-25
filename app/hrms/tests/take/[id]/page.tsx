@@ -48,7 +48,7 @@ function TestRunnerContent() {
   const testId = params.id as string;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const isStaff =
     user?.role === "manager" ||
@@ -86,6 +86,8 @@ function TestRunnerContent() {
 
   // Initialize or resume test attempt (or load preview for staff)
   useEffect(() => {
+    if (authLoading) return;
+
     async function init() {
       try {
         setLoading(true);
@@ -94,7 +96,7 @@ function TestRunnerContent() {
         const testRes = await fetch(`/api/hrm/v2/tests/${testId}`);
         const testData = await testRes.json();
         if (!testRes.ok || !testData.success) {
-          alert(testData.error || "Failed to load test");
+          console.error(testData.error || "Failed to load test");
           router.push("/hrms/tests");
           return;
         }
@@ -118,7 +120,7 @@ function TestRunnerContent() {
         });
         const attemptData = await attemptRes.json();
         if (!attemptRes.ok || !attemptData.success) {
-          alert(attemptData.error || "Could not start test");
+          console.error(attemptData.error || "Could not start test");
           router.push("/hrms/tests");
           return;
         }
@@ -149,7 +151,7 @@ function TestRunnerContent() {
       }
     }
     if (testId) init();
-  }, [testId, router, isPreview]);
+  }, [testId, router, isPreview, authLoading]);
 
   // Countdown Timer
   useEffect(() => {

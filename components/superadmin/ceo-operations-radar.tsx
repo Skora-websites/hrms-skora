@@ -85,7 +85,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
     });
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+    <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs text-card-foreground">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-border/60">
         <div className="flex items-center gap-3">
@@ -122,10 +122,10 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
       </div>
 
       {/* Metric Badges / Filter Chips */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-5">
+      <div className="flex sm:grid sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-5 overflow-x-auto pb-1.5 scrollbar-none">
         <button
           onClick={() => setFilter("all")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "all"
               ? "bg-primary/10 border-primary/30 text-primary"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -137,7 +137,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("punched_in")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "punched_in"
               ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -151,7 +151,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("active")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "active"
               ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -165,7 +165,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("on_break")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "on_break"
               ? "bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -179,7 +179,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("meeting")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "meeting"
               ? "bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -193,7 +193,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("in_office")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "in_office"
               ? "bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -207,7 +207,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("remote")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "remote"
               ? "bg-sky-500/15 border-sky-500/40 text-sky-600 dark:text-sky-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"
@@ -221,7 +221,7 @@ export function CeoOperationsRadar({ data }: CeoOperationsRadarProps) {
 
         <button
           onClick={() => setFilter("absent")}
-          className={`p-2.5 rounded-xl border text-left transition-all ${
+          className={`shrink-0 min-w-[95px] sm:min-w-0 p-2.5 rounded-xl border text-left transition-all ${
             filter === "absent"
               ? "bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-400"
               : "bg-muted/30 border-border/60 hover:bg-muted/50 text-foreground"

@@ -14,12 +14,12 @@ export function useOrganizations(params?: Record<string, string>) {
  * Hook to fetch departments.
  */
 export function useDepartments(params?: Record<string, string>) {
-  return useCollection<Department>("/api/hrm/v2/organizations/departments", params);
+  return useCollection<Department>("/api/hrm/v2/organizations", { type: "departments", ...params });
 }
 
 /**
  * Hook to fetch designations.
  */
 export function useDesignations(params?: Record<string, string>) {
-  return useCollection<Designation>("/api/hrm/v2/organizations/designations", params);
+  return useCollection<Designation>("/api/hrm/v2/organizations", { type: "designations", ...params });
 }

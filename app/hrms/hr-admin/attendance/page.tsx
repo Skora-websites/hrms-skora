@@ -506,14 +506,14 @@ export default function HrAdminAttendancePage() {
       </div>
 
       {/* ═══ Main Table Card with View Switcher & Filters ═══ */}
-      <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 text-card-foreground">
         {/* Controls Bar */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-border">
           {/* View Tabs */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-border">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-border overflow-x-auto max-w-full scrollbar-none">
             <button
               onClick={() => setActiveView("roster")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors duration-150 ${
                 activeView === "roster"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -523,7 +523,7 @@ export default function HrAdminAttendancePage() {
             </button>
             <button
               onClick={() => setActiveView("punched")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors duration-150 ${
                 activeView === "punched"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -533,7 +533,7 @@ export default function HrAdminAttendancePage() {
             </button>
             <button
               onClick={() => setActiveView("calendar")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors duration-150 ${
                 activeView === "calendar"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -546,7 +546,7 @@ export default function HrAdminAttendancePage() {
                 setActiveView("rota");
                 loadShiftsAndRota();
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-150 ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap transition-colors duration-150 ${
                 activeView === "rota"
                   ? "bg-white dark:bg-primary text-slate-900 dark:text-white"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -712,7 +712,7 @@ export default function HrAdminAttendancePage() {
         {/* ═══ View 3: Month Calendar Matrix ═══ */}
         {activeView === "calendar" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-border">
               <h4 className="font-bold text-sm text-slate-900 dark:text-white">
                 Monthly Overview — Click any date to load that day&apos;s attendance
               </h4>
@@ -776,25 +776,25 @@ export default function HrAdminAttendancePage() {
         {activeView === "rota" && (
           <div className="space-y-6">
             {/* Shifts Overview Cards */}
-            <div className="rounded-2xl border border-border bg-background p-6 text-card-foreground">
-              <div className="flex items-center justify-between mb-4">
+            <div className="rounded-2xl border border-border bg-background p-4 sm:p-6 text-card-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div>
                   <h3 className="font-bold text-base flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-primary" /> Configured Shifts ({shifts.length})
+                    <Clock className="h-5 w-5 text-primary shrink-0" /> Configured Shifts ({shifts.length})
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Operating work shifts, grace periods, and half-day thresholds</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     onClick={() => setShowShiftModal(true)}
-                    className="bg-primary text-white gap-2 font-bold text-xs"
+                    className="bg-primary text-white gap-2 font-bold text-xs shrink-0"
                   >
                     <Plus className="h-4 w-4" /> Add Shift
                   </Button>
                   <Button
                     onClick={() => setShowAssignModal(true)}
                     variant="outline"
-                    className="gap-2 font-bold text-xs border-primary/30 text-primary hover:bg-primary/10"
+                    className="gap-2 font-bold text-xs border-primary/30 text-primary hover:bg-primary/10 shrink-0"
                   >
                     <Users className="h-4 w-4" /> Assign Shift
                   </Button>
@@ -826,17 +826,17 @@ export default function HrAdminAttendancePage() {
             </div>
 
             {/* Shift Rota Assignments Table */}
-            <div className="rounded-2xl border border-border bg-background p-6 text-card-foreground">
-              <div className="flex items-center justify-between mb-4">
+            <div className="rounded-2xl border border-border bg-background p-4 sm:p-6 text-card-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div>
                   <h3 className="font-bold text-base flex items-center gap-2">
-                    <CalendarCheck className="h-5 w-5 text-primary" /> Active Shift Rota Assignments ({assignments.length})
+                    <CalendarCheck className="h-5 w-5 text-primary shrink-0" /> Active Shift Rota Assignments ({assignments.length})
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Workforce schedule assignments and forward-looking shift rotations</p>
                 </div>
                 <Button
                   onClick={() => setShowAssignModal(true)}
-                  className="bg-primary text-white gap-2 font-bold text-xs"
+                  className="bg-primary text-white gap-2 font-bold text-xs shrink-0 self-start sm:self-auto"
                 >
                   <Plus className="h-4 w-4" /> Assign Employee
                 </Button>

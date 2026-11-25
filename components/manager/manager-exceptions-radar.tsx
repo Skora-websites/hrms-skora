@@ -37,8 +37,8 @@ export function ManagerExceptionsRadar({ exceptions }: ExceptionsRadarProps) {
               <AlertTriangle className="w-3.5 h-3.5" /> Late-Mark Cap Breached ({exceptions.lateMarks.length})
             </span>
             <div className="space-y-1 mt-1">
-              {exceptions.lateMarks.slice(0, 2).map((m) => (
-                <div key={m.userId} className="flex justify-between text-[11px]">
+              {exceptions.lateMarks.slice(0, 2).map((m, i) => (
+                <div key={`${m.userId}-${i}`} className="flex justify-between text-[11px]">
                   <span className="font-semibold text-foreground truncate">{m.name}</span>
                   <span className="font-mono text-danger font-bold">{m.lateCount} late marks</span>
                 </div>
@@ -57,8 +57,8 @@ export function ManagerExceptionsRadar({ exceptions }: ExceptionsRadarProps) {
               <MapPin className="w-3.5 h-3.5" /> GPS Drift Verifications ({exceptions.driftExceptions.length})
             </span>
             <div className="space-y-1 mt-1">
-              {exceptions.driftExceptions.slice(0, 2).map((d) => (
-                <div key={d.userId} className="flex justify-between text-[11px]">
+              {exceptions.driftExceptions.slice(0, 2).map((d, i) => (
+                <div key={`${d.userId}-${i}`} className="flex justify-between text-[11px]">
                   <span className="font-semibold text-foreground truncate">{d.name}</span>
                   <span className="font-mono text-amber-600 dark:text-amber-400 font-bold">{d.distance}m (Drift)</span>
                 </div>
@@ -77,8 +77,8 @@ export function ManagerExceptionsRadar({ exceptions }: ExceptionsRadarProps) {
               <Clock className="w-3.5 h-3.5" /> Unclosed Punches ({exceptions.unclosedPunches.length})
             </span>
             <div className="space-y-1 mt-1">
-              {exceptions.unclosedPunches.slice(0, 2).map((u) => (
-                <div key={u.userId} className="flex justify-between text-[11px]">
+              {exceptions.unclosedPunches.slice(0, 2).map((u, i) => (
+                <div key={`${u.userId}-${u.date}-${i}`} className="flex justify-between text-[11px]">
                   <span className="font-semibold text-foreground truncate">{u.name}</span>
                   <span className="font-mono text-muted-foreground">{u.date}</span>
                 </div>

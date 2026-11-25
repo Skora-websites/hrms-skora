@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import type {
   TestDefinition,
   CandidateProgressItem,
@@ -34,14 +34,13 @@ export function CandidateProgressDialog({
   testItem,
   onRetakeGranted,
 }: CandidateProgressDialogProps) {
-  const toast = useToast();
   const [candidates, setCandidates] = useState<CandidateProgressItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [grantingUserId, setGrantingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !testItem) {
-      setCandidates([]);
+      setCandidates((prev) => (prev.length > 0 ? [] : prev));
       return;
     }
 
@@ -65,7 +64,7 @@ export function CandidateProgressDialog({
     return () => {
       isMounted = false;
     };
-  }, [open, testItem, toast]);
+  }, [open, testItem]);
 
   const handleGrantRetake = async (userId: string, userName: string) => {
     if (!testItem) return;

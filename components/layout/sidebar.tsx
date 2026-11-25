@@ -24,7 +24,6 @@ import {
   ListTodo,
   LogOut,
   Sun,
-  Moon,
   Search,
   UserCheck,
   Sparkles,
@@ -48,15 +47,13 @@ import {
   type NavItem,
 } from "@/lib/constants";
 import { useAuth } from "@/components/providers/auth-provider";
-import { canAccessRoute, getRoleLabel } from "@/lib/rbac";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { canAccessRoute } from "@/lib/rbac";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { getInitials } from "@/lib/utils";
 
 const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard,
@@ -86,14 +83,6 @@ const iconMap: Record<string, React.ElementType> = {
   GraduationCap,
 };
 
-const roleSettingsMap: Record<string, string> = {
-  super_admin: "/hrms/superadmin/settings",
-  hr_admin: "/hrms/hr-admin/settings",
-  admin: "/hrms/hr-admin/settings",
-  manager: "/hrms/manager/settings",
-  employee: "/hrms/employee/settings",
-};
-
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -101,7 +90,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { isSidebarMini, setSidebarMini, theme, toggleTheme, setTheme } = useTheme();
+  const { isSidebarMini, setSidebarMini } = useTheme();
   const { isMobile, isTablet } = useBreakpoint();
   const { user } = useAuth();
   const [searchFocused, setSearchFocused] = useState(false);
@@ -188,10 +177,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   groupedItems.sort(
     (a, b) => NAV_GROUP_ORDER.indexOf(a.group) - NAV_GROUP_ORDER.indexOf(b.group)
   );
-
-  const displayName = user?.name || user?.email || "User";
-  const initials = getInitials(displayName);
-  const roleLabel = getRoleLabel(user?.role ?? "");
 
   // ── Render a single nav link ──────────────────────────────────
   const renderNavLink = (item: NavItem) => {
@@ -455,149 +440,33 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </ul>
         </nav>
 
-        {/* ── Bottom Section ─────────────────────────────────── */}
-        <div className="shrink-0 border-t border-sidebar-border/80">
-          {/* Quick actions row */}
-          {!isCollapsed && (
-            <div className="px-2 pt-2 pb-1">
-              <div className="flex items-center gap-1 rounded-xl bg-sidebar-accent/30 dark:bg-sidebar-accent/40 p-1">
-                <button
-                  onClick={() => setTheme("light")}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-colors duration-150",
-                    theme === "light"
-                      ? "bg-white dark:bg-sidebar-accent/80 text-amber-500 font-semibold shadow-xs"
-                      : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
-                  )}
-                >
-                  <Sun className="h-3.5 w-3.5" />
-                  <span>Light</span>
-                </button>
-                <button
-                  onClick={() => setTheme("dark")}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-colors duration-150",
-                    theme === "dark"
-                      ? "bg-sidebar-accent/80 text-indigo-400 font-semibold dark:bg-sidebar shadow-xs"
-                      : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60"
-                  )}
-                >
-                  <Moon className="h-3.5 w-3.5" />
-                  <span>Dark</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* User profile */}
-          <div
-            className={cn(
-              "flex items-center gap-3 px-2 py-2.5",
-              isCollapsed && "justify-center"
-            )}
-          >
+        {/* ── Bottom Section (Collapse toggle - desktop only) ── */}
+        {!isMobile && !isTablet && (
+          <div className="shrink-0 border-t border-sidebar-border/80 px-2 py-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
-                  href={roleSettingsMap[user?.role || "employee"] || "/hrms/employee/settings"}
-                  onClick={() => isMobile && onClose()}
+                <button
+                  onClick={() => setSidebarMini(!isSidebarMini)}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl transition-colors duration-150 hover:bg-sidebar-accent/60 px-2.5 py-2 flex-1 min-w-0 group/user",
-                    isCollapsed && "px-0 py-0 justify-center"
+                    "flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60 transition-colors duration-150 w-full",
+                    isCollapsed && "justify-center px-0"
                   )}
                 >
-                  <div className="relative shrink-0">
-                    <Avatar className="h-8 w-8 ring-2 ring-sidebar-border/60 ring-offset-2 ring-offset-sidebar transition-[box-shadow] duration-150 group-hover/user:ring-primary/40">
-                      {user?.image ? (
-                        <AvatarImage src={user.image} alt={displayName} />
-                      ) : (
-                        <AvatarFallback className="text-[11px] font-bold bg-primary text-white">
-                          {initials}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </div>
-
-                  {!isCollapsed && (
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-sm font-semibold text-sidebar-accent-foreground dark:text-white truncate leading-tight">
-                        {displayName}
-                      </span>
-                      <span className="text-xs text-muted-foreground truncate capitalize leading-tight">
-                        {roleLabel}
-                      </span>
-                    </div>
-                  )}
-                </Link>
-              </TooltipTrigger>
-              {isCollapsed && (
-                <TooltipContent
-                  side="right"
-                  sideOffset={16}
-                  className="z-60 border border-border bg-popover text-popover-foreground rounded-xl px-3 py-2 shadow-md"
-                >
-                  <p className="font-semibold text-sm">{displayName}</p>
-                  <p className="text-muted-foreground text-xs capitalize mt-0.5">
-                    {roleLabel}
-                  </p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-
-            {!isCollapsed && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const res = await fetch("/api/auth/session", {
-                          method: "DELETE",
-                        });
-                        if (res.ok) window.location.href = "/hrms/login";
-                      } catch {
-                        window.location.href = "/hrms/login";
-                      }
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/70 hover:text-danger hover:bg-danger/10 transition-colors duration-150 shrink-0"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">
-                  Sign Out
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-
-          {/* Collapse toggle (desktop only) */}
-          {!isMobile && !isTablet && (
-            <div className="border-t border-sidebar-border/60 px-2 py-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setSidebarMini(!isSidebarMini)}
+                  <ChevronLeft
                     className={cn(
-                      "flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60 transition-colors duration-150 w-full",
-                      isCollapsed && "justify-center px-0"
+                      "h-4 w-4 transition-transform duration-200",
+                      isCollapsed && "rotate-180"
                     )}
-                  >
-                    <ChevronLeft
-                      className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        isCollapsed && "rotate-180"
-                      )}
-                    />
-                    {!isCollapsed && <span>Collapse</span>}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">
-                  {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-        </div>
+                  />
+                  {!isCollapsed && <span>Collapse</span>}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs">
+                {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </aside>
     </TooltipProvider>
   );

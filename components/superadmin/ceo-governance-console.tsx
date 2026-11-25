@@ -106,7 +106,7 @@ export function CeoGovernanceConsole({
     });
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-card-foreground">
+    <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs text-card-foreground">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-border/60">
         <div className="flex items-center gap-3">
@@ -131,7 +131,7 @@ export function CeoGovernanceConsole({
         </div>
 
         {/* Console Navigation Tabs */}
-        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/60">
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/60 overflow-x-auto scrollbar-none max-w-full">
           <button
             onClick={() => setActiveTab("unassigned")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${

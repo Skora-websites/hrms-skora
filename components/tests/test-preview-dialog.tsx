@@ -40,7 +40,7 @@ export function TestPreviewDialog({
 
   useEffect(() => {
     if (!open || !testItem) {
-      setQuestions([]);
+      setQuestions((prev) => (prev.length > 0 ? [] : prev));
       return;
     }
 

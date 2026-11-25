@@ -41,7 +41,7 @@ export function formatCompactNumber(num: number): string {
  * Format a date string
  */
 export function formatDate(
-  date: Date | string | undefined | null,
+  date: Date | string | number | undefined | null,
   options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
@@ -49,31 +49,41 @@ export function formatDate(
   }
 ): string {
   if (!date) return "—";
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", options);
+  try {
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-US", options);
+  } catch {
+    return "—";
+  }
 }
 
 /**
  * Get relative time string (e.g., "2 hours ago", "3 days ago")
  */
-export function getRelativeTime(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  const diffWeeks = Math.floor(diffDays / 7);
-  const diffMonths = Math.floor(diffDays / 30);
+export function getRelativeTime(date: Date | string | number): string {
+  try {
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return "—";
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffWeeks = Math.floor(diffDays / 7);
+    const diffMonths = Math.floor(diffDays / 30);
 
-  if (diffSecs < 60) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffWeeks < 4) return `${diffWeeks}w ago`;
-  if (diffMonths < 12) return `${diffMonths}mo ago`;
-  return formatDate(d);
+    if (diffSecs < 60) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffWeeks < 4) return `${diffWeeks}w ago`;
+    if (diffMonths < 12) return `${diffMonths}mo ago`;
+    return formatDate(d);
+  } catch {
+    return "—";
+  }
 }
 
 /** Alias for getRelativeTime */

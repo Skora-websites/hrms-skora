@@ -119,13 +119,14 @@ export default function ManagerMyTeamPage() {
 
   // Merge team member data with live AUX data
   const mergedMembers = members.map((m) => {
+    const memberId = m._id || (m as any).id;
     const live = liveData.find(
       (l) =>
-        l.userId === m._id ||
+        l.userId === memberId ||
         l.email.toLowerCase() === m.email.toLowerCase() ||
-        l.employeeCode === m.employeeCode
+        Boolean(m.employeeCode && l.employeeCode === m.employeeCode)
     );
-    return { ...m, live };
+    return { ...m, _id: memberId, live };
   });
 
   // Stats from all merged team members
@@ -283,7 +284,7 @@ export default function ManagerMyTeamPage() {
 
             return (
               <div
-                key={m._id}
+                key={m._id || (m as any).id || m.email}
                 onClick={() => {
                   if (m.live) {
                     setSelectedEmployee(m.live);
