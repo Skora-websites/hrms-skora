@@ -330,52 +330,54 @@ export function AttendancePunchCard() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-5 rounded-xl bg-muted/40 border border-border/70">
-        <div>
-          <span className="text-xs text-muted-foreground">{punchedIn ? "Punched In at:" : "Status:"}</span>
-          <p className="text-base font-bold mt-1 text-foreground">{punchedIn ? new Date(record.punchInTime).toLocaleTimeString() : "Not Punched In Today"}</p>
-          {punchedOut && <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">Out: {new Date(record.punchOutTime).toLocaleTimeString()}</p>}
-          {punchedIn && <div className="mt-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">Status: {record.status || "PRESENT"}</div>}
+      <div className="flex flex-col gap-4 p-4 sm:p-5 rounded-xl bg-muted/40 border border-border/70">
+        <div className="min-w-0 space-y-1">
+          <span className="text-xs text-muted-foreground block">{punchedIn ? "Punched In at:" : "Status:"}</span>
+          <p className="text-base font-bold text-foreground leading-tight">{punchedIn ? new Date(record.punchInTime).toLocaleTimeString() : "Not Punched In Today"}</p>
+          {punchedOut && <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Out: {new Date(record.punchOutTime).toLocaleTimeString()}</p>}
+          {punchedIn && <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Status: {record.status || "PRESENT"}</div>}
           {record?.location && (
-            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1 font-medium">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
               <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span>{record.location}</span>
+              <span className="truncate">{record.location}</span>
             </p>
           )}
           {gpsStatus?.distance !== undefined && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 font-medium">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
               <Navigation className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span>{gpsStatus.distance}m from office {gpsStatus.accuracy ? `(±${gpsStatus.accuracy}m GPS accuracy)` : ""}</span>
+              <span className="truncate">{gpsStatus.distance}m from office {gpsStatus.accuracy ? `(±${gpsStatus.accuracy}m GPS accuracy)` : ""}</span>
             </p>
           )}
         </div>
 
-        <div className="text-center bg-background px-6 py-3.5 rounded-xl border border-border/80 shadow-xs">
-          <span className="font-mono text-3xl font-extrabold tracking-wider text-foreground">{formatDuration(effectiveSeconds)}</span>
-          <span className="text-xs text-muted-foreground block mt-1 font-medium">Effective Work Time</span>
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] items-stretch gap-3">
+          <div className="flex flex-col items-center justify-center bg-background px-4 py-3 rounded-xl border border-border/80 shadow-xs min-w-0">
+            <span className="font-mono text-2xl sm:text-[28px] font-extrabold tracking-wider text-foreground tabular-nums leading-none">{formatDuration(effectiveSeconds)}</span>
+            <span className="text-[11px] text-muted-foreground mt-1.5 font-medium">Effective Work Time</span>
+          </div>
 
-        <div>
-          {!punchedIn ? (
-            <Button onClick={handlePunchIn} disabled={punching} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-6 h-11 shadow-sm">
-              {punching ? "Verifying GPS…" : (
-                <>
-                  <MapPin className="h-4 w-4" />
-                  <span>Punch In</span>
-                </>
-              )}
-            </Button>
-          ) : punchedOut ? (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Shift Complete</span>
-            </span>
-          ) : (
-            <Button onClick={handlePunchOut} disabled={punching} variant="danger" className="font-bold gap-2 px-6 h-11 shadow-sm">
-              <LogOut className="h-4 w-4" />
-              <span>{punching ? "Saving…" : "Punch Out"}</span>
-            </Button>
-          )}
+          <div className="flex items-stretch">
+            {!punchedIn ? (
+              <Button onClick={handlePunchIn} disabled={punching} className="w-full sm:w-auto sm:min-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-5 h-full min-h-11 py-3 shadow-sm justify-center whitespace-nowrap">
+                {punching ? "Verifying GPS…" : (
+                  <>
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    <span>Punch In</span>
+                  </>
+                )}
+              </Button>
+            ) : punchedOut ? (
+              <span className="inline-flex w-full sm:w-auto sm:min-w-[140px] items-center justify-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 px-4 py-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 min-h-11">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span>Shift Complete</span>
+              </span>
+            ) : (
+              <Button onClick={handlePunchOut} disabled={punching} variant="danger" className="w-full sm:w-auto sm:min-w-[140px] font-bold gap-2 px-5 h-full min-h-11 py-3 shadow-sm justify-center whitespace-nowrap">
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span>{punching ? "Saving…" : "Punch Out"}</span>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
